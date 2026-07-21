@@ -5,6 +5,8 @@ import { GameOverScreen } from '@/components/game/GameOverScreen';
 import { LevelCompleteScreen } from '@/components/game/LevelCompleteScreen';
 import { PauseOverlay } from '@/components/game/PauseOverlay';
 import type { GameEngine } from '@/engine/GameEngine';
+import { ensureSignedIn } from '@/services/authService';
+import { isLeaderboardAvailable, saveScore } from '@/services/leaderboardService';
 import { useGameStore } from '@/store/useGameStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import type { EngineEvents } from '@/types/game.types';
@@ -12,7 +14,9 @@ import type { SaveStatus } from '@/types/leaderboard.types';
 
 export function GameScreen() {
   const engineRef = useRef<GameEngine | null>(null);
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>(() =>
+    isLeaderboardAvailable() ? 'idle' : 'unavailable',
+  );
 
   const status = useGameStore((state) => state.status);
   const score = useGameStore((state) => state.score);
@@ -55,15 +59,38 @@ export function GameScreen() {
   };
 
   const retry = () => {
-    setSaveStatus('idle');
+    setSaveStatus(isLeaderboardAvailable() ? 'idle' : 'unavailable');
     useGameStore.getState().startGame();
     engineRef.current?.startRun();
   };
 
   const goToMenu = () => useGameStore.getState().setScreen('menu');
 
-  const handleSave = () => {
-    setSaveStatus('unavailable');
+  const handleSave = async (typedNickname: string) => {
+    if (!isLeaderboardAvailable()) {
+      setSaveStatus('unavailable');
+      return;
+    }
+    setSaveStatus('saving');
+    const uid = await ensureSignedIn();
+    if (!uid || !gameResult) {
+      setSaveStatus('error');
+      return;
+    }
+    useSettingsStore.getState().setNickname(typedNickname);
+    try {
+      await saveScore(
+        {
+          displayName: typedNickname,
+          score: gameResult.finalScore,
+          levelReached: gameResult.levelReached,
+        },
+        uid,
+      );
+      setSaveStatus('saved');
+    } catch {
+      setSaveStatus('error');
+    }
   };
 
   return (

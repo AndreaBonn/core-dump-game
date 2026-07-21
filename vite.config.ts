@@ -37,12 +37,27 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,woff2,mp3,svg,png,ico}'],
+        // Firebase is an optional, online-only feature loaded on demand; keep
+        // its chunk out of the offline precache so installs stay small.
+        globIgnores: ['**/firebase-*.js'],
+        maximumFileSizeToCacheInBytes: 3_000_000,
       },
     }),
   ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
+  build: {
+    // The Firebase vendor chunk is intentionally large and loaded on demand.
+    chunkSizeWarningLimit: 800,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+        },
+      },
     },
   },
   test: {
