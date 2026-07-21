@@ -2,12 +2,13 @@ import {
   BOARD_HEIGHT,
   BOARD_WIDTH,
   FIXED_TIMESTEP,
+  LEVEL_CLEAR_BONUS,
   MAX_FRAME_TIME,
   PACKET_RADIUS,
   VOID_RADIUS,
 } from '@/config/constants';
 import { comboLabel } from '@/config/combos';
-import { getLevel, type LevelConfig } from '@/config/levels';
+import { getLevel, TOTAL_LEVELS, type LevelConfig } from '@/config/levels';
 import { typesForCount } from '@/config/packetTypes';
 import { BOARD_CENTER } from '@/config/paths';
 import { FORK_SPREAD, ROLLBACK_DISTANCE, SLEEP_DURATION, SLEEP_FACTOR } from '@/config/powerUps';
@@ -56,6 +57,7 @@ export class GameEngine {
 
   private level = 1;
   private score = 0;
+  private levelStartScore = 0;
   private phase: GamePhase = 'idle';
   private rafId = 0;
   private lastTime = 0;
@@ -97,10 +99,18 @@ export class GameEngine {
   startLevel(level: number): void {
     const config = getLevel(level);
     this.level = level;
+    this.levelStartScore = this.score;
     this.buildLevel(config);
     this.phase = 'playing';
     this.events.onLevelChange(level);
     this.events.onNextPacketChange(this.cursor.nextType);
+  }
+
+  /** Advance to the next level after a level-complete screen. */
+  nextLevel(): void {
+    if (this.phase === 'levelComplete' && this.level < TOTAL_LEVELS) {
+      this.startLevel(this.level + 1);
+    }
   }
 
   private buildLevel(config: LevelConfig): void {
@@ -276,7 +286,23 @@ export class GameEngine {
         }
       }
     }
+    if (this.chain.isEmpty) {
+      this.completeLevel();
+    }
     return true;
+  }
+
+  private completeLevel(): void {
+    const levelScore = this.score - this.levelStartScore;
+    this.score += LEVEL_CLEAR_BONUS;
+    this.events.onScoreChange(this.score);
+    if (this.level >= TOTAL_LEVELS) {
+      this.phase = 'gameWon';
+      this.events.onGameWon(this.score, this.level);
+    } else {
+      this.phase = 'levelComplete';
+      this.events.onLevelComplete(levelScore, LEVEL_CLEAR_BONUS);
+    }
   }
 
   private applyPowerUp(type: PowerUpType): void {

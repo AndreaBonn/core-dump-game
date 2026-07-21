@@ -21,6 +21,9 @@ export const FIXED_TIMESTEP = 1 / 120;
 /** Upper bound on accumulated time processed per frame, to avoid spirals. */
 export const MAX_FRAME_TIME = 0.25;
 
+/** Bonus awarded for clearing a level without a packet reaching the void. */
+export const LEVEL_CLEAR_BONUS = 500;
+
 /** Logical board dimensions; the canvas is scaled to fit these. */
 export const BOARD_WIDTH = 960;
 export const BOARD_HEIGHT = 600;
