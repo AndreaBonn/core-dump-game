@@ -19,6 +19,7 @@ import { VoidHole } from '@/engine/entities/VoidHole';
 import { createRng, type Rng } from '@/engine/math/rng';
 import { vec2, type Vec2 } from '@/engine/math/vec2';
 import { findCollisionIndex, resolveInsertPosition } from '@/engine/systems/CollisionSystem';
+import { resolveMatches } from '@/engine/systems/MatchSystem';
 import { InputSystem } from '@/engine/systems/InputSystem';
 import { RenderSystem } from '@/engine/systems/RenderSystem';
 import type { EngineEvents, GamePhase, PacketType } from '@/types/game.types';
@@ -47,6 +48,7 @@ export class GameEngine {
   private projectiles: Projectile[] = [];
 
   private level = 1;
+  private score = 0;
   private phase: GamePhase = 'idle';
   private rafId = 0;
   private lastTime = 0;
@@ -77,6 +79,13 @@ export class GameEngine {
       this.fire();
     }
   };
+
+  /** Start a fresh run from level 1, resetting the accumulated score. */
+  startRun(): void {
+    this.score = 0;
+    this.events.onScoreChange(0);
+    this.startLevel(1);
+  }
 
   startLevel(level: number): void {
     const config = getLevel(level);
@@ -222,6 +231,11 @@ export class GameEngine {
       position,
       createPacket({ type: projectile.type, distance: 0 }),
     );
+    const resolution = resolveMatches(this.chain.packets, position);
+    if (resolution) {
+      this.score += resolution.score;
+      this.events.onScoreChange(this.score);
+    }
     return true;
   }
 
@@ -236,7 +250,7 @@ export class GameEngine {
 
   private endGame(): void {
     this.phase = 'gameOver';
-    this.events.onGameOver(0, this.level);
+    this.events.onGameOver(this.score, this.level);
   }
 
   private drawFrame(): void {
