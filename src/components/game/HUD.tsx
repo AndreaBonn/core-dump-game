@@ -16,6 +16,8 @@ export function HUD({ onPause }: HUDProps) {
   const nextPacket = useGameStore((state) => state.nextPacket);
   const combo = useGameStore((state) => state.combo);
   const setCombo = useGameStore((state) => state.setCombo);
+  const powerUp = useGameStore((state) => state.powerUp);
+  const setPowerUp = useGameStore((state) => state.setPowerUp);
 
   useEffect(() => {
     if (!combo) {
@@ -24,6 +26,14 @@ export function HUD({ onPause }: HUDProps) {
     const timeout = window.setTimeout(() => setCombo(null), COMBO_VISIBLE_MS);
     return () => window.clearTimeout(timeout);
   }, [combo, setCombo]);
+
+  useEffect(() => {
+    if (!powerUp) {
+      return;
+    }
+    const timeout = window.setTimeout(() => setPowerUp(null), COMBO_VISIBLE_MS);
+    return () => window.clearTimeout(timeout);
+  }, [powerUp, setPowerUp]);
 
   return (
     <div className="pointer-events-none absolute inset-0 z-[200] flex flex-col p-3 font-mono">
@@ -61,6 +71,14 @@ export function HUD({ onPause }: HUDProps) {
         <div className="mt-10 flex justify-center">
           <p className="animate-pulse text-3xl font-extrabold uppercase tracking-widest text-packet-warning drop-shadow">
             {combo.text} <span className="text-packet-error">x{combo.multiplier}</span>
+          </p>
+        </div>
+      )}
+
+      {powerUp && (
+        <div className="mt-4 flex justify-center">
+          <p className="rounded bg-terminal-panel/80 px-3 py-1 text-sm font-semibold text-packet-info">
+            {powerUp}
           </p>
         </div>
       )}

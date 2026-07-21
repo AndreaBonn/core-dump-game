@@ -4,6 +4,7 @@ import { HUD } from '@/components/game/HUD';
 import { GameOverScreen } from '@/components/game/GameOverScreen';
 import { LevelCompleteScreen } from '@/components/game/LevelCompleteScreen';
 import { PauseOverlay } from '@/components/game/PauseOverlay';
+import { POWER_UPS } from '@/config/powerUps';
 import type { GameEngine } from '@/engine/GameEngine';
 import { ensureSignedIn } from '@/services/authService';
 import { isLeaderboardAvailable, saveScore } from '@/services/leaderboardService';
@@ -34,7 +35,7 @@ export function GameScreen() {
       onLevelComplete: store.reportLevelComplete,
       onGameOver: store.reportGameOver,
       onGameWon: store.reportGameWon,
-      onPowerUp: () => {},
+      onPowerUp: (type) => store.setPowerUp(POWER_UPS[type].name),
     };
   }, []);
 

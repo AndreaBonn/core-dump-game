@@ -21,6 +21,7 @@ interface GameUIState {
   score: number;
   level: number;
   combo: ComboLabel | null;
+  powerUp: string | null;
   nextPacket: PacketType | null;
   levelResult: LevelResult | null;
   gameResult: GameResult | null;
@@ -30,6 +31,7 @@ interface GameUIState {
   setScore: (score: number) => void;
   setLevel: (level: number) => void;
   setCombo: (combo: ComboLabel | null) => void;
+  setPowerUp: (powerUp: string | null) => void;
   setNextPacket: (nextPacket: PacketType | null) => void;
   reportLevelComplete: (levelScore: number, bonus: number) => void;
   advanceLevel: () => void;
@@ -43,6 +45,7 @@ const initialRun = {
   score: 0,
   level: 1,
   combo: null,
+  powerUp: null,
   nextPacket: null,
   levelResult: null,
   gameResult: null,
@@ -57,6 +60,7 @@ export const useGameStore = create<GameUIState>((set) => ({
   setScore: (score) => set({ score }),
   setLevel: (level) => set({ level }),
   setCombo: (combo) => set({ combo }),
+  setPowerUp: (powerUp) => set({ powerUp }),
   setNextPacket: (nextPacket) => set({ nextPacket }),
   reportLevelComplete: (levelScore, bonus) =>
     set({ status: 'levelComplete', levelResult: { levelScore, bonus } }),

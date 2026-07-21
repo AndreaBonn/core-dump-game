@@ -218,7 +218,9 @@ export class GameEngine {
 
     if (this.phase === 'playing') {
       this.accumulator += frameTime;
-      while (this.accumulator >= FIXED_TIMESTEP) {
+      // Re-check the phase each step: fixedUpdate can end the level or the game
+      // mid-frame, and remaining steps must not keep simulating past that.
+      while (this.phase === 'playing' && this.accumulator >= FIXED_TIMESTEP) {
         this.fixedUpdate(FIXED_TIMESTEP);
         this.accumulator -= FIXED_TIMESTEP;
       }
@@ -299,6 +301,7 @@ export class GameEngine {
   }
 
   private completeLevel(): void {
+    this.projectiles = [];
     const levelScore = this.score - this.levelStartScore;
     this.score += LEVEL_CLEAR_BONUS;
     this.events.onScoreChange(this.score);
@@ -347,6 +350,7 @@ export class GameEngine {
 
   private endGame(): void {
     this.phase = 'gameOver';
+    this.projectiles = [];
     audioManager.play('game-over');
     this.events.onGameOver(this.score, this.level);
   }
