@@ -6,6 +6,7 @@ import {
   PACKET_RADIUS,
   VOID_RADIUS,
 } from '@/config/constants';
+import { comboLabel } from '@/config/combos';
 import { getLevel, type LevelConfig } from '@/config/levels';
 import { typesForCount } from '@/config/packetTypes';
 import { BOARD_CENTER } from '@/config/paths';
@@ -235,6 +236,10 @@ export class GameEngine {
     if (resolution) {
       this.score += resolution.score;
       this.events.onScoreChange(this.score);
+      const combo = comboLabel(resolution.explosions);
+      if (combo) {
+        this.events.onComboChange(combo);
+      }
     }
     return true;
   }
