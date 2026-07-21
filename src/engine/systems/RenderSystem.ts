@@ -1,5 +1,6 @@
 import { CURSOR_RADIUS, PACKET_RADIUS, VOID_RADIUS } from '@/config/constants';
 import { colorForType, labelForType } from '@/config/packetTypes';
+import { POWER_UPS } from '@/config/powerUps';
 import type { CpuCursor } from '@/engine/entities/CpuCursor';
 import type { Path } from '@/engine/entities/Path';
 import type { Projectile } from '@/engine/entities/Projectile';
@@ -132,19 +133,23 @@ export class RenderSystem {
     const color = colorForType(packet.type);
     this.roundedSquare(ctx, position, PACKET_RADIUS, color);
 
-    if (packet.isPowerUp) {
+    if (packet.isPowerUp && packet.powerUpType) {
       ctx.strokeStyle = '#0a0e14';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(position.x, position.y, PACKET_RADIUS * 0.45, 0, Math.PI * 2);
+      ctx.arc(position.x, position.y, PACKET_RADIUS * 0.62, 0, Math.PI * 2);
       ctx.stroke();
     }
 
+    const glyph =
+      packet.isPowerUp && packet.powerUpType
+        ? POWER_UPS[packet.powerUpType].glyph
+        : labelForType(packet.type);
     ctx.fillStyle = '#0a0e14';
     ctx.font = `bold ${PACKET_RADIUS}px "JetBrains Mono", monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(labelForType(packet.type), position.x, position.y + 1);
+    ctx.fillText(glyph, position.x, position.y + 1);
   }
 
   private roundedSquare(

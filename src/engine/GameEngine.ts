@@ -10,6 +10,7 @@ import { comboLabel } from '@/config/combos';
 import { getLevel, type LevelConfig } from '@/config/levels';
 import { typesForCount } from '@/config/packetTypes';
 import { BOARD_CENTER } from '@/config/paths';
+import { FORK_SPREAD, ROLLBACK_DISTANCE, SLEEP_DURATION, SLEEP_FACTOR } from '@/config/powerUps';
 import { generateChainPackets, insertPacketAt } from '@/engine/core/chainOps';
 import { Chain } from '@/engine/entities/Chain';
 import { CpuCursor } from '@/engine/entities/CpuCursor';
@@ -21,9 +22,10 @@ import { createRng, type Rng } from '@/engine/math/rng';
 import { vec2, type Vec2 } from '@/engine/math/vec2';
 import { findCollisionIndex, resolveInsertPosition } from '@/engine/systems/CollisionSystem';
 import { resolveMatches } from '@/engine/systems/MatchSystem';
+import { presentTypes, removeAllOfType, rollbackChain } from '@/engine/systems/PowerUpSystem';
 import { InputSystem } from '@/engine/systems/InputSystem';
 import { RenderSystem } from '@/engine/systems/RenderSystem';
-import type { EngineEvents, GamePhase, PacketType } from '@/types/game.types';
+import type { EngineEvents, GamePhase, PacketType, PowerUpType } from '@/types/game.types';
 
 interface Viewport {
   scale: number;
@@ -47,6 +49,10 @@ export class GameEngine {
   private rng: Rng = createRng(1);
   private types: readonly PacketType[] = [];
   private projectiles: Projectile[] = [];
+
+  private baseSpeed = 0;
+  private sleepTimer = 0;
+  private pendingFork = false;
 
   private level = 1;
   private score = 0;
@@ -102,8 +108,16 @@ export class GameEngine {
     this.voidHole = new VoidHole(this.path.voidPosition, this.path.length);
     this.rng = createRng(config.seed);
     this.types = typesForCount(config.colorCount);
+    this.baseSpeed = config.chainSpeed;
+    this.sleepTimer = 0;
+    this.pendingFork = false;
     this.chain = new Chain(
-      generateChainPackets(config.chainLength, this.types, this.rng),
+      generateChainPackets({
+        count: config.chainLength,
+        types: this.types,
+        rng: this.rng,
+        powerUpChance: config.powerUpChance,
+      }),
       config.chainSpeed,
     );
     this.cursor = new CpuCursor(BOARD_CENTER, this.drawType(), this.drawType());
@@ -175,7 +189,13 @@ export class GameEngine {
       return;
     }
     const type = this.cursor.loadNext(this.drawType());
-    this.projectiles.push(new Projectile(this.cursor.position, this.cursor.angle, type));
+    const angles = this.pendingFork
+      ? [this.cursor.angle - FORK_SPREAD, this.cursor.angle, this.cursor.angle + FORK_SPREAD]
+      : [this.cursor.angle];
+    for (const angle of angles) {
+      this.projectiles.push(new Projectile(this.cursor.position, angle, type));
+    }
+    this.pendingFork = false;
     this.events.onNextPacketChange(this.cursor.nextType);
   }
 
@@ -195,10 +215,20 @@ export class GameEngine {
   };
 
   private fixedUpdate(dt: number): void {
+    this.updateSleep(dt);
     this.chain.advance(dt);
     this.updateProjectiles(dt);
     if (this.voidHole.hasSwallowed(this.chain.frontDistance, VOID_RADIUS)) {
       this.endGame();
+    }
+  }
+
+  private updateSleep(dt: number): void {
+    if (this.sleepTimer > 0) {
+      this.sleepTimer -= dt;
+      if (this.sleepTimer <= 0) {
+        this.chain.speed = this.baseSpeed;
+      }
     }
   }
 
@@ -240,8 +270,36 @@ export class GameEngine {
       if (combo) {
         this.events.onComboChange(combo);
       }
+      for (const removed of resolution.removed) {
+        if (removed.isPowerUp && removed.powerUpType) {
+          this.applyPowerUp(removed.powerUpType);
+        }
+      }
     }
     return true;
+  }
+
+  private applyPowerUp(type: PowerUpType): void {
+    switch (type) {
+      case 'SLEEP':
+        this.chain.speed = this.baseSpeed * SLEEP_FACTOR;
+        this.sleepTimer = SLEEP_DURATION;
+        break;
+      case 'FORK':
+        this.pendingFork = true;
+        break;
+      case 'GARBAGE_COLLECT': {
+        const candidates = presentTypes(this.chain.packets);
+        if (candidates.length > 0) {
+          removeAllOfType(this.chain.packets, this.rng.pick(candidates));
+        }
+        break;
+      }
+      case 'ROLLBACK':
+        rollbackChain(this.chain.packets, ROLLBACK_DISTANCE);
+        break;
+    }
+    this.events.onPowerUp(type);
   }
 
   private isInsideBoard(point: Vec2): boolean {

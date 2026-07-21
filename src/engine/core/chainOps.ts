@@ -1,25 +1,38 @@
 import { createPacket } from '@/engine/entities/DataPacket';
 import type { Rng } from '@/engine/math/rng';
 import { PACKET_SPACING } from '@/config/constants';
+import { POWER_UP_TYPES } from '@/config/powerUps';
 import type { DataPacket, PacketType } from '@/types/game.types';
+
+export interface ChainGenerationOptions {
+  count: number;
+  types: readonly PacketType[];
+  rng: Rng;
+  /** Probability in [0, 1] that a generated packet carries a power-up. */
+  powerUpChance?: number;
+}
 
 /**
  * Build the initial chain packets, streaming in from behind the path start.
  * The front packet sits just behind distance 0; earlier packets trail off the
- * track at negative distances and scroll on as the chain advances.
+ * track at negative distances and scroll on as the chain advances. Each packet
+ * has a `powerUpChance` probability of also carrying a power-up.
  */
-export function generateChainPackets(
-  count: number,
-  types: readonly PacketType[],
-  rng: Rng,
-): DataPacket[] {
+export function generateChainPackets({
+  count,
+  types,
+  rng,
+  powerUpChance = 0,
+}: ChainGenerationOptions): DataPacket[] {
   const packets: DataPacket[] = [];
   for (let i = 0; i < count; i += 1) {
     const distanceFromFront = count - i;
+    const powerUpType = rng.next() < powerUpChance ? rng.pick(POWER_UP_TYPES) : null;
     packets.push(
       createPacket({
         type: rng.pick(types),
         distance: -distanceFromFront * PACKET_SPACING,
+        powerUpType,
       }),
     );
   }

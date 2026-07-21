@@ -14,10 +14,7 @@ beforeEach(() => {
 describe('Chain', () => {
   it('advances every packet by speed * dt', () => {
     const chain = new Chain(
-      [
-        createPacket({ type: 'INFO', distance: 0 }),
-        createPacket({ type: 'INFO', distance: 32 }),
-      ],
+      [createPacket({ type: 'INFO', distance: 0 }), createPacket({ type: 'INFO', distance: 32 })],
       100,
     );
     chain.advance(0.5);
@@ -27,10 +24,7 @@ describe('Chain', () => {
 
   it('reports the front distance as the last packet', () => {
     const chain = new Chain(
-      [
-        createPacket({ type: 'INFO', distance: 10 }),
-        createPacket({ type: 'ERROR', distance: 42 }),
-      ],
+      [createPacket({ type: 'INFO', distance: 10 }), createPacket({ type: 'ERROR', distance: 42 })],
       0,
     );
     expect(chain.frontDistance).toBe(42);
@@ -56,12 +50,12 @@ describe('generateChainPackets', () => {
   const types: readonly PacketType[] = ['ERROR', 'SUCCESS', 'INFO', 'WARNING'];
 
   it('creates the requested number of packets', () => {
-    const packets = generateChainPackets(20, types, createRng(1));
+    const packets = generateChainPackets({ count: 20, types, rng: createRng(1) });
     expect(packets).toHaveLength(20);
   });
 
   it('spaces packets by PACKET_SPACING with the front just behind the start', () => {
-    const packets = generateChainPackets(3, types, createRng(1));
+    const packets = generateChainPackets({ count: 3, types, rng: createRng(1) });
     expect(packets.map((p) => p.distance)).toEqual([
       -3 * PACKET_SPACING,
       -2 * PACKET_SPACING,
@@ -70,16 +64,31 @@ describe('generateChainPackets', () => {
   });
 
   it('only uses the allowed packet types', () => {
-    const packets = generateChainPackets(50, types, createRng(7));
+    const packets = generateChainPackets({ count: 50, types, rng: createRng(7) });
     for (const packet of packets) {
       expect(types).toContain(packet.type);
     }
   });
 
   it('is deterministic for a given seed', () => {
-    const a = generateChainPackets(10, types, createRng(42)).map((p) => p.type);
-    const b = generateChainPackets(10, types, createRng(42)).map((p) => p.type);
+    const a = generateChainPackets({ count: 10, types, rng: createRng(42) }).map((p) => p.type);
+    const b = generateChainPackets({ count: 10, types, rng: createRng(42) }).map((p) => p.type);
     expect(a).toEqual(b);
+  });
+
+  it('creates no power-ups when the chance is zero', () => {
+    const packets = generateChainPackets({ count: 40, types, rng: createRng(3) });
+    expect(packets.every((p) => !p.isPowerUp)).toBe(true);
+  });
+
+  it('creates power-ups when the chance is one', () => {
+    const packets = generateChainPackets({
+      count: 10,
+      types,
+      rng: createRng(3),
+      powerUpChance: 1,
+    });
+    expect(packets.every((p) => p.isPowerUp && p.powerUpType !== null)).toBe(true);
   });
 });
 
