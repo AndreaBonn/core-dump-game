@@ -1,18 +1,20 @@
 import { useEffect, useRef } from 'react';
 import { GameEngine } from '@/engine/GameEngine';
+import { audioManager } from '@/engine/audio/AudioManager';
 import type { EngineEvents } from '@/types/game.types';
 
 interface GameCanvasProps {
-  level: number;
   events: EngineEvents;
-  onReady?: (engine: GameEngine) => void;
+  onReady: (engine: GameEngine) => void;
 }
 
-export function GameCanvas({ level, events, onReady }: GameCanvasProps) {
+export function GameCanvas({ events, onReady }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const eventsRef = useRef(events);
   eventsRef.current = events;
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -21,29 +23,27 @@ export function GameCanvas({ level, events, onReady }: GameCanvasProps) {
       return;
     }
 
-    const stableEvents: EngineEvents = {
-      onScoreChange: (score) => eventsRef.current.onScoreChange(score),
+    const forward: EngineEvents = {
+      onScoreChange: (value) => eventsRef.current.onScoreChange(value),
       onLevelChange: (value) => eventsRef.current.onLevelChange(value),
-      onComboChange: (combo) => eventsRef.current.onComboChange(combo),
-      onNextPacketChange: (type) => eventsRef.current.onNextPacketChange(type),
-      onLevelComplete: (levelScore, bonus) =>
-        eventsRef.current.onLevelComplete(levelScore, bonus),
-      onGameOver: (finalScore, levelReached) =>
-        eventsRef.current.onGameOver(finalScore, levelReached),
-      onGameWon: (finalScore, levelReached) =>
-        eventsRef.current.onGameWon(finalScore, levelReached),
+      onComboChange: (value) => eventsRef.current.onComboChange(value),
+      onNextPacketChange: (value) => eventsRef.current.onNextPacketChange(value),
+      onLevelComplete: (score, bonus) => eventsRef.current.onLevelComplete(score, bonus),
+      onGameOver: (score, reached) => eventsRef.current.onGameOver(score, reached),
+      onGameWon: (score, reached) => eventsRef.current.onGameWon(score, reached),
       onPowerUp: (type) => eventsRef.current.onPowerUp(type),
     };
 
-    const engine = new GameEngine(canvas, stableEvents);
+    audioManager.load();
+    const engine = new GameEngine(canvas, forward);
     const applySize = () => {
       const rect = container.getBoundingClientRect();
       engine.resize(rect.width, rect.height, window.devicePixelRatio || 1);
     };
     applySize();
-    engine.startLevel(level);
+    engine.startRun();
     engine.start();
-    onReady?.(engine);
+    onReadyRef.current(engine);
 
     const observer = new ResizeObserver(applySize);
     observer.observe(container);
@@ -52,7 +52,7 @@ export function GameCanvas({ level, events, onReady }: GameCanvasProps) {
       observer.disconnect();
       engine.destroy();
     };
-  }, [level, onReady]);
+  }, []);
 
   return (
     <div ref={containerRef} className="h-full w-full touch-none">

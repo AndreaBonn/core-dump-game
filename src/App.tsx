@@ -1,27 +1,19 @@
-import { useMemo, useState } from 'react';
-import { GameCanvas } from '@/components/game/GameCanvas';
-import { createNoopEngineEvents } from '@/engine/events';
+import { GameScreen } from '@/components/game/GameScreen';
+import { MainMenu } from '@/components/menu/MainMenu';
+import { Leaderboard } from '@/components/menu/Leaderboard';
+import { Settings } from '@/components/menu/Settings';
+import { useGameStore } from '@/store/useGameStore';
 
 function App() {
-  const [gameOver, setGameOver] = useState(false);
-
-  const events = useMemo(
-    () => ({
-      ...createNoopEngineEvents(),
-      onGameOver: () => setGameOver(true),
-    }),
-    [],
-  );
+  const screen = useGameStore((state) => state.screen);
 
   return (
-    <main className="relative h-full w-full">
-      <GameCanvas level={1} events={events} />
-      {gameOver && (
-        <div className="absolute inset-0 flex items-center justify-center bg-terminal-bg/80">
-          <p className="text-2xl font-bold text-packet-error">CORE DUMPED</p>
-        </div>
-      )}
-    </main>
+    <div className="h-full w-full bg-terminal-bg text-terminal-text">
+      {screen === 'menu' && <MainMenu />}
+      {screen === 'game' && <GameScreen />}
+      {screen === 'leaderboard' && <Leaderboard />}
+      {screen === 'settings' && <Settings />}
+    </div>
   );
 }
 

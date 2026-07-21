@@ -12,6 +12,7 @@ import { getLevel, TOTAL_LEVELS, type LevelConfig } from '@/config/levels';
 import { typesForCount } from '@/config/packetTypes';
 import { BOARD_CENTER } from '@/config/paths';
 import { FORK_SPREAD, ROLLBACK_DISTANCE, SLEEP_DURATION, SLEEP_FACTOR } from '@/config/powerUps';
+import { audioManager } from '@/engine/audio/AudioManager';
 import { generateChainPackets, insertPacketAt } from '@/engine/core/chainOps';
 import { Chain } from '@/engine/entities/Chain';
 import { CpuCursor } from '@/engine/entities/CpuCursor';
@@ -206,6 +207,7 @@ export class GameEngine {
       this.projectiles.push(new Projectile(this.cursor.position, angle, type));
     }
     this.pendingFork = false;
+    audioManager.play('shoot');
     this.events.onNextPacketChange(this.cursor.nextType);
   }
 
@@ -276,9 +278,13 @@ export class GameEngine {
     if (resolution) {
       this.score += resolution.score;
       this.events.onScoreChange(this.score);
+      audioManager.play('match');
       const combo = comboLabel(resolution.explosions);
       if (combo) {
         this.events.onComboChange(combo);
+        audioManager.play(
+          `combo-${Math.min(combo.multiplier, 4)}` as 'combo-2' | 'combo-3' | 'combo-4',
+        );
       }
       for (const removed of resolution.removed) {
         if (removed.isPowerUp && removed.powerUpType) {
@@ -296,6 +302,7 @@ export class GameEngine {
     const levelScore = this.score - this.levelStartScore;
     this.score += LEVEL_CLEAR_BONUS;
     this.events.onScoreChange(this.score);
+    audioManager.play('level-complete');
     if (this.level >= TOTAL_LEVELS) {
       this.phase = 'gameWon';
       this.events.onGameWon(this.score, this.level);
@@ -325,6 +332,7 @@ export class GameEngine {
         rollbackChain(this.chain.packets, ROLLBACK_DISTANCE);
         break;
     }
+    audioManager.play('powerup');
     this.events.onPowerUp(type);
   }
 
@@ -339,6 +347,7 @@ export class GameEngine {
 
   private endGame(): void {
     this.phase = 'gameOver';
+    audioManager.play('game-over');
     this.events.onGameOver(this.score, this.level);
   }
 
