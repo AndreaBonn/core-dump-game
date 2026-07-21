@@ -11,13 +11,7 @@ export interface DataPacket {
   powerUpType: PowerUpType | null;
 }
 
-export type GamePhase =
-  | 'idle'
-  | 'playing'
-  | 'paused'
-  | 'levelComplete'
-  | 'gameOver'
-  | 'gameWon';
+export type GamePhase = 'idle' | 'playing' | 'paused' | 'levelComplete' | 'gameOver' | 'gameWon';
 
 export interface ComboLabel {
   multiplier: number;

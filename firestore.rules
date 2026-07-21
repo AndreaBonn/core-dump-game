@@ -18,7 +18,8 @@ service cloud.firestore {
         && request.resource.data.score < 1000000
         && request.resource.data.levelReached is int
         && request.resource.data.levelReached >= 1
-        && request.resource.data.levelReached <= 100;
+        && request.resource.data.levelReached <= 100
+        && request.resource.data.timestamp == request.time;
 
       allow update, delete: if false;
     }

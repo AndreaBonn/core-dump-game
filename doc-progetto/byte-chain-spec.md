@@ -18,20 +18,20 @@
 
 ## 2. Stack tecnologico
 
-| Layer | Tecnologia |
-|---|---|
-| Frontend framework | React 18 + TypeScript |
-| Build tool | Vite |
-| Styling | Tailwind CSS |
-| Rendering di gioco | HTML5 Canvas 2D (via `<canvas>` nativo, no PixiJS — il gioco è abbastanza semplice da non richiedere una libreria di rendering dedicata) |
-| State management globale (menu, auth, UI) | Zustand |
-| State del gioco (loop, entità) | Gestito internamente al game engine (classe/hook dedicato), NON tramite Zustand/React state per evitare re-render ad ogni frame |
-| Backend | Firebase (Spark free tier) |
-| Autenticazione | Firebase Auth (Anonymous Auth di default, opzionale login Google per persistenza cross-device) |
-| Database | Firestore |
-| Hosting | Firebase Hosting |
-| PWA | Vite PWA plugin (`vite-plugin-pwa`), service worker con precaching |
-| Audio | Web Audio API (o semplice `<audio>` tag per suoni brevi, vedi sezione 9) |
+| Layer                                     | Tecnologia                                                                                                                               |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend framework                        | React 18 + TypeScript                                                                                                                    |
+| Build tool                                | Vite                                                                                                                                     |
+| Styling                                   | Tailwind CSS                                                                                                                             |
+| Rendering di gioco                        | HTML5 Canvas 2D (via `<canvas>` nativo, no PixiJS — il gioco è abbastanza semplice da non richiedere una libreria di rendering dedicata) |
+| State management globale (menu, auth, UI) | Zustand                                                                                                                                  |
+| State del gioco (loop, entità)            | Gestito internamente al game engine (classe/hook dedicato), NON tramite Zustand/React state per evitare re-render ad ogni frame          |
+| Backend                                   | Firebase (Spark free tier)                                                                                                               |
+| Autenticazione                            | Firebase Auth (Anonymous Auth di default, opzionale login Google per persistenza cross-device)                                           |
+| Database                                  | Firestore                                                                                                                                |
+| Hosting                                   | Firebase Hosting                                                                                                                         |
+| PWA                                       | Vite PWA plugin (`vite-plugin-pwa`), service worker con precaching                                                                       |
+| Audio                                     | Web Audio API (o semplice `<audio>` tag per suoni brevi, vedi sezione 9)                                                                 |
 
 ---
 
@@ -73,12 +73,12 @@ Questa sezione descrive la meccanica generica del genere, che deve essere implem
 
 Implementare almeno questi 4 power-up, che appaiono come pacchetti dati speciali (con icona distintiva) inseriti occasionalmente nella catena:
 
-| Power-up | Nome in-game | Effetto |
-|---|---|---|
-| Rallentamento catena | `sleep()` | Rallenta la velocità di avanzamento della catena per 5 secondi |
-| Sparo multiplo | `fork()` | Il prossimo sparo del giocatore duplica il pacchetto in 3 direzioni ravvicinate |
-| Rimozione colore | `garbage collect` | Rimuove tutti i pacchetti di un colore casuale attualmente in catena |
-| Retrocessione catena | `rollback()` | La catena arretra di un tratto fisso lungo il percorso |
+| Power-up             | Nome in-game      | Effetto                                                                         |
+| -------------------- | ----------------- | ------------------------------------------------------------------------------- |
+| Rallentamento catena | `sleep()`         | Rallenta la velocità di avanzamento della catena per 5 secondi                  |
+| Sparo multiplo       | `fork()`          | Il prossimo sparo del giocatore duplica il pacchetto in 3 direzioni ravvicinate |
+| Rimozione colore     | `garbage collect` | Rimuove tutti i pacchetti di un colore casuale attualmente in catena            |
+| Retrocessione catena | `rollback()`      | La catena arretra di un tratto fisso lungo il percorso                          |
 
 I power-up appaiono con probabilità configurabile (default: 5% di possibilità per ogni pacchetto generato nella catena) e sono attivati automaticamente quando il pacchetto power-up viene colpito da un match (non serve una logica di "raccolta" separata).
 
@@ -102,15 +102,15 @@ I power-up appaiono con probabilità configurabile (default: 5% di possibilità 
 
 ### 5.2 Tipi di pacchetto dati e colori (naming tematico)
 
-| Tipo/colore | Colore hex | Nome in-game |
-|---|---|---|
-| Rosso | `#ff5555` | `ERROR` |
-| Verde | `#50fa7b` | `SUCCESS` |
-| Blu | `#8be9fd` | `INFO` |
-| Giallo | `#f1fa8c` | `WARNING` |
-| Viola | `#bd93f9` | `DEBUG` |
-| Arancione | `#ffb86c` | `TRACE` |
-| Rosa (solo livelli avanzati) | `#ff79c9` | `FATAL` |
+| Tipo/colore                  | Colore hex | Nome in-game |
+| ---------------------------- | ---------- | ------------ |
+| Rosso                        | `#ff5555`  | `ERROR`      |
+| Verde                        | `#50fa7b`  | `SUCCESS`    |
+| Blu                          | `#8be9fd`  | `INFO`       |
+| Giallo                       | `#f1fa8c`  | `WARNING`    |
+| Viola                        | `#bd93f9`  | `DEBUG`      |
+| Arancione                    | `#ffb86c`  | `TRACE`      |
+| Rosa (solo livelli avanzati) | `#ff79c9`  | `FATAL`      |
 
 Nota: questi nomi/colori sono ispirati ai livelli di log standard (info, warning, error, debug) — scelta intenzionale per rinforzare il tema "informatico" in modo riconoscibile senza scimmiottare palette di prodotti/brand esistenti.
 
@@ -239,14 +239,14 @@ service cloud.firestore {
 
 Tutti gli effetti sonori devono essere brevi (< 1 secondo) e in stile 8-bit/retro/synth, coerenti col tema:
 
-| Evento | Suono |
-|---|---|
-| Sparo pacchetto | Beep corto acuto |
-| Match/esplosione base | Suono tipo "pop" digitale/glitch breve |
-| Combo (x2+) | Suono ascendente più intenso per ogni livello di combo |
-| Power-up attivato | Suono distintivo per tipo (es. `sleep()` → suono "rallentato" con pitch-down) |
-| Game over | Suono discendente tipo "crash"/errore di sistema |
-| Livello completato | Breve jingle ascendente positivo |
+| Evento                | Suono                                                                         |
+| --------------------- | ----------------------------------------------------------------------------- |
+| Sparo pacchetto       | Beep corto acuto                                                              |
+| Match/esplosione base | Suono tipo "pop" digitale/glitch breve                                        |
+| Combo (x2+)           | Suono ascendente più intenso per ogni livello di combo                        |
+| Power-up attivato     | Suono distintivo per tipo (es. `sleep()` → suono "rallentato" con pitch-down) |
+| Game over             | Suono discendente tipo "crash"/errore di sistema                              |
+| Livello completato    | Breve jingle ascendente positivo                                              |
 
 Implementazione: `AudioManager.ts` centralizza il caricamento e la riproduzione, con un semplice sistema di pool per evitare latenza alla riproduzione ripetuta. Includere un toggle mute/unmute in Settings, persistito in `localStorage`.
 

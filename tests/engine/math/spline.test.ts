@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  pointAtDistance,
-  sampleCatmullRom,
-  tangentAtDistance,
-} from '@/engine/math/spline';
+import { pointAtDistance, sampleCatmullRom, tangentAtDistance } from '@/engine/math/spline';
 import { vec2 } from '@/engine/math/vec2';
 
 describe('sampleCatmullRom', () => {

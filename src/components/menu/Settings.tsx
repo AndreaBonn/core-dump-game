@@ -24,7 +24,10 @@ export function Settings() {
       </div>
 
       <div className="rounded border border-terminal-border bg-terminal-panel p-4">
-        <label htmlFor="settings-nickname" className="mb-2 block font-mono text-sm text-terminal-text">
+        <label
+          htmlFor="settings-nickname"
+          className="mb-2 block font-mono text-sm text-terminal-text"
+        >
           Nickname
         </label>
         <input

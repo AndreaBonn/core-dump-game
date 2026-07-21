@@ -14,7 +14,11 @@ export class Projectile {
   position: Vec2;
   readonly velocity: Vec2;
 
-  constructor(origin: Vec2, angle: number, readonly type: PacketType) {
+  constructor(
+    origin: Vec2,
+    angle: number,
+    readonly type: PacketType,
+  ) {
     this.id = nextProjectileId++;
     this.position = origin;
     this.velocity = vec2(Math.cos(angle) * PROJECTILE_SPEED, Math.sin(angle) * PROJECTILE_SPEED);

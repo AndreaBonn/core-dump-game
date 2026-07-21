@@ -49,11 +49,7 @@ export async function fetchTopScores(max = TOP_LIMIT): Promise<ScoreEntry[]> {
     return [];
   }
   const { collection, getDocs, limit, orderBy, query } = await import('firebase/firestore');
-  const topQuery = query(
-    collection(firebase.db, COLLECTION),
-    orderBy('score', 'desc'),
-    limit(max),
-  );
+  const topQuery = query(collection(firebase.db, COLLECTION), orderBy('score', 'desc'), limit(max));
   const snapshot = await getDocs(topQuery);
   return snapshot.docs.map(mapDoc);
 }

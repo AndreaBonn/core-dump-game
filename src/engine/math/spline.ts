@@ -35,10 +35,7 @@ function catmullRom(p0: Vec2, p1: Vec2, p2: Vec2, p3: Vec2, t: number): Vec2 {
  * are duplicated as phantom control points so the curve passes through the
  * first and last waypoint. `samplesPerSegment` controls smoothness.
  */
-export function sampleCatmullRom(
-  waypoints: readonly Vec2[],
-  samplesPerSegment = 24,
-): SampledCurve {
+export function sampleCatmullRom(waypoints: readonly Vec2[], samplesPerSegment = 24): SampledCurve {
   if (waypoints.length < 2) {
     throw new Error('A path needs at least two waypoints');
   }

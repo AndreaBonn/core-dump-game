@@ -8,6 +8,7 @@ export function comboLabel(explosions: number): ComboLabel | null {
   if (explosions < 2) {
     return null;
   }
-  const text = explosions === 2 ? 'SEGFAULT!' : explosions === 3 ? 'STACK OVERFLOW!' : 'KERNEL PANIC!!';
+  const text =
+    explosions === 2 ? 'SEGFAULT!' : explosions === 3 ? 'STACK OVERFLOW!' : 'KERNEL PANIC!!';
   return { multiplier: explosions, text };
 }
