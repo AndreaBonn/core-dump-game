@@ -38,3 +38,19 @@ export function compactBehind(packets: DataPacket[], fromIndex: number): DataPac
   }
   return packets;
 }
+
+/**
+ * Splice `packet` into the chain at array `position`, then re-space so it sits
+ * one spacing behind its front neighbour, pushing the trailing packets back to
+ * make room. The chain front (higher indices) stays anchored. Mutates in place.
+ */
+export function insertPacketAt(packets: DataPacket[], position: number, packet: DataPacket): void {
+  packets.splice(position, 0, packet);
+  const frontIndex = position + 1;
+  if (frontIndex < packets.length) {
+    compactBehind(packets, frontIndex);
+  } else {
+    const behind = packets[position - 1];
+    packet.distance = behind ? behind.distance + PACKET_SPACING : 0;
+  }
+}

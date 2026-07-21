@@ -1,6 +1,8 @@
-import { PACKET_RADIUS, VOID_RADIUS } from '@/config/constants';
+import { CURSOR_RADIUS, PACKET_RADIUS, VOID_RADIUS } from '@/config/constants';
 import { colorForType, labelForType } from '@/config/packetTypes';
+import type { CpuCursor } from '@/engine/entities/CpuCursor';
 import type { Path } from '@/engine/entities/Path';
+import type { Projectile } from '@/engine/entities/Projectile';
 import type { Vec2 } from '@/engine/math/vec2';
 import type { DataPacket } from '@/types/game.types';
 
@@ -8,11 +10,15 @@ const BACKGROUND = '#0a0e14';
 const TRACE_OUTER = '#16351f';
 const TRACE_INNER = '#2fb344';
 const VOID_RING = '#ff5555';
+const CURSOR_BODY = '#1e2a38';
+const CURSOR_PIN = '#2fb344';
 
 export interface RenderScene {
   path: Path;
   packets: readonly DataPacket[];
   voidPosition: Vec2;
+  cursor: CpuCursor;
+  projectiles: readonly Projectile[];
 }
 
 export class RenderSystem {
@@ -31,6 +37,36 @@ export class RenderSystem {
       }
       this.drawPacket(ctx, packet, scene.path.pointAt(packet.distance));
     }
+    for (const projectile of scene.projectiles) {
+      this.roundedSquare(ctx, projectile.position, PACKET_RADIUS, colorForType(projectile.type));
+    }
+    this.drawCursor(ctx, scene.cursor);
+  }
+
+  private drawCursor(ctx: CanvasRenderingContext2D, cursor: CpuCursor): void {
+    const { position, angle } = cursor;
+
+    ctx.strokeStyle = 'rgba(47, 179, 68, 0.35)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 8]);
+    ctx.beginPath();
+    ctx.moveTo(position.x, position.y);
+    ctx.lineTo(position.x + Math.cos(angle) * 90, position.y + Math.sin(angle) * 90);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.save();
+    ctx.translate(position.x, position.y);
+    ctx.rotate(angle);
+    ctx.fillStyle = CURSOR_PIN;
+    const pin = CURSOR_RADIUS * 0.9;
+    for (const offset of [-0.5, 0, 0.5]) {
+      ctx.fillRect(pin, offset * CURSOR_RADIUS - 3, 8, 6);
+    }
+    ctx.restore();
+
+    this.roundedSquare(ctx, position, CURSOR_RADIUS, CURSOR_BODY);
+    this.roundedSquare(ctx, position, PACKET_RADIUS * 0.7, colorForType(cursor.currentType));
   }
 
   private clear(ctx: CanvasRenderingContext2D): void {
