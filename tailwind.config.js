@@ -10,7 +10,7 @@ export default {
           border: '#1e2a38',
           trace: '#2fb344',
           text: '#c8d3e0',
-          muted: '#5a6b80',
+          muted: '#8593a8',
           accent: '#39ff14',
         },
         packet: {
