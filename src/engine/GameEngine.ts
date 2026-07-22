@@ -22,6 +22,7 @@ import { createRng, type Rng } from '@/engine/math/rng';
 import { vec2, type Vec2 } from '@/engine/math/vec2';
 import { presentTypes, removeAllOfType, rollbackChain } from '@/engine/systems/PowerUpSystem';
 import { applyShot } from '@/engine/systems/ShotSystem';
+import { predictLanding } from '@/engine/systems/trajectory';
 import { InputSystem } from '@/engine/systems/InputSystem';
 import { RenderSystem } from '@/engine/systems/RenderSystem';
 import { VisualFx } from '@/engine/systems/VisualFx';
@@ -351,11 +352,22 @@ export class GameEngine {
   private drawFrame(dt: number): void {
     const { scale, offsetX, offsetY } = this.viewport;
     if (this.phase === 'idle') {
-      this.ctx.setTransform(scale * this.dpr, 0, 0, scale * this.dpr, offsetX * this.dpr, offsetY * this.dpr);
+      this.ctx.setTransform(
+        scale * this.dpr,
+        0,
+        0,
+        scale * this.dpr,
+        offsetX * this.dpr,
+        offsetY * this.dpr,
+      );
       return;
     }
     this.fx.update(dt);
     this.fx.syncChain(this.chain.packets, dt);
+    const trajectory =
+      this.phase === 'playing'
+        ? predictLanding(this.cursor.position, this.cursor.angle, this.chain.packets, this.path)
+        : null;
     const shake = this.fx.shakeOffset();
     this.ctx.setTransform(
       scale * this.dpr,
@@ -372,6 +384,7 @@ export class GameEngine {
       cursor: this.cursor,
       projectiles: this.projectiles,
       fx: this.fx,
+      trajectory,
     });
   }
 }
