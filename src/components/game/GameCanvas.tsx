@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { GameEngine } from '@/engine/GameEngine';
 import { audioManager } from '@/engine/audio/AudioManager';
+import { runConfigForMode } from '@/engine/core/runController';
+import { useGameStore } from '@/store/useGameStore';
 import type { EngineEvents } from '@/types/game.types';
 
 interface GameCanvasProps {
@@ -50,7 +52,7 @@ export function GameCanvas({ events, onReady }: GameCanvasProps) {
     applyMotion();
     motionQuery?.addEventListener('change', applyMotion);
 
-    engine.startRun();
+    engine.startRun(runConfigForMode(useGameStore.getState().mode));
     engine.start();
     onReadyRef.current(engine);
 

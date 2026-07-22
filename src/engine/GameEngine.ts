@@ -7,33 +7,28 @@ import {
   PACKET_RADIUS,
   VOID_RADIUS,
 } from '@/config/constants';
-import { getLevel, TOTAL_LEVELS, type LevelConfig } from '@/config/levels';
+import { type LevelConfig } from '@/config/levels';
 import { colorForType, typesForCount } from '@/config/packetTypes';
 import { BOARD_CENTER } from '@/config/paths';
 import { FORK_SPREAD, ROLLBACK_DISTANCE, SLEEP_DURATION, SLEEP_FACTOR } from '@/config/powerUps';
 import { audioManager } from '@/engine/audio/AudioManager';
 import { generateChainPackets } from '@/engine/core/chainOps';
+import { campaignConfig, type RunConfig } from '@/engine/core/runController';
 import { Chain } from '@/engine/entities/Chain';
 import { CpuCursor } from '@/engine/entities/CpuCursor';
 import { Path } from '@/engine/entities/Path';
 import { Projectile } from '@/engine/entities/Projectile';
 import { VoidHole } from '@/engine/entities/VoidHole';
 import { createRng, type Rng } from '@/engine/math/rng';
-import { vec2, type Vec2 } from '@/engine/math/vec2';
+import { type Vec2 } from '@/engine/math/vec2';
 import { presentTypes, removeAllOfType, rollbackChain } from '@/engine/systems/PowerUpSystem';
 import { applyShot } from '@/engine/systems/ShotSystem';
 import { predictLanding } from '@/engine/systems/trajectory';
 import { frontUrgency } from '@/engine/systems/urgency';
 import { InputSystem } from '@/engine/systems/InputSystem';
-import { RenderSystem } from '@/engine/systems/RenderSystem';
+import { EngineRenderer } from '@/engine/systems/EngineRenderer';
 import { VisualFx } from '@/engine/systems/VisualFx';
 import type { EngineEvents, GamePhase, PacketType, PowerUpType } from '@/types/game.types';
-
-interface Viewport {
-  scale: number;
-  offsetX: number;
-  offsetY: number;
-}
 
 const PROJECTILE_MARGIN = PACKET_RADIUS * 2;
 /** Arc-length before the void within which the chain front reads as "in danger". */
@@ -42,7 +37,7 @@ const URGENCY_THRESHOLD = VOID_RADIUS * 6;
 export class GameEngine {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly canvas: HTMLCanvasElement;
-  private readonly render: RenderSystem;
+  private readonly presenter: EngineRenderer;
   private readonly events: EngineEvents;
   private readonly input: InputSystem;
   private readonly fx = new VisualFx();
@@ -59,6 +54,7 @@ export class GameEngine {
   private sleepTimer = 0;
   private pendingFork = false;
 
+  private runConfig: RunConfig = campaignConfig();
   private level = 1;
   private score = 0;
   private levelStartScore = 0;
@@ -66,8 +62,6 @@ export class GameEngine {
   private rafId = 0;
   private lastTime = 0;
   private accumulator = 0;
-  private dpr = 1;
-  private viewport: Viewport = { scale: 1, offsetX: 0, offsetY: 0 };
 
   constructor(canvas: HTMLCanvasElement, events: EngineEvents) {
     const context = canvas.getContext('2d');
@@ -76,7 +70,7 @@ export class GameEngine {
     }
     this.canvas = canvas;
     this.ctx = context;
-    this.render = new RenderSystem(BOARD_WIDTH, BOARD_HEIGHT);
+    this.presenter = new EngineRenderer(BOARD_WIDTH, BOARD_HEIGHT);
     this.events = events;
     this.input = new InputSystem(
       canvas,
@@ -104,15 +98,23 @@ export class GameEngine {
     this.events.onNextPacketChange(this.cursor.nextType);
   }
 
-  /** Start a fresh run from level 1, resetting the accumulated score. */
-  startRun(): void {
+  /**
+   * Start a fresh run, resetting the accumulated score. The RunConfig selects
+   * the mode (campaign/endless/daily) via its level provider; defaults to the
+   * campaign so existing callers and tests keep the previous behaviour.
+   */
+  startRun(config: RunConfig = campaignConfig()): void {
+    this.runConfig = config;
     this.score = 0;
     this.events.onScoreChange(0);
-    this.startLevel(1);
+    this.startLevel(config.startIndex);
   }
 
   startLevel(level: number): void {
-    const config = getLevel(level);
+    const config = this.runConfig.levelProvider(level);
+    if (!config) {
+      return;
+    }
     this.level = level;
     this.levelStartScore = this.score;
     this.buildLevel(config);
@@ -123,7 +125,7 @@ export class GameEngine {
 
   /** Advance to the next level after a level-complete screen. */
   nextLevel(): void {
-    if (this.phase === 'levelComplete' && this.level < TOTAL_LEVELS) {
+    if (this.phase === 'levelComplete') {
       this.startLevel(this.level + 1);
     }
   }
@@ -190,22 +192,12 @@ export class GameEngine {
   }
 
   resize(cssWidth: number, cssHeight: number, devicePixelRatio: number): void {
-    this.dpr = devicePixelRatio;
-    this.canvas.width = Math.round(cssWidth * devicePixelRatio);
-    this.canvas.height = Math.round(cssHeight * devicePixelRatio);
-    const scale = Math.min(cssWidth / BOARD_WIDTH, cssHeight / BOARD_HEIGHT);
-    this.viewport = {
-      scale,
-      offsetX: (cssWidth - BOARD_WIDTH * scale) / 2,
-      offsetY: (cssHeight - BOARD_HEIGHT * scale) / 2,
-    };
+    this.presenter.configure(this.canvas, cssWidth, cssHeight, devicePixelRatio);
     this.drawFrame(0);
   }
 
   private screenToBoard(clientX: number, clientY: number): Vec2 {
-    const rect = this.canvas.getBoundingClientRect();
-    const { scale, offsetX, offsetY } = this.viewport;
-    return vec2((clientX - rect.left - offsetX) / scale, (clientY - rect.top - offsetY) / scale);
+    return this.presenter.screenToBoard(this.canvas, clientX, clientY);
   }
 
   private aim(point: Vec2): void {
@@ -318,7 +310,12 @@ export class GameEngine {
     this.events.onScoreChange(this.score);
     this.fx.addShake(6);
     audioManager.play('level-complete');
-    if (this.level >= TOTAL_LEVELS) {
+    // A run ends in victory only when the mode has a final level and we reached
+    // it; endless and daily runs have no final level, so they only end on game
+    // over.
+    const finalLevel = this.runConfig.finalLevel;
+    const isFinalLevel = finalLevel !== null && this.level >= finalLevel;
+    if (isFinalLevel) {
       this.phase = 'gameWon';
       this.events.onGameWon(this.score, this.level);
     } else {
@@ -369,16 +366,8 @@ export class GameEngine {
   }
 
   private drawFrame(dt: number): void {
-    const { scale, offsetX, offsetY } = this.viewport;
     if (this.phase === 'idle') {
-      this.ctx.setTransform(
-        scale * this.dpr,
-        0,
-        0,
-        scale * this.dpr,
-        offsetX * this.dpr,
-        offsetY * this.dpr,
-      );
+      this.presenter.applyIdleTransform(this.ctx);
       return;
     }
     this.fx.update(dt);
@@ -388,16 +377,7 @@ export class GameEngine {
         ? predictLanding(this.cursor.position, this.cursor.angle, this.chain.packets, this.path)
         : null;
     const urgency = frontUrgency(this.chain.frontDistance, this.path.length, URGENCY_THRESHOLD);
-    const shake = this.fx.shakeOffset();
-    this.ctx.setTransform(
-      scale * this.dpr,
-      0,
-      0,
-      scale * this.dpr,
-      (offsetX + shake.x) * this.dpr,
-      (offsetY + shake.y) * this.dpr,
-    );
-    this.render.render(this.ctx, {
+    this.presenter.draw(this.ctx, this.fx.shakeOffset(), {
       path: this.path,
       packets: this.chain.packets,
       voidPosition: this.voidHole.position,

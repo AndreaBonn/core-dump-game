@@ -71,6 +71,7 @@ export default defineConfig({
       include: ['src/engine/**/*.ts', 'src/config/**/*.ts', 'src/services/**/*.ts'],
       exclude: [
         'src/engine/systems/RenderSystem.ts',
+        'src/engine/systems/EngineRenderer.ts',
         'src/engine/systems/VisualFx.ts',
         'src/engine/systems/FxRenderer.ts',
         'src/engine/systems/GuideRenderer.ts',

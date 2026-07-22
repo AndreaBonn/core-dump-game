@@ -17,8 +17,14 @@ export function MainMenu() {
       </div>
 
       <nav className="flex w-full max-w-xs flex-col gap-3">
-        <Button className="w-full" onClick={startGame}>
-          Play
+        <Button className="w-full" onClick={() => startGame('campaign')}>
+          Play Campaign
+        </Button>
+        <Button variant="ghost" className="w-full" onClick={() => startGame('endless')}>
+          Endless
+        </Button>
+        <Button variant="ghost" className="w-full" onClick={() => startGame('daily')}>
+          Daily Challenge
         </Button>
         <Button variant="ghost" className="w-full" onClick={() => setScreen('leaderboard')}>
           Leaderboard

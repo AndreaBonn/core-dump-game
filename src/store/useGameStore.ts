@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { RunMode } from '@/engine/core/runController';
 import type { ComboLabel, PacketType } from '@/types/game.types';
 
 export type Screen = 'menu' | 'game' | 'leaderboard' | 'settings';
@@ -18,6 +19,7 @@ export interface GameResult {
 interface GameUIState {
   screen: Screen;
   status: GameStatus;
+  mode: RunMode;
   score: number;
   level: number;
   combo: ComboLabel | null;
@@ -27,7 +29,7 @@ interface GameUIState {
   gameResult: GameResult | null;
 
   setScreen: (screen: Screen) => void;
-  startGame: () => void;
+  startGame: (mode?: RunMode) => void;
   setScore: (score: number) => void;
   setLevel: (level: number) => void;
   setCombo: (combo: ComboLabel | null) => void;
@@ -42,6 +44,7 @@ interface GameUIState {
 
 const initialRun = {
   status: 'playing' as GameStatus,
+  mode: 'campaign' as RunMode,
   score: 0,
   level: 1,
   combo: null,
@@ -56,7 +59,7 @@ export const useGameStore = create<GameUIState>((set) => ({
   ...initialRun,
 
   setScreen: (screen) => set({ screen }),
-  startGame: () => set({ screen: 'game', ...initialRun }),
+  startGame: (mode = 'campaign') => set({ screen: 'game', ...initialRun, mode }),
   setScore: (score) => set({ score }),
   setLevel: (level) => set({ level }),
   setCombo: (combo) => set({ combo }),

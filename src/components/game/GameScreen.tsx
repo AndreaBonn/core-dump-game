@@ -6,6 +6,7 @@ import { LevelCompleteScreen } from '@/components/game/LevelCompleteScreen';
 import { PauseOverlay } from '@/components/game/PauseOverlay';
 import { POWER_UPS } from '@/config/powerUps';
 import type { GameEngine } from '@/engine/GameEngine';
+import { runConfigForMode } from '@/engine/core/runController';
 import { ensureSignedIn } from '@/services/authService';
 import { isLeaderboardAvailable, saveScore } from '@/services/leaderboardService';
 import { useGameStore } from '@/store/useGameStore';
@@ -73,9 +74,10 @@ export function GameScreen() {
   };
 
   const retry = () => {
+    const mode = useGameStore.getState().mode;
     setSaveStatus(isLeaderboardAvailable() ? 'idle' : 'unavailable');
-    useGameStore.getState().startGame();
-    engineRef.current?.startRun();
+    useGameStore.getState().startGame(mode);
+    engineRef.current?.startRun(runConfigForMode(mode));
   };
 
   const goToMenu = () => useGameStore.getState().setScreen('menu');
