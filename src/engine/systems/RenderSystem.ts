@@ -5,6 +5,7 @@ import type { CpuCursor } from '@/engine/entities/CpuCursor';
 import type { Path } from '@/engine/entities/Path';
 import type { Projectile } from '@/engine/entities/Projectile';
 import type { Vec2 } from '@/engine/math/vec2';
+import { FxRenderer } from '@/engine/systems/FxRenderer';
 import type { VisualFx } from '@/engine/systems/VisualFx';
 import type { DataPacket } from '@/types/game.types';
 
@@ -26,6 +27,8 @@ export interface RenderScene {
 }
 
 export class RenderSystem {
+  private readonly fxRenderer = new FxRenderer();
+
   constructor(
     private readonly width: number,
     private readonly height: number,
@@ -46,7 +49,7 @@ export class RenderSystem {
       this.drawProjectile(ctx, projectile);
     }
     this.drawCursor(ctx, scene.cursor, scene.fx.time);
-    this.drawFx(ctx, scene.fx);
+    this.fxRenderer.render(ctx, scene.fx);
   }
 
   private clear(ctx: CanvasRenderingContext2D): void {
@@ -128,12 +131,7 @@ export class RenderSystem {
     ctx.stroke();
   }
 
-  drawPacket(
-    ctx: CanvasRenderingContext2D,
-    packet: DataPacket,
-    position: Vec2,
-    scale = 1,
-  ): void {
+  drawPacket(ctx: CanvasRenderingContext2D, packet: DataPacket, position: Vec2, scale = 1): void {
     const color = colorForType(packet.type);
     const radius = PACKET_RADIUS * scale;
     this.roundedSquare(ctx, position, radius, color, true);
@@ -215,32 +213,6 @@ export class RenderSystem {
     ctx.shadowColor = colorForType(cursor.currentType);
     ctx.shadowBlur = 12;
     this.roundedSquare(ctx, position, PACKET_RADIUS * 0.7, colorForType(cursor.currentType), true);
-    ctx.restore();
-  }
-
-  private drawFx(ctx: CanvasRenderingContext2D, fx: VisualFx): void {
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    for (const p of fx.activeParticles) {
-      ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
-
-    ctx.save();
-    for (const r of fx.activeRipples) {
-      const t = r.age / r.duration;
-      const radius = r.fromRadius + (r.toRadius - r.fromRadius) * t;
-      ctx.globalAlpha = Math.max(0, 1 - t);
-      ctx.strokeStyle = r.color;
-      ctx.lineWidth = r.width;
-      ctx.beginPath();
-      ctx.arc(r.x, r.y, radius, 0, Math.PI * 2);
-      ctx.stroke();
-    }
     ctx.restore();
   }
 
