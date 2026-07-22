@@ -7,24 +7,21 @@ import {
   PACKET_RADIUS,
   VOID_RADIUS,
 } from '@/config/constants';
-import { comboLabel } from '@/config/combos';
 import { getLevel, TOTAL_LEVELS, type LevelConfig } from '@/config/levels';
 import { typesForCount } from '@/config/packetTypes';
 import { BOARD_CENTER } from '@/config/paths';
 import { FORK_SPREAD, ROLLBACK_DISTANCE, SLEEP_DURATION, SLEEP_FACTOR } from '@/config/powerUps';
 import { audioManager } from '@/engine/audio/AudioManager';
-import { generateChainPackets, insertPacketAt } from '@/engine/core/chainOps';
+import { generateChainPackets } from '@/engine/core/chainOps';
 import { Chain } from '@/engine/entities/Chain';
 import { CpuCursor } from '@/engine/entities/CpuCursor';
-import { createPacket } from '@/engine/entities/DataPacket';
 import { Path } from '@/engine/entities/Path';
 import { Projectile } from '@/engine/entities/Projectile';
 import { VoidHole } from '@/engine/entities/VoidHole';
 import { createRng, type Rng } from '@/engine/math/rng';
 import { vec2, type Vec2 } from '@/engine/math/vec2';
-import { findCollisionIndex, resolveInsertPosition } from '@/engine/systems/CollisionSystem';
-import { resolveMatches } from '@/engine/systems/MatchSystem';
 import { presentTypes, removeAllOfType, rollbackChain } from '@/engine/systems/PowerUpSystem';
+import { applyShot } from '@/engine/systems/ShotSystem';
 import { InputSystem } from '@/engine/systems/InputSystem';
 import { RenderSystem } from '@/engine/systems/RenderSystem';
 import type { EngineEvents, GamePhase, PacketType, PowerUpType } from '@/types/game.types';
@@ -261,40 +258,25 @@ export class GameEngine {
   }
 
   private tryInsert(projectile: Projectile): boolean {
-    const index = findCollisionIndex(this.chain.packets, this.path, projectile.position);
-    if (index < 0) {
+    const outcome = applyShot(this.chain.packets, this.path, projectile);
+    if (!outcome.hit) {
       return false;
     }
-    const position = resolveInsertPosition(
-      this.chain.packets,
-      this.path,
-      index,
-      projectile.position,
-    );
-    insertPacketAt(
-      this.chain.packets,
-      position,
-      createPacket({ type: projectile.type, distance: 0 }),
-    );
-    const resolution = resolveMatches(this.chain.packets, position);
-    if (resolution) {
-      this.score += resolution.score;
+    if (outcome.explosions > 0) {
+      this.score += outcome.score;
       this.events.onScoreChange(this.score);
       audioManager.play('match');
-      const combo = comboLabel(resolution.explosions);
-      if (combo) {
-        this.events.onComboChange(combo);
+      if (outcome.combo) {
+        this.events.onComboChange(outcome.combo);
         audioManager.play(
-          `combo-${Math.min(combo.multiplier, 4)}` as 'combo-2' | 'combo-3' | 'combo-4',
+          `combo-${Math.min(outcome.combo.multiplier, 4)}` as 'combo-2' | 'combo-3' | 'combo-4',
         );
       }
-      for (const removed of resolution.removed) {
-        if (removed.isPowerUp && removed.powerUpType) {
-          this.applyPowerUp(removed.powerUpType);
-        }
+      for (const powerUp of outcome.powerUps) {
+        this.applyPowerUp(powerUp);
       }
     }
-    if (this.chain.isEmpty) {
+    if (outcome.clearedChain) {
       this.completeLevel();
     }
     return true;
