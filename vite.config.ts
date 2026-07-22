@@ -73,6 +73,7 @@ export default defineConfig({
         'src/engine/systems/RenderSystem.ts',
         'src/engine/systems/VisualFx.ts',
         'src/engine/systems/FxRenderer.ts',
+        'src/engine/systems/GuideRenderer.ts',
       ],
     },
   },

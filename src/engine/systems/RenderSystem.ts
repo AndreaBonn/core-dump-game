@@ -6,6 +6,7 @@ import type { Path } from '@/engine/entities/Path';
 import type { Projectile } from '@/engine/entities/Projectile';
 import type { Vec2 } from '@/engine/math/vec2';
 import { FxRenderer } from '@/engine/systems/FxRenderer';
+import { GuideRenderer } from '@/engine/systems/GuideRenderer';
 import type { Landing } from '@/engine/systems/trajectory';
 import type { VisualFx } from '@/engine/systems/VisualFx';
 import type { DataPacket } from '@/types/game.types';
@@ -27,10 +28,13 @@ export interface RenderScene {
   fx: VisualFx;
   /** Predicted landing of the current shot, or null when not aiming. */
   trajectory: Landing | null;
+  /** Danger level of the chain front, 0..1, driving the head-of-chain warning. */
+  urgency: number;
 }
 
 export class RenderSystem {
   private readonly fxRenderer = new FxRenderer();
+  private readonly guides = new GuideRenderer();
 
   constructor(
     private readonly width: number,
@@ -42,7 +46,7 @@ export class RenderSystem {
     this.drawPath(ctx, scene.path);
     this.drawVoid(ctx, scene.voidPosition, scene.fx.time);
     if (scene.trajectory) {
-      this.drawTrajectory(ctx, scene.cursor.position, scene.trajectory, scene.fx.time);
+      this.guides.trajectory(ctx, scene.cursor.position, scene.trajectory, scene.fx.time);
     }
     for (const packet of scene.packets) {
       const distance = scene.fx.renderDistanceFor(packet);
@@ -50,6 +54,9 @@ export class RenderSystem {
         continue;
       }
       this.drawPacket(ctx, packet, scene.path.pointAt(distance), scene.fx.popScaleFor(packet.id));
+    }
+    if (scene.urgency > 0) {
+      this.guides.urgency(ctx, scene);
     }
     for (const projectile of scene.projectiles) {
       this.drawProjectile(ctx, projectile);
@@ -187,34 +194,6 @@ export class RenderSystem {
     ctx.shadowColor = color;
     ctx.shadowBlur = 14;
     this.roundedSquare(ctx, position, PACKET_RADIUS, color, true);
-    ctx.restore();
-  }
-
-  private drawTrajectory(
-    ctx: CanvasRenderingContext2D,
-    from: Vec2,
-    landing: Landing,
-    time: number,
-  ): void {
-    const color = landing.hit ? TRACE_GLOW : 'rgba(90, 107, 128, 0.55)';
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.setLineDash([2, 9]);
-    ctx.lineDashOffset = -time * 60;
-    ctx.beginPath();
-    ctx.moveTo(from.x, from.y);
-    ctx.lineTo(landing.point.x, landing.point.y);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    if (landing.hit) {
-      const pulse = PACKET_RADIUS * (0.7 + Math.sin(time * 6) * 0.12);
-      ctx.strokeStyle = TRACE_GLOW;
-      ctx.globalAlpha = 0.8;
-      ctx.beginPath();
-      ctx.arc(landing.point.x, landing.point.y, pulse, 0, Math.PI * 2);
-      ctx.stroke();
-    }
     ctx.restore();
   }
 

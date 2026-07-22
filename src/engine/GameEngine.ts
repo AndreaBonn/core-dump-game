@@ -23,6 +23,7 @@ import { vec2, type Vec2 } from '@/engine/math/vec2';
 import { presentTypes, removeAllOfType, rollbackChain } from '@/engine/systems/PowerUpSystem';
 import { applyShot } from '@/engine/systems/ShotSystem';
 import { predictLanding } from '@/engine/systems/trajectory';
+import { frontUrgency } from '@/engine/systems/urgency';
 import { InputSystem } from '@/engine/systems/InputSystem';
 import { RenderSystem } from '@/engine/systems/RenderSystem';
 import { VisualFx } from '@/engine/systems/VisualFx';
@@ -35,6 +36,8 @@ interface Viewport {
 }
 
 const PROJECTILE_MARGIN = PACKET_RADIUS * 2;
+/** Arc-length before the void within which the chain front reads as "in danger". */
+const URGENCY_THRESHOLD = VOID_RADIUS * 6;
 
 export class GameEngine {
   private readonly ctx: CanvasRenderingContext2D;
@@ -379,6 +382,7 @@ export class GameEngine {
       this.phase === 'playing'
         ? predictLanding(this.cursor.position, this.cursor.angle, this.chain.packets, this.path)
         : null;
+    const urgency = frontUrgency(this.chain.frontDistance, this.path.length, URGENCY_THRESHOLD);
     const shake = this.fx.shakeOffset();
     this.ctx.setTransform(
       scale * this.dpr,
@@ -396,6 +400,7 @@ export class GameEngine {
       projectiles: this.projectiles,
       fx: this.fx,
       trajectory,
+      urgency,
     });
   }
 }
