@@ -3,6 +3,7 @@ import type { Vec2 } from '@/engine/math/vec2';
 export interface InputHandlers {
   onAim: (boardPoint: Vec2) => void;
   onFire: (boardPoint: Vec2) => void;
+  onSwap: () => void;
 }
 
 /**
@@ -29,12 +30,19 @@ export class InputSystem {
   private attach(): void {
     this.canvas.addEventListener('pointermove', this.onPointerMove);
     this.canvas.addEventListener('pointerdown', this.onPointerDown);
+    this.canvas.addEventListener('contextmenu', this.onContextMenu);
   }
 
   destroy(): void {
     this.canvas.removeEventListener('pointermove', this.onPointerMove);
     this.canvas.removeEventListener('pointerdown', this.onPointerDown);
+    this.canvas.removeEventListener('contextmenu', this.onContextMenu);
   }
+
+  private onContextMenu = (event: Event): void => {
+    // Right-click is the swap gesture, so suppress the browser menu.
+    event.preventDefault();
+  };
 
   private onPointerMove = (event: PointerEvent): void => {
     if (event.pointerType === 'touch') {
@@ -44,6 +52,10 @@ export class InputSystem {
   };
 
   private onPointerDown = (event: PointerEvent): void => {
+    if (event.button === 2) {
+      this.handlers.onSwap();
+      return;
+    }
     if (event.button !== 0) {
       return;
     }

@@ -34,6 +34,13 @@ describe('CpuCursor', () => {
     cursor.aimAt(vec2(0, 10));
     expect(cursor.angle).toBeCloseTo(Math.PI / 2);
   });
+
+  it('swaps the ready packet with the preview', () => {
+    const cursor = new CpuCursor(vec2(0, 0), 'ERROR', 'SUCCESS');
+    cursor.swap();
+    expect(cursor.currentType).toBe('SUCCESS');
+    expect(cursor.nextType).toBe('ERROR');
+  });
 });
 
 describe('findCollisionIndex', () => {

@@ -77,7 +77,7 @@ export class GameEngine {
     this.events = events;
     this.input = new InputSystem(
       canvas,
-      { onAim: (point) => this.aim(point), onFire: () => this.fire() },
+      { onAim: (point) => this.aim(point), onFire: () => this.fire(), onSwap: () => this.swap() },
       (clientX, clientY) => this.screenToBoard(clientX, clientY),
     );
     window.addEventListener('keydown', this.onKeyDown);
@@ -88,7 +88,18 @@ export class GameEngine {
       event.preventDefault();
       this.fire();
     }
+    if (event.code === 'KeyS') {
+      this.swap();
+    }
   };
+
+  private swap(): void {
+    if (this.phase !== 'playing') {
+      return;
+    }
+    this.cursor.swap();
+    this.events.onNextPacketChange(this.cursor.nextType);
+  }
 
   /** Start a fresh run from level 1, resetting the accumulated score. */
   startRun(): void {

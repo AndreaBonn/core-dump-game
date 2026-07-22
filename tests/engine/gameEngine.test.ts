@@ -231,6 +231,31 @@ describe('GameEngine', () => {
       expect(internals.projectiles).toHaveLength(3);
       expect(internals.pendingFork).toBe(false);
     });
+
+    it('swaps the ready and preview packets on the S key while playing', () => {
+      const events = spyEvents();
+      const { engine, internals } = makeEngine(events);
+      engine.startLevel(1);
+      const readyBefore = internals.cursor.currentType;
+      const nextBefore = internals.cursor.nextType;
+
+      window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyS' }));
+
+      expect(internals.cursor.currentType).toBe(nextBefore);
+      expect(internals.cursor.nextType).toBe(readyBefore);
+      expect(events.onNextPacketChange).toHaveBeenLastCalledWith(readyBefore);
+    });
+
+    it('does not swap when the game is not playing', () => {
+      const { engine, internals } = makeEngine(spyEvents());
+      engine.startLevel(1);
+      internals.phase = 'paused';
+      const readyBefore = internals.cursor.currentType;
+
+      window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyS' }));
+
+      expect(internals.cursor.currentType).toBe(readyBefore);
+    });
   });
 
   describe('coordinate mapping', () => {

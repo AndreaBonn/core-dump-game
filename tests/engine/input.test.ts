@@ -15,13 +15,17 @@ function dispatch(
 
 describe('InputSystem', () => {
   let canvas: HTMLCanvasElement;
-  let handlers: { onAim: ReturnType<typeof vi.fn>; onFire: ReturnType<typeof vi.fn> };
+  let handlers: {
+    onAim: ReturnType<typeof vi.fn>;
+    onFire: ReturnType<typeof vi.fn>;
+    onSwap: ReturnType<typeof vi.fn>;
+  };
   let input: InputSystem;
   const toBoard = (clientX: number, clientY: number): Vec2 => vec2(clientX, clientY);
 
   beforeEach(() => {
     canvas = document.createElement('canvas');
-    handlers = { onAim: vi.fn(), onFire: vi.fn() };
+    handlers = { onAim: vi.fn(), onFire: vi.fn(), onSwap: vi.fn() };
     input = new InputSystem(canvas, handlers as unknown as InputHandlers, toBoard);
   });
 
@@ -42,10 +46,24 @@ describe('InputSystem', () => {
     expect(handlers.onFire).toHaveBeenCalledWith(vec2(10, 20));
   });
 
-  it('ignores non-left-button presses', () => {
+  it('swaps on a right-button press without aiming or firing', () => {
     dispatch(canvas, 'pointerdown', { button: 2, clientX: 10, clientY: 20 });
+    expect(handlers.onSwap).toHaveBeenCalledTimes(1);
     expect(handlers.onAim).not.toHaveBeenCalled();
     expect(handlers.onFire).not.toHaveBeenCalled();
+  });
+
+  it('ignores middle-button presses', () => {
+    dispatch(canvas, 'pointerdown', { button: 1, clientX: 10, clientY: 20 });
+    expect(handlers.onAim).not.toHaveBeenCalled();
+    expect(handlers.onFire).not.toHaveBeenCalled();
+    expect(handlers.onSwap).not.toHaveBeenCalled();
+  });
+
+  it('suppresses the browser context menu on the canvas', () => {
+    const event = new Event('contextmenu', { cancelable: true });
+    canvas.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
   });
 
   it('stops responding after destroy', () => {

@@ -28,4 +28,11 @@ export class CpuCursor {
     this.nextType = incoming;
     return fired;
   }
+
+  /** Swap the ready packet with the preview (the classic marble-shooter swap). */
+  swap(): void {
+    const previousCurrent = this.currentType;
+    this.currentType = this.nextType;
+    this.nextType = previousCurrent;
+  }
 }
