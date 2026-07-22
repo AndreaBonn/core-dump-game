@@ -78,6 +78,14 @@ describe('AudioManager', () => {
     expect(ctx.resume).toHaveBeenCalled();
   });
 
+  it('does not throw when resuming the context rejects', () => {
+    const ctx = createFakeContext('suspended');
+    ctx.resume.mockReturnValue(Promise.reject(new Error('context closed')));
+    const manager = new AudioManager(() => ctx as unknown as AudioContext);
+
+    expect(() => manager.play('shoot')).not.toThrow();
+  });
+
   it('degrades silently when the audio context cannot be created', () => {
     const manager = new AudioManager(() => {
       throw new Error('no Web Audio');

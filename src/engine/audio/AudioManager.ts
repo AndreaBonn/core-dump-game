@@ -53,7 +53,9 @@ export class AudioManager {
       }
     }
     if (this.ctx.state === 'suspended') {
-      void this.ctx.resume();
+      // Resume can reject if the context was closed mid-flight (e.g. a reload
+      // race); the sound is simply dropped rather than surfacing as an error.
+      void this.ctx.resume().catch(() => {});
     }
     return this.ctx;
   }
