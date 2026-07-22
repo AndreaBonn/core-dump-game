@@ -41,6 +41,15 @@ export function GameCanvas({ events, onReady }: GameCanvasProps) {
       engine.resize(rect.width, rect.height, window.devicePixelRatio || 1);
     };
     applySize();
+
+    const motionQuery =
+      typeof window.matchMedia === 'function'
+        ? window.matchMedia('(prefers-reduced-motion: reduce)')
+        : null;
+    const applyMotion = () => engine.setReducedMotion(motionQuery?.matches ?? false);
+    applyMotion();
+    motionQuery?.addEventListener('change', applyMotion);
+
     engine.startRun();
     engine.start();
     onReadyRef.current(engine);
@@ -50,13 +59,19 @@ export function GameCanvas({ events, onReady }: GameCanvasProps) {
 
     return () => {
       observer.disconnect();
+      motionQuery?.removeEventListener('change', applyMotion);
       engine.destroy();
     };
   }, []);
 
   return (
     <div ref={containerRef} className="h-full w-full touch-none">
-      <canvas ref={canvasRef} className="block h-full w-full" />
+      <canvas
+        ref={canvasRef}
+        className="block h-full w-full"
+        aria-label="Core Dump game board. Aim with the pointer, click or press space to fire, right-click or press S to swap the ready packet."
+        role="img"
+      />
     </div>
   );
 }

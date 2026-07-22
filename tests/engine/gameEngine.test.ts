@@ -36,6 +36,7 @@ interface EngineInternals {
   applyPowerUp: (type: PowerUpType) => void;
   screenToBoard: (x: number, y: number) => { x: number; y: number };
   loop: (now: number) => void;
+  fx: { addShake: (m: number) => void; shakeOffset: () => { x: number; y: number } };
 }
 
 function spyEvents(): EngineEvents & Record<keyof EngineEvents, ReturnType<typeof vi.fn>> {
@@ -459,6 +460,27 @@ describe('GameEngine', () => {
       internals.loop(100);
 
       expect(internals.chain.frontDistance).toBe(before);
+    });
+  });
+
+  describe('reduced motion', () => {
+    it('suppresses screen shake once reduced motion is enabled', () => {
+      const { engine, internals } = makeEngine(spyEvents());
+      engine.setReducedMotion(true);
+
+      internals.fx.addShake(20);
+
+      expect(internals.fx.shakeOffset()).toEqual({ x: 0, y: 0 });
+    });
+
+    it('shakes normally when reduced motion is off', () => {
+      const { engine, internals } = makeEngine(spyEvents());
+      engine.setReducedMotion(false);
+      internals.fx.addShake(20);
+      // A live shake produces a non-zero offset once time advances.
+      (internals as unknown as { fx: { update: (dt: number) => void } }).fx.update(0.016);
+      const offset = internals.fx.shakeOffset();
+      expect(Math.abs(offset.x) + Math.abs(offset.y)).toBeGreaterThan(0);
     });
   });
 

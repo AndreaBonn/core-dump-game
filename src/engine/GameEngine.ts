@@ -184,6 +184,11 @@ export class GameEngine {
     }
   }
 
+  /** Toggle reduced-motion, suppressing screen shake and particle bursts. */
+  setReducedMotion(reduced: boolean): void {
+    this.fx.setReducedMotion(reduced);
+  }
+
   resize(cssWidth: number, cssHeight: number, devicePixelRatio: number): void {
     this.dpr = devicePixelRatio;
     this.canvas.width = Math.round(cssWidth * devicePixelRatio);

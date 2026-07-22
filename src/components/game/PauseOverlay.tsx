@@ -9,7 +9,7 @@ interface PauseOverlayProps {
 
 export function PauseOverlay({ onResume, onRestart, onMenu }: PauseOverlayProps) {
   return (
-    <Modal title="PAUSED">
+    <Modal title="PAUSED" onClose={onResume}>
       <div className="flex flex-col gap-2">
         <Button className="w-full" onClick={onResume}>
           Resume

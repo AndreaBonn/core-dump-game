@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { GameCanvas } from '@/components/game/GameCanvas';
 import { HUD } from '@/components/game/HUD';
 import { GameOverScreen } from '@/components/game/GameOverScreen';
@@ -43,6 +43,19 @@ export function GameScreen() {
     engineRef.current?.pause();
     useGameStore.getState().setStatus('paused');
   };
+
+  // Pause when the tab is hidden so the chain does not advance unattended.
+  // No auto-resume: the player consciously resumes from the pause overlay.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.hidden && useGameStore.getState().status === 'playing') {
+        engineRef.current?.pause();
+        useGameStore.getState().setStatus('paused');
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
 
   const resume = () => {
     engineRef.current?.resume();

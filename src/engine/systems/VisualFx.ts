@@ -46,7 +46,13 @@ export class VisualFx {
   private readonly pops = new Map<number, number>();
   private readonly renderDist = new Map<number, number>();
   private shakeMag = 0;
+  private reducedMotion = false;
   time = 0;
+
+  /** When on, suppress screen shake and particle bursts (prefers-reduced-motion). */
+  setReducedMotion(reduced: boolean): void {
+    this.reducedMotion = reduced;
+  }
 
   update(dt: number): void {
     this.time += dt;
@@ -151,11 +157,17 @@ export class VisualFx {
   }
 
   addShake(magnitude: number): void {
+    if (this.reducedMotion) {
+      return;
+    }
     this.shakeMag = Math.min(MAX_SHAKE, Math.max(this.shakeMag, magnitude));
   }
 
   /** A small ring plus a few sparks where a projectile lodges into the chain. */
   spawnImpact(point: Vec2, color: string): void {
+    if (this.reducedMotion) {
+      return;
+    }
     this.ripples.push({
       x: point.x,
       y: point.y,
@@ -171,6 +183,9 @@ export class VisualFx {
 
   /** A dense colored burst and a shockwave where a matched packet detonates. */
   spawnExplosion(point: Vec2, color: string): void {
+    if (this.reducedMotion) {
+      return;
+    }
     this.ripples.push({
       x: point.x,
       y: point.y,
