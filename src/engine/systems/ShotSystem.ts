@@ -1,4 +1,5 @@
 import { comboLabel } from '@/config/combos';
+import { colorForType } from '@/config/packetTypes';
 import { insertPacketAt } from '@/engine/core/chainOps';
 import { createPacket } from '@/engine/entities/DataPacket';
 import type { Vec2 } from '@/engine/math/vec2';
@@ -16,10 +17,18 @@ export interface Shot {
   type: PacketType;
 }
 
+/** Where a removed packet detonated, for the caller to spawn an effect. */
+export interface Burst {
+  point: Vec2;
+  color: string;
+}
+
 /** What a shot did to the chain, without touching score, audio or engine state. */
 export interface ShotOutcome {
   /** Whether the shot collided with the chain and was inserted. */
   hit: boolean;
+  /** Id of the packet spliced in, or null on a miss. */
+  insertedId: number | null;
   /** Points awarded by the matches this shot triggered. */
   score: number;
   /** Number of consecutive explosions; 0 when nothing matched. */
@@ -28,12 +37,23 @@ export interface ShotOutcome {
   combo: ComboLabel | null;
   /** Power-up types released by removed packets, in removal order. */
   powerUps: PowerUpType[];
+  /** Detonation points of removed packets, in removal order. */
+  bursts: Burst[];
   /** True when the shot emptied the chain. */
   clearedChain: boolean;
 }
 
 function miss(): ShotOutcome {
-  return { hit: false, score: 0, explosions: 0, combo: null, powerUps: [], clearedChain: false };
+  return {
+    hit: false,
+    insertedId: null,
+    score: 0,
+    explosions: 0,
+    combo: null,
+    powerUps: [],
+    bursts: [],
+    clearedChain: false,
+  };
 }
 
 /**
@@ -50,20 +70,36 @@ export function applyShot(packets: DataPacket[], path: PathQuery, shot: Shot): S
     return miss();
   }
   const position = resolveInsertPosition(packets, path, index, shot.position);
-  insertPacketAt(packets, position, createPacket({ type: shot.type, distance: 0 }));
+  const inserted = createPacket({ type: shot.type, distance: 0 });
+  insertPacketAt(packets, position, inserted);
   const resolution = resolveMatches(packets, position);
   if (!resolution) {
-    return { hit: true, score: 0, explosions: 0, combo: null, powerUps: [], clearedChain: false };
+    return {
+      hit: true,
+      insertedId: inserted.id,
+      score: 0,
+      explosions: 0,
+      combo: null,
+      powerUps: [],
+      bursts: [],
+      clearedChain: false,
+    };
   }
   const powerUps = resolution.removed
     .filter((packet) => packet.isPowerUp && packet.powerUpType !== null)
     .map((packet) => packet.powerUpType!);
+  const bursts = resolution.removed.map((packet) => ({
+    point: path.pointAt(packet.distance),
+    color: colorForType(packet.type),
+  }));
   return {
     hit: true,
+    insertedId: inserted.id,
     score: resolution.score,
     explosions: resolution.explosions,
     combo: comboLabel(resolution.explosions),
     powerUps,
+    bursts,
     clearedChain: packets.length === 0,
   };
 }

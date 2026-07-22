@@ -290,6 +290,23 @@ describe('GameEngine', () => {
       expect(internals.chain.packets).toHaveLength(1);
     });
 
+    it('lodges a non-matching packet without scoring', () => {
+      const events = spyEvents();
+      const { internals } = makeEngine(events);
+      applyStraightBoard(internals, [
+        createPacket({ type: 'INFO', distance: 100 }),
+        createPacket({ type: 'ERROR', distance: 200 }),
+      ]);
+      internals.score = 0;
+
+      const inserted = internals.tryInsert(new Projectile(vec2(208, 0), 0, 'ERROR'));
+
+      expect(inserted).toBe(true);
+      expect(internals.score).toBe(0);
+      expect(events.onScoreChange).not.toHaveBeenCalled();
+      expect(internals.chain.packets).toHaveLength(3);
+    });
+
     it('applies a power-up carried by a matched packet', () => {
       const events = spyEvents();
       const { internals } = makeEngine(events);

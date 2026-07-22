@@ -5,14 +5,16 @@ import type { CpuCursor } from '@/engine/entities/CpuCursor';
 import type { Path } from '@/engine/entities/Path';
 import type { Projectile } from '@/engine/entities/Projectile';
 import type { Vec2 } from '@/engine/math/vec2';
+import type { VisualFx } from '@/engine/systems/VisualFx';
 import type { DataPacket } from '@/types/game.types';
 
 const BACKGROUND = '#0a0e14';
-const TRACE_OUTER = '#16351f';
-const TRACE_INNER = '#2fb344';
+const TRACE_OUTER = '#123024';
+const TRACE_GLOW = '#2fb344';
 const VOID_RING = '#ff5555';
 const CURSOR_BODY = '#1e2a38';
 const CURSOR_PIN = '#2fb344';
+const INK = '#0a0e14';
 
 export interface RenderScene {
   path: Path;
@@ -20,6 +22,7 @@ export interface RenderScene {
   voidPosition: Vec2;
   cursor: CpuCursor;
   projectiles: readonly Projectile[];
+  fx: VisualFx;
 }
 
 export class RenderSystem {
@@ -31,43 +34,19 @@ export class RenderSystem {
   render(ctx: CanvasRenderingContext2D, scene: RenderScene): void {
     this.clear(ctx);
     this.drawPath(ctx, scene.path);
-    this.drawVoid(ctx, scene.voidPosition);
+    this.drawVoid(ctx, scene.voidPosition, scene.fx.time);
     for (const packet of scene.packets) {
-      if (packet.distance < -PACKET_RADIUS) {
+      const distance = scene.fx.renderDistanceFor(packet);
+      if (distance < -PACKET_RADIUS) {
         continue;
       }
-      this.drawPacket(ctx, packet, scene.path.pointAt(packet.distance));
+      this.drawPacket(ctx, packet, scene.path.pointAt(distance), scene.fx.popScaleFor(packet.id));
     }
     for (const projectile of scene.projectiles) {
-      this.roundedSquare(ctx, projectile.position, PACKET_RADIUS, colorForType(projectile.type));
+      this.drawProjectile(ctx, projectile);
     }
-    this.drawCursor(ctx, scene.cursor);
-  }
-
-  private drawCursor(ctx: CanvasRenderingContext2D, cursor: CpuCursor): void {
-    const { position, angle } = cursor;
-
-    ctx.strokeStyle = 'rgba(47, 179, 68, 0.35)';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([4, 8]);
-    ctx.beginPath();
-    ctx.moveTo(position.x, position.y);
-    ctx.lineTo(position.x + Math.cos(angle) * 90, position.y + Math.sin(angle) * 90);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    ctx.save();
-    ctx.translate(position.x, position.y);
-    ctx.rotate(angle);
-    ctx.fillStyle = CURSOR_PIN;
-    const pin = CURSOR_RADIUS * 0.9;
-    for (const offset of [-0.5, 0, 0.5]) {
-      ctx.fillRect(pin, offset * CURSOR_RADIUS - 3, 8, 6);
-    }
-    ctx.restore();
-
-    this.roundedSquare(ctx, position, CURSOR_RADIUS, CURSOR_BODY);
-    this.roundedSquare(ctx, position, PACKET_RADIUS * 0.7, colorForType(cursor.currentType));
+    this.drawCursor(ctx, scene.cursor, scene.fx.time);
+    this.drawFx(ctx, scene.fx);
   }
 
   private clear(ctx: CanvasRenderingContext2D): void {
@@ -82,10 +61,15 @@ export class RenderSystem {
     }
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
-    this.strokePolyline(ctx, points, TRACE_OUTER, PACKET_RADIUS * 2 + 6);
+    // Recessed channel the chain rides in, then a soft neon centre line.
+    this.strokePolyline(ctx, points, TRACE_OUTER, PACKET_RADIUS * 2 + 8);
     this.strokePolyline(ctx, points, BACKGROUND, PACKET_RADIUS * 2);
-    ctx.setLineDash([2, 10]);
-    this.strokePolyline(ctx, points, TRACE_INNER, 2);
+    ctx.save();
+    ctx.shadowColor = TRACE_GLOW;
+    ctx.shadowBlur = 10;
+    ctx.setLineDash([2, 12]);
+    this.strokePolyline(ctx, points, TRACE_GLOW, 2);
+    ctx.restore();
     ctx.setLineDash([]);
   }
 
@@ -105,39 +89,60 @@ export class RenderSystem {
     ctx.stroke();
   }
 
-  private drawVoid(ctx: CanvasRenderingContext2D, position: Vec2): void {
+  private drawVoid(ctx: CanvasRenderingContext2D, position: Vec2, time: number): void {
+    const outer = VOID_RADIUS * 1.8;
     const gradient = ctx.createRadialGradient(
       position.x,
       position.y,
       2,
       position.x,
       position.y,
-      VOID_RADIUS * 1.8,
+      outer,
     );
     gradient.addColorStop(0, '#000000');
     gradient.addColorStop(0.7, '#05070b');
     gradient.addColorStop(1, 'rgba(10, 14, 20, 0)');
     ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.arc(position.x, position.y, VOID_RADIUS * 1.8, 0, Math.PI * 2);
+    ctx.arc(position.x, position.y, outer, 0, Math.PI * 2);
     ctx.fill();
 
+    // Slowly rotating accretion ring, plus a breathing hazard ring.
+    ctx.save();
+    ctx.translate(position.x, position.y);
+    ctx.rotate(time * 0.6);
+    ctx.strokeStyle = 'rgba(255, 85, 85, 0.5)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 10]);
+    ctx.beginPath();
+    ctx.arc(0, 0, VOID_RADIUS * 1.35, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+    ctx.setLineDash([]);
+
+    const pulse = VOID_RADIUS + Math.sin(time * 3) * 1.5;
     ctx.strokeStyle = VOID_RING;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(position.x, position.y, VOID_RADIUS, 0, Math.PI * 2);
+    ctx.arc(position.x, position.y, pulse, 0, Math.PI * 2);
     ctx.stroke();
   }
 
-  drawPacket(ctx: CanvasRenderingContext2D, packet: DataPacket, position: Vec2): void {
+  drawPacket(
+    ctx: CanvasRenderingContext2D,
+    packet: DataPacket,
+    position: Vec2,
+    scale = 1,
+  ): void {
     const color = colorForType(packet.type);
-    this.roundedSquare(ctx, position, PACKET_RADIUS, color);
+    const radius = PACKET_RADIUS * scale;
+    this.roundedSquare(ctx, position, radius, color, true);
 
     if (packet.isPowerUp && packet.powerUpType) {
-      ctx.strokeStyle = '#0a0e14';
+      ctx.strokeStyle = INK;
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(position.x, position.y, PACKET_RADIUS * 0.62, 0, Math.PI * 2);
+      ctx.arc(position.x, position.y, radius * 0.62, 0, Math.PI * 2);
       ctx.stroke();
     }
 
@@ -145,11 +150,98 @@ export class RenderSystem {
       packet.isPowerUp && packet.powerUpType
         ? POWER_UPS[packet.powerUpType].glyph
         : labelForType(packet.type);
-    ctx.fillStyle = '#0a0e14';
-    ctx.font = `bold ${PACKET_RADIUS}px "JetBrains Mono", monospace`;
+    ctx.fillStyle = INK;
+    ctx.font = `bold ${Math.round(PACKET_RADIUS * scale)}px "JetBrains Mono", monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(glyph, position.x, position.y + 1);
+  }
+
+  private drawProjectile(ctx: CanvasRenderingContext2D, projectile: Projectile): void {
+    const { position, velocity, type } = projectile;
+    const color = colorForType(type);
+    const speed = Math.hypot(velocity.x, velocity.y) || 1;
+    const dirX = velocity.x / speed;
+    const dirY = velocity.y / speed;
+
+    // Fading motion trail behind the projectile.
+    ctx.save();
+    for (let i = 1; i <= 4; i += 1) {
+      const back = i * PACKET_RADIUS * 0.7;
+      ctx.globalAlpha = 0.28 - i * 0.05;
+      this.roundedSquare(
+        ctx,
+        { x: position.x - dirX * back, y: position.y - dirY * back },
+        PACKET_RADIUS * (1 - i * 0.14),
+        color,
+        false,
+      );
+    }
+    ctx.restore();
+
+    ctx.save();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 14;
+    this.roundedSquare(ctx, position, PACKET_RADIUS, color, true);
+    ctx.restore();
+  }
+
+  private drawCursor(ctx: CanvasRenderingContext2D, cursor: CpuCursor, time: number): void {
+    const { position, angle } = cursor;
+
+    ctx.strokeStyle = 'rgba(47, 179, 68, 0.35)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 8]);
+    ctx.lineDashOffset = -time * 40;
+    ctx.beginPath();
+    ctx.moveTo(position.x, position.y);
+    ctx.lineTo(position.x + Math.cos(angle) * 90, position.y + Math.sin(angle) * 90);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.lineDashOffset = 0;
+
+    ctx.save();
+    ctx.translate(position.x, position.y);
+    ctx.rotate(angle);
+    ctx.fillStyle = CURSOR_PIN;
+    const pin = CURSOR_RADIUS * 0.9;
+    for (const offset of [-0.5, 0, 0.5]) {
+      ctx.fillRect(pin, offset * CURSOR_RADIUS - 3, 8, 6);
+    }
+    ctx.restore();
+
+    this.roundedSquare(ctx, position, CURSOR_RADIUS, CURSOR_BODY, false);
+    ctx.save();
+    ctx.shadowColor = colorForType(cursor.currentType);
+    ctx.shadowBlur = 12;
+    this.roundedSquare(ctx, position, PACKET_RADIUS * 0.7, colorForType(cursor.currentType), true);
+    ctx.restore();
+  }
+
+  private drawFx(ctx: CanvasRenderingContext2D, fx: VisualFx): void {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (const p of fx.activeParticles) {
+      ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    ctx.save();
+    for (const r of fx.activeRipples) {
+      const t = r.age / r.duration;
+      const radius = r.fromRadius + (r.toRadius - r.fromRadius) * t;
+      ctx.globalAlpha = Math.max(0, 1 - t);
+      ctx.strokeStyle = r.color;
+      ctx.lineWidth = r.width;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   private roundedSquare(
@@ -157,6 +249,7 @@ export class RenderSystem {
     center: Vec2,
     radius: number,
     color: string,
+    highlight: boolean,
   ): void {
     const size = radius * 2;
     const x = center.x - radius;
@@ -166,6 +259,14 @@ export class RenderSystem {
     ctx.roundRect(x, y, size, size, cornerRadius);
     ctx.fillStyle = color;
     ctx.fill();
+    if (highlight) {
+      // Top-left sheen for a bit of volume over the flat fill.
+      const sheen = ctx.createLinearGradient(x, y, x, y + size);
+      sheen.addColorStop(0, 'rgba(255, 255, 255, 0.28)');
+      sheen.addColorStop(0.45, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = sheen;
+      ctx.fill();
+    }
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
     ctx.lineWidth = 2;
     ctx.stroke();

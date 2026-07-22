@@ -74,4 +74,14 @@ describe('applyShot', () => {
 
     expect(outcome.powerUps).toEqual(['SLEEP']);
   });
+
+  it('reports a burst per removed packet and the id of the inserted one', () => {
+    const packets = [packet('ERROR', 200), packet('ERROR', 216)];
+    const outcome = applyShot(packets, straightPath, { position: vec2(208, 0), type: 'ERROR' });
+
+    // Two existing packets plus the inserted one all detonate.
+    expect(outcome.bursts).toHaveLength(3);
+    expect(outcome.bursts[0]!.color).toBe('#ff5555');
+    expect(typeof outcome.insertedId).toBe('number');
+  });
 });

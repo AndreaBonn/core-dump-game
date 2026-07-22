@@ -8,7 +8,7 @@ import {
   VOID_RADIUS,
 } from '@/config/constants';
 import { getLevel, TOTAL_LEVELS, type LevelConfig } from '@/config/levels';
-import { typesForCount } from '@/config/packetTypes';
+import { colorForType, typesForCount } from '@/config/packetTypes';
 import { BOARD_CENTER } from '@/config/paths';
 import { FORK_SPREAD, ROLLBACK_DISTANCE, SLEEP_DURATION, SLEEP_FACTOR } from '@/config/powerUps';
 import { audioManager } from '@/engine/audio/AudioManager';
@@ -24,6 +24,7 @@ import { presentTypes, removeAllOfType, rollbackChain } from '@/engine/systems/P
 import { applyShot } from '@/engine/systems/ShotSystem';
 import { InputSystem } from '@/engine/systems/InputSystem';
 import { RenderSystem } from '@/engine/systems/RenderSystem';
+import { VisualFx } from '@/engine/systems/VisualFx';
 import type { EngineEvents, GamePhase, PacketType, PowerUpType } from '@/types/game.types';
 
 interface Viewport {
@@ -40,6 +41,7 @@ export class GameEngine {
   private readonly render: RenderSystem;
   private readonly events: EngineEvents;
   private readonly input: InputSystem;
+  private readonly fx = new VisualFx();
 
   private path!: Path;
   private chain!: Chain;
@@ -177,7 +179,7 @@ export class GameEngine {
       offsetX: (cssWidth - BOARD_WIDTH * scale) / 2,
       offsetY: (cssHeight - BOARD_HEIGHT * scale) / 2,
     };
-    this.drawFrame();
+    this.drawFrame(0);
   }
 
   private screenToBoard(clientX: number, clientY: number): Vec2 {
@@ -204,6 +206,7 @@ export class GameEngine {
       this.projectiles.push(new Projectile(this.cursor.position, angle, type));
     }
     this.pendingFork = false;
+    this.fx.spawnImpact(this.cursor.position, colorForType(type));
     audioManager.play('shoot');
     this.events.onNextPacketChange(this.cursor.nextType);
   }
@@ -222,7 +225,7 @@ export class GameEngine {
         this.accumulator -= FIXED_TIMESTEP;
       }
     }
-    this.drawFrame();
+    this.drawFrame(frameTime);
   };
 
   private fixedUpdate(dt: number): void {
@@ -262,10 +265,16 @@ export class GameEngine {
     if (!outcome.hit) {
       return false;
     }
+    this.fx.spawnImpact(projectile.position, colorForType(projectile.type));
+    this.fx.popPacket(outcome.insertedId);
     if (outcome.explosions > 0) {
       this.score += outcome.score;
       this.events.onScoreChange(this.score);
       audioManager.play('match');
+      for (const burst of outcome.bursts) {
+        this.fx.spawnExplosion(burst.point, burst.color);
+      }
+      this.fx.addShake(4 + outcome.explosions * 4);
       if (outcome.combo) {
         this.events.onComboChange(outcome.combo);
         audioManager.play(
@@ -287,6 +296,7 @@ export class GameEngine {
     const levelScore = this.score - this.levelStartScore;
     this.score += LEVEL_CLEAR_BONUS;
     this.events.onScoreChange(this.score);
+    this.fx.addShake(6);
     audioManager.play('level-complete');
     if (this.level >= TOTAL_LEVELS) {
       this.phase = 'gameWon';
@@ -333,29 +343,35 @@ export class GameEngine {
   private endGame(): void {
     this.phase = 'gameOver';
     this.projectiles = [];
+    this.fx.addShake(16);
     audioManager.play('game-over');
     this.events.onGameOver(this.score, this.level);
   }
 
-  private drawFrame(): void {
+  private drawFrame(dt: number): void {
     const { scale, offsetX, offsetY } = this.viewport;
+    if (this.phase === 'idle') {
+      this.ctx.setTransform(scale * this.dpr, 0, 0, scale * this.dpr, offsetX * this.dpr, offsetY * this.dpr);
+      return;
+    }
+    this.fx.update(dt);
+    this.fx.syncChain(this.chain.packets, dt);
+    const shake = this.fx.shakeOffset();
     this.ctx.setTransform(
       scale * this.dpr,
       0,
       0,
       scale * this.dpr,
-      offsetX * this.dpr,
-      offsetY * this.dpr,
+      (offsetX + shake.x) * this.dpr,
+      (offsetY + shake.y) * this.dpr,
     );
-    if (this.phase === 'idle') {
-      return;
-    }
     this.render.render(this.ctx, {
       path: this.path,
       packets: this.chain.packets,
       voidPosition: this.voidHole.position,
       cursor: this.cursor,
       projectiles: this.projectiles,
+      fx: this.fx,
     });
   }
 }

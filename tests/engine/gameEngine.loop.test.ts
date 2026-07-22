@@ -1,33 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameEngine } from '@/engine/GameEngine';
 import { createNoopEngineEvents } from '../helpers/engineEvents';
-
-function createCanvasMock(): HTMLCanvasElement {
-  const ctx = new Proxy(
-    {},
-    {
-      get: (_target, prop) => {
-        if (prop === 'createRadialGradient') {
-          return () => ({ addColorStop: () => {} });
-        }
-        if (prop === 'canvas') {
-          return canvas;
-        }
-        return () => {};
-      },
-      set: () => true,
-    },
-  );
-  const canvas = {
-    width: 960,
-    height: 600,
-    getContext: () => ctx,
-    getBoundingClientRect: () => ({ left: 0, top: 0, width: 960, height: 600 }),
-    addEventListener: () => {},
-    removeEventListener: () => {},
-  } as unknown as HTMLCanvasElement;
-  return canvas;
-}
+import { createCanvasMock } from '../helpers/canvasMock';
 
 describe('GameEngine fixed-timestep loop', () => {
   beforeEach(() => {

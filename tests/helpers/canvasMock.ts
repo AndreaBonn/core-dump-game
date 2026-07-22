@@ -8,7 +8,7 @@ export function createCanvasMock(width = 960, height = 600): HTMLCanvasElement {
     {},
     {
       get: (_target, prop) => {
-        if (prop === 'createRadialGradient') {
+        if (prop === 'createRadialGradient' || prop === 'createLinearGradient') {
           return () => ({ addColorStop: () => {} });
         }
         if (prop === 'canvas') {

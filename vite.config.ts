@@ -69,7 +69,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html'],
       include: ['src/engine/**/*.ts', 'src/config/**/*.ts', 'src/services/**/*.ts'],
-      exclude: ['src/engine/systems/RenderSystem.ts'],
+      exclude: ['src/engine/systems/RenderSystem.ts', 'src/engine/systems/VisualFx.ts'],
     },
   },
 });
