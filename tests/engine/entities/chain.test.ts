@@ -2,10 +2,10 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { Chain } from '@/engine/entities/Chain';
 import { VoidHole } from '@/engine/entities/VoidHole';
 import { createPacket, resetPacketIds } from '@/engine/entities/DataPacket';
-import { compactBehind, generateChainPackets } from '@/engine/core/chainOps';
+import { compactBehind, generateChainPackets, insertPacketAt } from '@/engine/core/chainOps';
 import { createRng } from '@/engine/math/rng';
 import { PACKET_SPACING } from '@/config/constants';
-import type { PacketType } from '@/types/game.types';
+import type { DataPacket, PacketType } from '@/types/game.types';
 
 beforeEach(() => {
   resetPacketIds();
@@ -102,5 +102,14 @@ describe('compactBehind', () => {
     compactBehind(packets, 2);
     expect(packets[1]!.distance).toBe(232 - PACKET_SPACING);
     expect(packets[0]!.distance).toBe(232 - 2 * PACKET_SPACING);
+  });
+});
+
+describe('insertPacketAt', () => {
+  it('places the first packet of an empty chain at distance zero', () => {
+    const packets: DataPacket[] = [];
+    insertPacketAt(packets, 0, createPacket({ type: 'INFO', distance: 0 }));
+    expect(packets).toHaveLength(1);
+    expect(packets[0]!.distance).toBe(0);
   });
 });

@@ -26,6 +26,15 @@ describe('clampLevel', () => {
     expect(clampLevel(3)).toBe(3);
     expect(clampLevel(200)).toBe(100);
   });
+
+  it('floors fractional levels', () => {
+    expect(clampLevel(7.9)).toBe(7);
+  });
+
+  it('returns 1 for non-finite input', () => {
+    expect(clampLevel(Number.NaN)).toBe(1);
+    expect(clampLevel(Number.POSITIVE_INFINITY)).toBe(1);
+  });
 });
 
 describe('sanitizeDisplayName', () => {

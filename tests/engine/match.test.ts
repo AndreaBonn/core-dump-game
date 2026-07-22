@@ -34,6 +34,11 @@ describe('findRun', () => {
     const packets = chain(['SUCCESS', 'ERROR', 'SUCCESS']);
     expect(findRun(packets, 1)).toEqual({ start: 1, length: 1 });
   });
+
+  it('reports an empty run for an out-of-range index', () => {
+    const packets = chain(['SUCCESS', 'ERROR']);
+    expect(findRun(packets, 99)).toEqual({ start: 99, length: 0 });
+  });
 });
 
 describe('resolveMatches', () => {

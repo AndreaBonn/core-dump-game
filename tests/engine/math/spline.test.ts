@@ -46,4 +46,10 @@ describe('sampleCatmullRom', () => {
     const chord = 2 * Math.hypot(50, 80);
     expect(curve.totalLength).toBeGreaterThan(chord);
   });
+
+  it('returns a default tangent for a degenerate zero-length curve', () => {
+    const curve = sampleCatmullRom([vec2(5, 5), vec2(5, 5)]);
+    expect(curve.totalLength).toBe(0);
+    expect(tangentAtDistance(curve, 0)).toEqual({ x: 1, y: 0 });
+  });
 });
