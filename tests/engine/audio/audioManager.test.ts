@@ -1,90 +1,94 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { AudioManager } from '@/engine/audio/AudioManager';
 
-const SOUND_COUNT = 8;
-const POOL_SIZE = 4;
-
-interface FakeAudio {
-  volume: number;
-  preload: string;
+interface FakeContext {
+  state: 'running' | 'suspended';
   currentTime: number;
-  play: ReturnType<typeof vi.fn>;
+  destination: AudioNode;
+  resume: ReturnType<typeof vi.fn>;
+  createOscillator: ReturnType<typeof vi.fn>;
+  createGain: ReturnType<typeof vi.fn>;
 }
 
-let created: FakeAudio[];
-
-function installFakeAudio(): void {
-  created = [];
-  const FakeAudioCtor = vi.fn(function (this: FakeAudio) {
-    this.volume = 1;
-    this.preload = '';
-    this.currentTime = -1;
-    this.play = vi.fn(() => Promise.resolve());
-    created.push(this);
+function createFakeContext(state: 'running' | 'suspended' = 'running'): FakeContext {
+  const osc = () => ({
+    type: '',
+    frequency: { setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() },
+    connect: vi.fn(),
+    start: vi.fn(),
+    stop: vi.fn(),
   });
-  vi.stubGlobal('Audio', FakeAudioCtor);
+  const gain = () => ({
+    gain: {
+      setValueAtTime: vi.fn(),
+      linearRampToValueAtTime: vi.fn(),
+      exponentialRampToValueAtTime: vi.fn(),
+    },
+    connect: vi.fn(),
+  });
+  return {
+    state,
+    currentTime: 0,
+    destination: {} as AudioNode,
+    resume: vi.fn(() => Promise.resolve()),
+    createOscillator: vi.fn(osc),
+    createGain: vi.fn(gain),
+  };
 }
 
 describe('AudioManager', () => {
-  beforeEach(() => {
-    installFakeAudio();
-  });
+  it('creates the audio context lazily on the first play and reuses it after', () => {
+    const ctx = createFakeContext();
+    const factory = vi.fn(() => ctx as unknown as AudioContext);
+    const manager = new AudioManager(factory);
 
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it('builds one pool per sound and is idempotent across repeated loads', () => {
-    const manager = new AudioManager();
-    manager.load();
-    manager.load();
-    expect(created).toHaveLength(SOUND_COUNT * POOL_SIZE);
-  });
-
-  it('does not construct audio when the Audio API is unavailable', () => {
-    vi.stubGlobal('Audio', undefined);
-    const manager = new AudioManager();
-    expect(() => manager.load()).not.toThrow();
-    // No pool was built, so playing is silently ignored rather than throwing.
-    expect(() => manager.play('shoot')).not.toThrow();
-  });
-
-  it('rewinds and plays a pooled element, cycling through the pool on repeats', () => {
-    const manager = new AudioManager();
-    manager.load();
-    const shootPool = created.slice(0, POOL_SIZE);
-
-    for (let i = 0; i < POOL_SIZE; i += 1) {
-      manager.play('shoot');
-    }
-    for (const element of shootPool) {
-      expect(element.currentTime).toBe(0);
-      expect(element.play).toHaveBeenCalledTimes(1);
-    }
-
-    // The (POOL_SIZE + 1)-th play wraps back to the first element.
+    expect(factory).not.toHaveBeenCalled();
     manager.play('shoot');
-    expect(shootPool[0]!.play).toHaveBeenCalledTimes(2);
+    manager.play('match');
+    expect(factory).toHaveBeenCalledTimes(1);
   });
 
-  it('plays nothing while muted', () => {
-    const manager = new AudioManager();
-    manager.load();
+  it('synthesizes a sound by scheduling oscillators on the context', () => {
+    const ctx = createFakeContext();
+    const manager = new AudioManager(() => ctx as unknown as AudioContext);
+
+    manager.play('match');
+
+    // The "match" spec has two tones, so two oscillators are scheduled.
+    expect(ctx.createOscillator).toHaveBeenCalledTimes(2);
+  });
+
+  it('stays silent while muted and does not touch the audio context', () => {
+    const factory = vi.fn(() => createFakeContext() as unknown as AudioContext);
+    const manager = new AudioManager(factory);
     manager.setMuted(true);
+
     manager.play('shoot');
-    expect(created.every((audio) => audio.play.mock.calls.length === 0)).toBe(true);
-  });
 
-  it('exposes the mute state it was set to', () => {
-    const manager = new AudioManager();
-    expect(manager.isMuted()).toBe(false);
-    manager.setMuted(true);
+    expect(factory).not.toHaveBeenCalled();
     expect(manager.isMuted()).toBe(true);
   });
 
-  it('ignores an unknown or not-yet-loaded sound without throwing', () => {
-    const manager = new AudioManager();
-    expect(() => manager.play('match')).not.toThrow();
-    expect(created).toHaveLength(0);
+  it('resumes a suspended context (autoplay unlock) on play', () => {
+    const ctx = createFakeContext('suspended');
+    const manager = new AudioManager(() => ctx as unknown as AudioContext);
+
+    manager.play('shoot');
+
+    expect(ctx.resume).toHaveBeenCalled();
+  });
+
+  it('degrades silently when the audio context cannot be created', () => {
+    const manager = new AudioManager(() => {
+      throw new Error('no Web Audio');
+    });
+
+    expect(() => manager.play('shoot')).not.toThrow();
+  });
+
+  it('load is a no-op and mute state is reported', () => {
+    const manager = new AudioManager(() => createFakeContext() as unknown as AudioContext);
+    expect(() => manager.load()).not.toThrow();
+    expect(manager.isMuted()).toBe(false);
   });
 });

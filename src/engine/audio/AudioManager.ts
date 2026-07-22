@@ -1,55 +1,29 @@
-export type SoundName =
-  | 'shoot'
-  | 'match'
-  | 'combo-2'
-  | 'combo-3'
-  | 'combo-4'
-  | 'powerup'
-  | 'game-over'
-  | 'level-complete';
+import { renderSpec } from '@/engine/audio/renderSpec';
+import { SOUND_SPECS, type SoundName } from '@/engine/audio/soundSpecs';
 
-const SOUND_NAMES: readonly SoundName[] = [
-  'shoot',
-  'match',
-  'combo-2',
-  'combo-3',
-  'combo-4',
-  'powerup',
-  'game-over',
-  'level-complete',
-];
+export type { SoundName };
 
-const POOL_SIZE = 4;
-const DEFAULT_VOLUME = 0.4;
+type ContextFactory = () => AudioContext;
+
+const MASTER_GAIN = 0.5;
 
 /**
- * Loads and plays short sound effects from `public/audio/<name>.mp3`. Each
- * sound keeps a small pool of audio elements so rapid repeats do not cut each
- * other off. Missing files fail silently, so the game stays playable before
- * real audio assets are added (spec 9).
+ * Synthesizes short sound effects with the Web Audio API — no audio assets. The
+ * context is created lazily on the first `play` (which happens inside a user
+ * gesture, satisfying autoplay policies) and resumed if suspended. The context
+ * factory is injected so the manager can be tested without a real Web Audio API.
  */
 export class AudioManager {
-  private readonly pools = new Map<SoundName, HTMLAudioElement[]>();
-  private readonly cursors = new Map<SoundName, number>();
+  private readonly createContext: ContextFactory;
+  private ctx: AudioContext | null = null;
   private muted = false;
-  private loaded = false;
 
-  load(): void {
-    if (this.loaded || typeof Audio === 'undefined') {
-      return;
-    }
-    for (const name of SOUND_NAMES) {
-      const pool = Array.from({ length: POOL_SIZE }, () => {
-        const audio = new Audio(`${import.meta.env.BASE_URL}audio/${name}.mp3`);
-        audio.volume = DEFAULT_VOLUME;
-        audio.preload = 'auto';
-        return audio;
-      });
-      this.pools.set(name, pool);
-      this.cursors.set(name, 0);
-    }
-    this.loaded = true;
+  constructor(createContext: ContextFactory = () => new AudioContext()) {
+    this.createContext = createContext;
   }
+
+  /** Kept for API compatibility; synthesis needs no preloading. */
+  load(): void {}
 
   setMuted(muted: boolean): void {
     this.muted = muted;
@@ -63,15 +37,25 @@ export class AudioManager {
     if (this.muted) {
       return;
     }
-    const pool = this.pools.get(name);
-    if (!pool) {
+    const ctx = this.ensureContext();
+    if (!ctx) {
       return;
     }
-    const cursor = this.cursors.get(name) ?? 0;
-    const audio = pool[cursor % pool.length]!;
-    this.cursors.set(name, cursor + 1);
-    audio.currentTime = 0;
-    void audio.play().catch(() => {});
+    renderSpec(ctx, SOUND_SPECS[name], MASTER_GAIN);
+  }
+
+  private ensureContext(): AudioContext | null {
+    if (!this.ctx) {
+      try {
+        this.ctx = this.createContext();
+      } catch {
+        return null;
+      }
+    }
+    if (this.ctx.state === 'suspended') {
+      void this.ctx.resume();
+    }
+    return this.ctx;
   }
 }
 
