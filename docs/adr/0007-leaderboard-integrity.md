@@ -51,7 +51,19 @@ Run history is gone, which nothing used.
 
 A score typed into the console still reaches the board. **This is accepted, not
 overlooked**: stopping it costs a backend, and an heuristic on top of it would
-still pass anything plausible. Public read is also unrestricted, so a script can
-read the whole collection ignoring the ten-row limit the client asks for. At
-this size that is a rounding error on cost; if the game grows, App Check on
-reads is the answer.
+still pass anything plausible.
+
+The sharper version of the same gap, which an earlier draft of this ADR
+understated: anonymous sign-in is open, so a script outside a browser can mint
+identities and write one maximum score each, with a display name of its
+choosing. The limit of one document per player does not bound that, because the
+attacker is not one player. What is at stake is not a self-inflicted high score
+but a public board filled with junk or with offensive names. App Check is the
+lever that closes it, and it is deliberately not pulled yet: it costs nothing to
+add later, it risks locking the developer out in the meantime, and the board is
+not public until the game is. **If the game is published, App Check goes in
+before it, not after the first incident.**
+
+Public read is also unrestricted, so a script can read the whole collection
+ignoring the ten-row limit the client asks for. At this size that is a rounding
+error on cost; if the game grows, App Check on reads is the answer to that too.
