@@ -1,4 +1,5 @@
 import { buildSpiral } from '@/config/paths';
+import type { StarThresholds } from '@/engine/core/stars';
 import type { Vec2 } from '@/engine/math/vec2';
 
 export interface LevelConfig {
@@ -14,11 +15,28 @@ export interface LevelConfig {
   readonly powerUpChance: number;
   /** Deterministic seed for chain generation. */
   readonly seed: number;
+  /** Level scores that earn one, two and three stars. */
+  readonly starThresholds: StarThresholds;
 }
 
 export const TOTAL_LEVELS = 10;
 
 const POWER_UP_CHANCE = 0.05;
+
+/**
+ * Points per packet asked for one, two and three stars. Clearing a chain in
+ * plain three-packet matches is worth 10 points a packet, so one star forgives
+ * a good deal of wasted shots, two is close to a clean run, and three needs
+ * combos: chained explosions are the only way past 10 a packet.
+ */
+const STAR_POINTS_PER_PACKET: readonly [number, number, number] = [6, 10, 15];
+
+/** Round to a readable mark; a threshold of 187 tells the player nothing. */
+function starThresholdsFor(chainLength: number): StarThresholds {
+  const [one, two, three] = STAR_POINTS_PER_PACKET;
+  const mark = (perPacket: number): number => Math.round((chainLength * perPacket) / 10) * 10;
+  return [mark(one), mark(two), mark(three)];
+}
 
 /** Seed base of the campaign; keeps campaign layouts identical across runs. */
 export const CAMPAIGN_SEED_BASE = 1000;
@@ -73,6 +91,7 @@ export function buildLevelConfig(level: number, seedBase: number): LevelConfig {
     chainSpeed: tuning.chainSpeed,
     powerUpChance: POWER_UP_CHANCE,
     seed: seedBase + level * SEED_STEP,
+    starThresholds: starThresholdsFor(tuning.chainLength),
   };
 }
 
