@@ -37,7 +37,7 @@ Il dettaglio (verify per step, motivazioni, rischi) è in `plan.md`.
 - [x] 2.6 | 2.4 | Verifica runtime: a 375 px il lato del gioco passa da 234 a 375, il packet da ~6 a ~21 px;
   a 1280x800 nessuna differenza visibile rispetto alla baseline
 
-## Blocco 3 — Test UI React ed E2E [F3] — parte RTL chiusa, E2E aperto
+## Blocco 3 — Test UI React ed E2E [F3] — CHIUSO
 
 - [x] 3.1 | - | Testing Library installata, `tests/setup.ts` con jest-dom e cleanup
 - [x] 3.2 | 3.1 | Test `useGameStore`: 8 casi (reset run, modalità preservata, esiti, eventi engine)
@@ -48,8 +48,10 @@ Il dettaglio (verify per step, motivazioni, rischi) è in `plan.md`.
 - [x] 3.6 | 3.1 | Test `GameOverScreen`: 9 casi, tutti gli stati di `SaveStatus`
 - [x] 3.7 | 3.2,3.3,3.4 | `coverage.include` esteso a store e hooks. Baseline misurata: **99,4% righe**
   su 325 test (era 99,31% su 190 con store e hooks esclusi)
-- [ ] 3.8 | - | Playwright: config con webServer su preview, artefatti in gitignore
-- [ ] 3.9 | 3.8 | Spec E2E smoke: menu → campagna → tiro → score cambia; screenshot 375 e 1280
+- [x] 3.8 | - | Playwright con webServer sulla build di produzione, due profili (desktop 1280x800, mobile 375x700)
+- [x] 3.9 | 3.8 | 4 spec, 8 esecuzioni verdi in ~11s: run che segna, pausa da mouse e da Escape, le tre
+  modalità raggiungibili, la leaderboard senza Firebase. Screenshot allegati al report, non su disco.
+  Rosso verificato azzerando il punteggio dei match: il test fallisce col proprio messaggio
 
 ## Blocco 4 — Error boundary e prompt di aggiornamento [F5, F6]
 
