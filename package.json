@@ -14,6 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-core-dump \"vitest run --config vitest.rules.config.ts\"",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -29,6 +30,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
+    "@firebase/rules-unit-testing": "^4.0.1",
     "@types/node": "^22.20.1",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",

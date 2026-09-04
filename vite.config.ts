@@ -65,6 +65,9 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
+    // Security-rules tests need the Firestore emulator: they have their own
+    // config and script so `npm test` runs without it (see vitest.rules.config.ts).
+    exclude: ['tests/rules/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
