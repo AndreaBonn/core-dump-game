@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
   pull_request:
-    branches: [main]
+    branches: [main, master]
 
 jobs:
   verify:
@@ -27,8 +27,70 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
-      - name: Test
-        run: npm run test
+      # Coverage thresholds live in vite.config.ts, so the same run fails
+      # locally and here rather than only in CI.
+      - name: Test with coverage
+        run: npm run test:coverage
 
       - name: Build
         run: npm run build
+
+  rules:
+    name: Firestore rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # The emulator runs on the JVM; without it the rules stay untested,
+      # which is how they shipped unverified in the first place.
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install the Firebase CLI
+        run: npm i -g firebase-tools
+
+      - name: Test the security rules
+        run: npm run test:rules
+
+  e2e:
+    name: End-to-end
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install the browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run the end-to-end suite
+        run: npm run test:e2e
+
+      # Screenshots and traces are attached to the report; keep them when a run
+      # fails, which is the only time anyone opens them.
+      - name: Upload the report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

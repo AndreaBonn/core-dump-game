@@ -1,0 +1,31 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # One pull request per family instead of a dozen: the toolchain moves
+      # together and reviewing it together is the only way it gets reviewed.
+      dev-tooling:
+        patterns:
+          - '@typescript-eslint/*'
+          - 'typescript-eslint'
+          - 'eslint*'
+          - 'prettier'
+          - 'vite'
+          - '@vitejs/*'
+          - 'vitest'
+          - '@vitest/*'
+      testing:
+        patterns:
+          - '@testing-library/*'
+          - '@playwright/*'
+          - '@firebase/rules-unit-testing'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

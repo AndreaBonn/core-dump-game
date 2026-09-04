@@ -87,6 +87,16 @@ export default defineConfig({
         'src/engine/systems/FxRenderer.ts',
         'src/engine/systems/GuideRenderer.ts',
       ],
+      // Measured at 99.4% lines, 99% branches, 98.2% functions when these
+      // thresholds were set. They sit a few points below that: high enough to
+      // catch a module landing untested, loose enough that one uncovered
+      // branch in a new file does not block a pull request.
+      thresholds: {
+        lines: 95,
+        statements: 95,
+        functions: 92,
+        branches: 92,
+      },
     },
   },
 });

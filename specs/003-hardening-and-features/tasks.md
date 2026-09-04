@@ -64,13 +64,20 @@ Il dettaglio (verify per step, motivazioni, rischi) è in `plan.md`.
   attivava da solo e non c'era niente da promuovere
 - [~] Monitoring esterno: **fuori scope per decisione DEC3**, non rimandato
 
-## Blocco 5 — CI e manutenzione dipendenze [F7]
+## Blocco 5 — CI e manutenzione dipendenze [F7] — CHIUSO salvo il deploy
 
-- 5.1 | - | Allinea i trigger del workflow al branch reale
-- 5.2 | 3.7 | Step coverage con soglia esplicita [DEC5], fissata sulla baseline misurata
-- 5.3 | 3.9 | Job E2E Playwright con upload degli screenshot come artefatto
-- 5.4 | - | `.github/dependabot.yml` (npm settimanale + github-actions)
-- 5.5 | - | [DEC1] Workflow di deploy su Firebase Hosting, solo con un progetto reale
+- [x] 5.1 | - | Trigger su `main` e `master`: prima puntavano solo a `main`, che in questo repo non esiste
+- [x] 5.2 | 3.7 | Soglie in `vite.config.ts` (95% righe e statement, 92% funzioni e rami) contro una
+  baseline misurata di 99,4 / 98,2 / 99. Verificato che mordano: alzandole a 100 il comando esce 1
+  con `ERROR: Coverage for lines (99.4%) does not meet global threshold (100%)`
+- [x] 5.3 | 3.9 | Job `e2e` con installazione del browser e report caricato come artefatto (7 giorni)
+- [x] 5.4 | - | `.github/dependabot.yml`: npm e github-actions settimanali, aggiornamenti raggruppati
+  per famiglia (toolchain, testing) invece di una PR per pacchetto
+- [x] extra | - | Job `rules`: l'emulatore Firestore con la JVM, altrimenti le rules tornerebbero a
+  non essere mai eseguite
+- [~] 5.5 | - | **Deploy non scritto.** DEC1 colloca la pubblicazione dopo B/C/D e non esiste un
+  progetto Firebase reale (solo `.firebaserc.example`): un workflow di deploy non eseguibile darebbe
+  una falsa sicurezza. Si scrive nel Blocco 6/7, quando ci sarà un progetto contro cui verificarlo
 
 ## Blocco B — Retention meta [piano 002, Incremento B]
 
