@@ -64,10 +64,12 @@ export function Leaderboard() {
         </div>
       )}
 
-      <p className="font-mono text-xs text-terminal-muted">
-        Scores are reported by each player&apos;s browser and are not verified. Treat the board as a
-        friendly ranking, not a record book.
-      </p>
+      {status !== 'unavailable' && (
+        <p className="font-mono text-xs text-terminal-muted">
+          Scores are reported by each player&apos;s browser and are not verified. Treat the board as
+          a friendly ranking, not a record book.
+        </p>
+      )}
 
       <Button variant="ghost" className="w-full" onClick={() => setScreen('menu')}>
         Back

@@ -17,14 +17,14 @@ Il dettaglio (verify per step, motivazioni, rischi) è in `plan.md`.
   riscrivere i test che pilotano 22 membri privati. Decisione utente: accettato, vedi DoD
   Blocco 0 in `plan.md`
 
-## Blocco 1 — Leaderboard: schema per modalità e personal best [F4, F1 strutturale]
+## Blocco 1 — Leaderboard: schema per modalità e personal best [F4, F1 strutturale] — CHIUSO
 
-- 1.1 | - | Test che riproduce F4 (60 documenti, massimo oltre i primi 50): rosso prima del verde
-- 1.2 | - | `@firebase/rules-unit-testing` + script `test:rules`; baseline sulle rules attuali
-- 1.3 | 1.2 | Nuove rules `leaderboards/{mode}/scores/{uid}` (ADR-007): create, doppia create, update minore/maggiore, delete
-- 1.4 | 1.3 | `leaderboardService` sul nuovo path: `saveScore(mode)`, `fetchPersonalBest` come getDoc, `fetchTopScores(mode)`
-- 1.5 | 1.4 | Propaga la modalità da `GameScreen.handleSave` e mostra la board della modalità
-- 1.6 | 1.4 | Dismetti la vecchia collezione `scores` (nessun dato reale) e dichiaralo nel report
+- [x] 1.1 | - | F4 riprodotto: 60 documenti, il migliore oltre i primi 50, ritornava 49 invece di 9999
+- [x] 1.2 | - | `@firebase/rules-unit-testing@4` (5.x richiede firebase 12) + script `test:rules`, emulatore su 8089
+- [x] 1.3 | 1.2 | Rules `leaderboards/{mode}/scores/{uid}`: 19 casi verdi sull'emulatore, 5 rossi con le rules precedenti (`8caa648`)
+- [x] 1.4 | 1.3 | `leaderboardService` sul nuovo path, personal best come `getDoc`, `deletePersonalScore` per F8 (`cbe6ed2`)
+- [x] 1.5 | 1.4 | Modalità propagata dal salvataggio; la schermata Leaderboard ha i tre tab, esito `notABest` distinto dall'errore
+- [x] 1.6 | 1.4 | Vecchia collezione `scores` dismessa senza migrazione: nessun deploy, nessun dato reale (verificato: `git grep` non trova più il path root)
 
 ## Blocco 2 — Giocabilità mobile portrait [F2]
 
