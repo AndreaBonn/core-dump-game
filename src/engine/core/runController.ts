@@ -33,12 +33,16 @@ export function isRunWon(level: number, finalLevel: number | null): boolean {
   return finalLevel !== null && level >= finalLevel;
 }
 
-/** Campaign: the fixed TOTAL_LEVELS sequence; past the last level the run is won. */
-export function campaignConfig(): RunConfig {
+/**
+ * Campaign: the fixed TOTAL_LEVELS sequence; past the last level the run is
+ * won. `startIndex` lets the level select drop the player straight into a level
+ * they have already unlocked; the run still ends at the final level.
+ */
+export function campaignConfig(startIndex = 1): RunConfig {
   return {
     mode: 'campaign',
     levelProvider: (index) => (index <= TOTAL_LEVELS ? getLevel(index) : null),
-    startIndex: 1,
+    startIndex: Math.max(1, Math.min(startIndex, TOTAL_LEVELS)),
     finalLevel: TOTAL_LEVELS,
   };
 }
@@ -79,13 +83,13 @@ const MAX_SEED = 0x7fffffff;
  * still flows through the deterministic PRNG, so the simulation stays
  * reproducible for a given config.
  */
-export function runConfigForMode(mode: RunMode): RunConfig {
+export function runConfigForMode(mode: RunMode, startIndex = 1): RunConfig {
   switch (mode) {
     case 'endless':
       return endlessConfig(Math.floor(Math.random() * MAX_SEED));
     case 'daily':
       return dailyConfig(new Date());
     default:
-      return campaignConfig();
+      return campaignConfig(startIndex);
   }
 }

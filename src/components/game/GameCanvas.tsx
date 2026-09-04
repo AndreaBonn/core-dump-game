@@ -51,7 +51,8 @@ export function GameCanvas({ events, onReady }: GameCanvasProps) {
     applyMotion();
     motionQuery?.addEventListener('change', applyMotion);
 
-    engine.startRun(runConfigForMode(useGameStore.getState().mode));
+    const { mode, startLevel } = useGameStore.getState();
+    engine.startRun(runConfigForMode(mode, startLevel));
     engine.start();
     onReadyRef.current(engine);
 

@@ -20,6 +20,9 @@ export function MainMenu() {
         <Button className="w-full" onClick={() => startGame('campaign')}>
           Play Campaign
         </Button>
+        <Button variant="ghost" className="w-full" onClick={() => setScreen('levels')}>
+          Select Level
+        </Button>
         <Button variant="ghost" className="w-full" onClick={() => startGame('endless')}>
           Endless
         </Button>
@@ -28,6 +31,12 @@ export function MainMenu() {
         </Button>
         <Button variant="ghost" className="w-full" onClick={() => setScreen('leaderboard')}>
           Leaderboard
+        </Button>
+        <Button variant="ghost" className="w-full" onClick={() => setScreen('profile')}>
+          Profile
+        </Button>
+        <Button variant="ghost" className="w-full" onClick={() => setScreen('achievements')}>
+          Achievements
         </Button>
         <Button variant="ghost" className="w-full" onClick={() => setScreen('settings')}>
           Settings

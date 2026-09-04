@@ -2,7 +2,14 @@ import { create } from 'zustand';
 import type { RunMode } from '@/engine/core/runController';
 import type { ComboLabel, PacketType, RunResult } from '@/types/game.types';
 
-export type Screen = 'menu' | 'game' | 'leaderboard' | 'settings';
+export type Screen =
+  | 'menu'
+  | 'game'
+  | 'levels'
+  | 'leaderboard'
+  | 'settings'
+  | 'profile'
+  | 'achievements';
 export type GameStatus = 'playing' | 'paused' | 'levelComplete' | 'gameOver' | 'gameWon';
 
 export interface LevelResult {
@@ -20,6 +27,8 @@ interface GameUIState {
   screen: Screen;
   status: GameStatus;
   mode: RunMode;
+  /** Level the current run was started from, so a retry resumes there. */
+  startLevel: number;
   score: number;
   level: number;
   combo: ComboLabel | null;
@@ -29,7 +38,7 @@ interface GameUIState {
   gameResult: GameResult | null;
 
   setScreen: (screen: Screen) => void;
-  startGame: (mode?: RunMode) => void;
+  startGame: (mode?: RunMode, startLevel?: number) => void;
   setScore: (score: number) => void;
   setLevel: (level: number) => void;
   setCombo: (combo: ComboLabel | null) => void;
@@ -44,6 +53,7 @@ interface GameUIState {
 const initialRun = {
   status: 'playing' as GameStatus,
   mode: 'campaign' as RunMode,
+  startLevel: 1,
   score: 0,
   level: 1,
   combo: null,
@@ -58,7 +68,8 @@ export const useGameStore = create<GameUIState>((set) => ({
   ...initialRun,
 
   setScreen: (screen) => set({ screen }),
-  startGame: (mode = 'campaign') => set({ screen: 'game', ...initialRun, mode }),
+  startGame: (mode = 'campaign', startLevel = 1) =>
+    set({ screen: 'game', ...initialRun, mode, level: startLevel, startLevel }),
   setScore: (score) => set({ score }),
   setLevel: (level) => set({ level }),
   setCombo: (combo) => set({ combo }),

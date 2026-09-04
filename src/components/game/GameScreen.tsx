@@ -10,6 +10,7 @@ import { runConfigForMode } from '@/engine/core/runController';
 import { ensureSignedIn } from '@/services/authService';
 import { isLeaderboardAvailable, saveScore } from '@/services/leaderboardService';
 import { useGameStore } from '@/store/useGameStore';
+import { useProgressStore } from '@/store/useProgressStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import type { EngineEvents } from '@/types/game.types';
 import type { SaveStatus } from '@/types/leaderboard.types';
@@ -26,16 +27,36 @@ export function GameScreen() {
   const gameResult = useGameStore((state) => state.gameResult);
   const nickname = useSettingsStore((state) => state.nickname);
 
+  // The engine reports to two places: the run state the HUD reads, and the
+  // profile that outlives the run. Everything durable goes through the profile
+  // store, which is the only one that writes to disk.
   const events = useMemo<EngineEvents>(() => {
     const store = useGameStore.getState();
+    // Actions are stable, but state read off a snapshot would be frozen at
+    // mount time: anything that reads a value calls getState() when it fires.
+    const profile = () => useProgressStore.getState();
     return {
       onScoreChange: store.setScore,
       onLevelChange: store.setLevel,
-      onComboChange: store.setCombo,
+      onComboChange: (combo) => {
+        store.setCombo(combo);
+        if (combo) {
+          profile().noteCombo(combo.multiplier);
+        }
+      },
       onNextPacketChange: store.setNextPacket,
-      onLevelComplete: store.reportLevelComplete,
-      onRunEnd: store.reportRunEnd,
-      onPowerUp: (type) => store.setPowerUp(POWER_UPS[type].name),
+      onLevelComplete: (levelScore, bonus) => {
+        store.reportLevelComplete(levelScore, bonus);
+        profile().recordLevelResult(useGameStore.getState().level, levelScore);
+      },
+      onRunEnd: (result) => {
+        store.reportRunEnd(result);
+        profile().recordRunEnd(result);
+      },
+      onPowerUp: (type) => {
+        store.setPowerUp(POWER_UPS[type].name);
+        profile().notePowerUp();
+      },
     };
   }, []);
 
@@ -73,10 +94,10 @@ export function GameScreen() {
   };
 
   const retry = () => {
-    const mode = useGameStore.getState().mode;
+    const { mode, startLevel } = useGameStore.getState();
     setSaveStatus(isLeaderboardAvailable() ? 'idle' : 'unavailable');
-    useGameStore.getState().startGame(mode);
-    engineRef.current?.startRun(runConfigForMode(mode));
+    useGameStore.getState().startGame(mode, startLevel);
+    engineRef.current?.startRun(runConfigForMode(mode, startLevel));
   };
 
   const goToMenu = () => useGameStore.getState().setScreen('menu');

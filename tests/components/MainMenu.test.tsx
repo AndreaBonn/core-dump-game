@@ -23,7 +23,10 @@ describe('MainMenu', () => {
   });
 
   it.each([
+    ['Select Level', 'levels'],
     ['Leaderboard', 'leaderboard'],
+    ['Profile', 'profile'],
+    ['Achievements', 'achievements'],
     ['Settings', 'settings'],
   ])('%s opens the %s screen without starting a run', async (label, target) => {
     render(<MainMenu />);
@@ -33,9 +36,9 @@ describe('MainMenu', () => {
     expect(useGameStore.getState().screen).toBe(target);
   });
 
-  it('offers exactly the five entries the menu is meant to have', () => {
+  it('offers exactly the eight entries the menu is meant to have', () => {
     render(<MainMenu />);
 
-    expect(screen.getAllByRole('button')).toHaveLength(5);
+    expect(screen.getAllByRole('button')).toHaveLength(8);
   });
 });
