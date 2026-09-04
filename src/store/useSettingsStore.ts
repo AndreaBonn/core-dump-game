@@ -1,15 +1,16 @@
 import { create } from 'zustand';
 import { audioManager } from '@/engine/audio/AudioManager';
+import { readStored, writeStored } from '@/store/persistence';
 
 const MUTED_KEY = 'coredump.muted';
 const NICKNAME_KEY = 'coredump.nickname';
 
 function readMuted(): boolean {
-  return localStorage.getItem(MUTED_KEY) === 'true';
+  return readStored(MUTED_KEY) === 'true';
 }
 
 function readNickname(): string {
-  return localStorage.getItem(NICKNAME_KEY) ?? '';
+  return readStored(NICKNAME_KEY) ?? '';
 }
 
 interface SettingsState {
@@ -29,12 +30,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     toggleMuted: () => {
       const next = !get().muted;
       audioManager.setMuted(next);
-      localStorage.setItem(MUTED_KEY, String(next));
+      writeStored(MUTED_KEY, String(next));
       set({ muted: next });
     },
     setNickname: (nickname: string) => {
       const trimmed = nickname.trim().slice(0, 24);
-      localStorage.setItem(NICKNAME_KEY, trimmed);
+      writeStored(NICKNAME_KEY, trimmed);
       set({ nickname: trimmed });
     },
   };

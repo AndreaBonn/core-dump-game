@@ -71,7 +71,13 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
-      include: ['src/engine/**/*.ts', 'src/config/**/*.ts', 'src/services/**/*.ts'],
+      include: [
+        'src/engine/**/*.ts',
+        'src/config/**/*.ts',
+        'src/services/**/*.ts',
+        'src/store/**/*.ts',
+        'src/hooks/**/*.ts',
+      ],
       exclude: [
         'src/engine/systems/RenderSystem.ts',
         'src/engine/systems/EngineRenderer.ts',
