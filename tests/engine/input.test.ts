@@ -73,4 +73,41 @@ describe('InputSystem', () => {
     expect(handlers.onAim).not.toHaveBeenCalled();
     expect(handlers.onFire).not.toHaveBeenCalled();
   });
+
+  describe('keyboard', () => {
+    it('fires on Space at the last aimed point and suppresses page scroll', () => {
+      dispatch(canvas, 'pointermove', { pointerType: 'mouse', clientX: 55, clientY: 65 });
+      const event = new KeyboardEvent('keydown', { code: 'Space', cancelable: true });
+
+      window.dispatchEvent(event);
+
+      expect(handlers.onFire).toHaveBeenCalledWith(vec2(55, 65));
+      expect(event.defaultPrevented).toBe(true);
+    });
+
+    it('fires from the board origin when nothing has been aimed yet', () => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));
+      expect(handlers.onFire).toHaveBeenCalledWith(vec2(0, 0));
+    });
+
+    it('swaps on S without firing', () => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyS' }));
+      expect(handlers.onSwap).toHaveBeenCalledTimes(1);
+      expect(handlers.onFire).not.toHaveBeenCalled();
+    });
+
+    it('ignores other keys', () => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyQ' }));
+      expect(handlers.onFire).not.toHaveBeenCalled();
+      expect(handlers.onSwap).not.toHaveBeenCalled();
+    });
+
+    it('stops listening to the keyboard after destroy', () => {
+      input.destroy();
+      window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));
+      window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyS' }));
+      expect(handlers.onFire).not.toHaveBeenCalled();
+      expect(handlers.onSwap).not.toHaveBeenCalled();
+    });
+  });
 });

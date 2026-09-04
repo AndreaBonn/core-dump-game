@@ -72,18 +72,7 @@ export class GameEngine {
       { onAim: (point) => this.aim(point), onFire: () => this.fire(), onSwap: () => this.swap() },
       (clientX, clientY) => this.screenToBoard(clientX, clientY),
     );
-    window.addEventListener('keydown', this.onKeyDown);
   }
-
-  private onKeyDown = (event: KeyboardEvent): void => {
-    if (event.code === 'Space') {
-      event.preventDefault();
-      this.fire();
-    }
-    if (event.code === 'KeyS') {
-      this.swap();
-    }
-  };
 
   private swap(): void {
     if (this.phase !== 'playing') {
@@ -167,7 +156,6 @@ export class GameEngine {
 
   destroy(): void {
     this.input.destroy();
-    window.removeEventListener('keydown', this.onKeyDown);
     if (this.rafId !== 0) {
       cancelAnimationFrame(this.rafId);
       this.rafId = 0;
