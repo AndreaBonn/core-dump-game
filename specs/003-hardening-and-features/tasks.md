@@ -79,7 +79,7 @@ Il dettaglio (verify per step, motivazioni, rischi) è in `plan.md`.
   progetto Firebase reale (solo `.firebaserc.example`): un workflow di deploy non eseguibile darebbe
   una falsa sicurezza. Si scrive nel Blocco 6/7, quando ci sarà un progetto contro cui verificarlo
 
-## Blocco B — Retention meta [piano 002, Incremento B]
+## Blocco B — Retention meta [piano 002, Incremento B] — CHIUSO (`c8e4d8d`)
 
 - B0 | 0.6 | `onRunEnd(RunResult)` in `EngineEvents` + forward in `GameCanvas` + store (i 3 punti del confine)
 - B1 | - | `engine/core/stars.ts`: `starsFor(levelScore, thresholds)` puro + test
@@ -94,7 +94,7 @@ Il dettaglio (verify per step, motivazioni, rischi) è in `plan.md`.
 - B10 | B6 | Toast di sblocco achievement (z-index 500)
 - B11 | B7,B8 | Stati mancanti delle viste nuove: loading, empty, error, edge; render a 375 e 1280
 
-## Blocco C — Varietà gameplay [piano 002, Incremento C]
+## Blocco C — Varietà gameplay [piano 002, Incremento C] — CHIUSO (`86e2d06`)
 
 - C1 | - | Test di caratterizzazione su `MatchSystem.findRun` e `chainOps` (passano su HEAD)
 - C2 | C1 | `matchable: boolean` su `DataPacket` + guardia in `findRun` + test hazard
@@ -107,7 +107,7 @@ Il dettaglio (verify per step, motivazioni, rischi) è in `plan.md`.
 - C9 | C8,C3 | `pathKindFor(level)` derivato in `buildLevelConfig` e chance hazard per livello
 - C10 | C7,C9 | Bilanciamento e verifica runtime: nessun soft-lock da hazard
 
-## Blocco D — Onboarding e rifiniture [piano 002, Incremento D]
+## Blocco D — Onboarding e rifiniture [piano 002, Incremento D] — CHIUSO (`ed6c8b3`, `753196e`)
 
 - D1 | 0.6 | Hit-stop: `hitStopFrames` che salta step interi, mai `dt` frazionario + test
 - D2 | D1 | Trigger hit-stop da `outcome.combo`, soglie da costante nominata
@@ -118,7 +118,7 @@ Il dettaglio (verify per step, motivazioni, rischi) è in `plan.md`.
 - D7 | D6 | Flag `coredump.tutorialSeen`: auto-avvio, skip, rigiocabile da menu
 - D8 | D7,3.9 | Spec E2E che completa il tutorial dall'inizio alla fine
 
-## Blocco 6 — Licenza, privacy, cancellazione [F8]
+## Blocco 6 — Licenza, privacy, cancellazione [F8] — CHIUSO (`127407e`)
 
 - 6.1 | - | [DEC2] Aggiungi `LICENSE` e aggiorna la sezione License del README
 - 6.2 | - | Informativa privacy raggiungibile in-app da Settings
@@ -126,16 +126,18 @@ Il dettaglio (verify per step, motivazioni, rischi) è in `plan.md`.
 - 6.4 | 6.2 | Documenta la retention (TTL proposto 12 mesi, o la scelta di non averla)
 - 6.5 | 6.3 | UI "cancella i miei punteggi" con conferma
 
-## Blocco 7 — F1, parte non strutturale
+## Blocco 7 — F1, parte non strutturale — CHIUSO salvo App Check
 
 - 7.1 | 1.4 | Scrivi `docs/adr/0007-leaderboard-integrity.md` e `0008-portrait-viewport.md`
 - 7.2 | 7.1 | Copy in UI: la classifica è sociale e non verificata
-- 7.3 | - | [DEC3/DEC1] App Check con reCAPTCHA v3, solo se si decide di attivarlo
-- 7.4 | 7.3 | CSP in `firebase.json` estesa ai domini reCAPTCHA
+- [~] 7.3 | - | App Check **non attivato**: resta l'unico `[DEC]` aperto, da decidere a ridosso del
+  deploy. Senza traffico reale non c'è modo di sapere se serve, e il rischio di lockout in dev è concreto
+- [~] 7.4 | 7.3 | CSP invariata di conseguenza (i domini reCAPTCHA sono documentati in ADR-0007)
 
-## Blocco E — Boss entity [piano 002, Incremento E]
+## Blocco E — Boss entity [piano 002, Incremento E] — FUORI SEQUENZA (DEC4)
 
-- E0 | C10 | [DEC4] Design doc regole boss (HP, fasi, danno, attacchi), time-box mezza giornata, poi ri-pianificazione
+- [ ] E0 | C10 | Design doc regole boss (HP, fasi, danno, attacchi), time-box mezza giornata, poi
+  ri-pianificazione. Da riaprire ora che B, C e D sono chiusi
 
 ## Requisiti → blocco
 
