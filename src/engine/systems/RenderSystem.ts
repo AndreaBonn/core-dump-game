@@ -11,7 +11,8 @@ import type { Landing } from '@/engine/systems/trajectory';
 import type { VisualFx } from '@/engine/systems/VisualFx';
 import type { DataPacket } from '@/types/game.types';
 
-const BACKGROUND = '#0a0e14';
+/** Board background, also used to clear the canvas outside the fitted board. */
+export const BACKGROUND = '#0a0e14';
 const TRACE_OUTER = '#123024';
 const TRACE_GLOW = '#2fb344';
 const VOID_RING = '#ff5555';

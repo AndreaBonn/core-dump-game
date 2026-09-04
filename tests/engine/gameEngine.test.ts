@@ -260,11 +260,32 @@ describe('GameEngine', () => {
   });
 
   describe('coordinate mapping', () => {
-    it('resize centres the board and maps screen coordinates through the viewport', () => {
+    it('maps the centre of a landscape viewport to the centre of the board', () => {
+      const { engine, internals } = makeEngine(spyEvents());
+      engine.resize(1280, 800, 1);
+      // scale 4/3, no letterboxing: (640,400) screen is the middle of the board.
+      expect(internals.screenToBoard(640, 400)).toEqual({ x: 480, y: 300 });
+    });
+
+    it('maps the centre of a portrait viewport to the centre of the board', () => {
       const { engine, internals } = makeEngine(spyEvents());
       engine.resize(480, 600, 1);
-      // scale 0.5, offsetX 0, offsetY 150 -> (240,300) screen maps to (480,300) board.
-      expect(internals.screenToBoard(240, 300)).toEqual({ x: 480, y: 300 });
+      // Portrait fits the content box, not the 960x600 board, so the scale is
+      // set by the box; the centre still maps to the centre.
+      const centre = internals.screenToBoard(240, 300);
+      expect(centre.x).toBeCloseTo(480);
+      expect(centre.y).toBeCloseTo(300);
+    });
+
+    it('keeps the game larger in portrait than fitting the whole board would', () => {
+      const { engine, internals } = makeEngine(spyEvents());
+      engine.resize(375, 700, 1);
+
+      // 100 CSS px to the right of centre covers fewer board units than the
+      // 100 / (375/960) the old whole-board fit would have covered.
+      const centre = internals.screenToBoard(187.5, 350);
+      const offset = internals.screenToBoard(287.5, 350);
+      expect(offset.x - centre.x).toBeLessThan(100 / (375 / 960));
     });
   });
 

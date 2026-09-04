@@ -26,14 +26,16 @@ Il dettaglio (verify per step, motivazioni, rischi) è in `plan.md`.
 - [x] 1.5 | 1.4 | Modalità propagata dal salvataggio; la schermata Leaderboard ha i tre tab, esito `notABest` distinto dall'errore
 - [x] 1.6 | 1.4 | Vecchia collezione `scores` dismessa senza migrazione: nessun deploy, nessun dato reale (verificato: `git grep` non trova più il path root)
 
-## Blocco 2 — Giocabilità mobile portrait [F2]
+## Blocco 2 — Giocabilità mobile portrait [F2] — CHIUSO
 
-- 2.1 | - | `engine/core/viewport.ts` puro: `fitViewport(...)` estratto identico da `EngineRenderer.configure`
-- 2.2 | - | `CONTENT_BOX` in `constants.ts` + test: waypoint dei livelli 1..50 dentro il box
-- 2.3 | 2.1,2.2 | `fitViewport` sceglie il box: portrait → quadrato di contenuto, altrimenti board pieno
-- 2.4 | 2.3 | Cabla in `EngineRenderer.configure`; `screenToBoard` allineato (test di round-trip)
-- 2.5 | 2.4 | Layout portrait dell'HUD sotto i 640 px: board sopra, HUD sotto invece che overlay
-- 2.6 | 2.5 | Verifica runtime con screenshot a 375x700 e 1280x800
+- [x] 2.1 | - | `engine/core/viewport.ts` puro: `fitViewport`, `viewportBoxFor`, `screenToBoard`, `boardToScreen`
+- [x] 2.2 | - | `CONTENT_BOX` in `constants.ts` + test: 50 livelli, ogni waypoint dentro il box (era `inferred`, ora `measured`)
+- [x] 2.3 | 2.1,2.2 | Portrait → content box, landscape → board pieno; a 1280x800 la trasformazione è invariata bit per bit
+- [x] 2.4 | 2.3 | Cablato in `EngineRenderer`; canvas pulito per intero (in portrait eccede il board)
+- [~] 2.5 | 2.4 | **Non necessario**: osservato a 375x700, il board centrato non finisce mai sotto l'HUD.
+  Spostare l'HUD sarebbe stata complessità senza guadagno
+- [x] 2.6 | 2.4 | Verifica runtime: a 375 px il lato del gioco passa da 234 a 375, il packet da ~6 a ~21 px;
+  a 1280x800 nessuna differenza visibile rispetto alla baseline
 
 ## Blocco 3 — Test UI React ed E2E [F3]
 

@@ -27,3 +27,24 @@ export const LEVEL_CLEAR_BONUS = 500;
 /** Logical board dimensions; the canvas is scaled to fit these. */
 export const BOARD_WIDTH = 960;
 export const BOARD_HEIGHT = 600;
+
+/**
+ * Largest distance from the board centre at which a level places a packet:
+ * the widest starting radius a level can ask for (`levels.ts` tuning), plus a
+ * packet radius so the outermost packet is fully inside. Paths must keep every
+ * waypoint within this reach, which `tests/config/contentBox.test.ts` enforces.
+ */
+export const CONTENT_REACH = 270 + PACKET_RADIUS;
+
+/**
+ * The square region of the board the game actually occupies. On a portrait
+ * viewport this is what gets fitted to the screen instead of the full 960x600
+ * board, whose side margins are empty: fitting the board would shrink the game
+ * to a third of the screen height.
+ */
+export const CONTENT_BOX = {
+  x: BOARD_WIDTH / 2 - CONTENT_REACH,
+  y: BOARD_HEIGHT / 2 - CONTENT_REACH,
+  width: CONTENT_REACH * 2,
+  height: CONTENT_REACH * 2,
+} as const;

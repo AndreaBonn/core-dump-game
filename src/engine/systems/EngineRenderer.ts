@@ -3,8 +3,14 @@ import type { Chain } from '@/engine/entities/Chain';
 import type { CpuCursor } from '@/engine/entities/CpuCursor';
 import type { Path } from '@/engine/entities/Path';
 import type { Projectile } from '@/engine/entities/Projectile';
+import {
+  fitViewport,
+  screenToBoard as toBoard,
+  viewportBoxFor,
+  type Viewport,
+} from '@/engine/core/viewport';
 import { vec2, type Vec2 } from '@/engine/math/vec2';
-import { RenderSystem, type RenderScene } from '@/engine/systems/RenderSystem';
+import { BACKGROUND, RenderSystem, type RenderScene } from '@/engine/systems/RenderSystem';
 import { predictLanding } from '@/engine/systems/trajectory';
 import { frontUrgency } from '@/engine/systems/urgency';
 import type { VisualFx } from '@/engine/systems/VisualFx';
@@ -12,12 +18,6 @@ import type { GamePhase } from '@/types/game.types';
 
 /** Arc-length before the void within which the chain front reads as "in danger". */
 const URGENCY_THRESHOLD = VOID_RADIUS * 6;
-
-interface Viewport {
-  scale: number;
-  offsetX: number;
-  offsetY: number;
-}
 
 /** The simulation state a frame is drawn from, read but never written here. */
 export interface Frame {
@@ -41,42 +41,50 @@ export class EngineRenderer {
   private viewport: Viewport = { scale: 1, offsetX: 0, offsetY: 0 };
   private dpr = 1;
 
-  constructor(
-    private readonly boardWidth: number,
-    private readonly boardHeight: number,
-  ) {
+  constructor(boardWidth: number, boardHeight: number) {
     this.render = new RenderSystem(boardWidth, boardHeight);
   }
 
-  /** Resize the backing store and recompute the letterboxed fit transform. */
+  /**
+   * Resize the backing store and recompute the fit transform. Which part of the
+   * board is fitted depends on the shape of the viewport, see `viewportBoxFor`.
+   */
   configure(canvas: HTMLCanvasElement, cssWidth: number, cssHeight: number, dpr: number): void {
     this.dpr = dpr;
     canvas.width = Math.round(cssWidth * dpr);
     canvas.height = Math.round(cssHeight * dpr);
-    const scale = Math.min(cssWidth / this.boardWidth, cssHeight / this.boardHeight);
-    this.viewport = {
-      scale,
-      offsetX: (cssWidth - this.boardWidth * scale) / 2,
-      offsetY: (cssHeight - this.boardHeight * scale) / 2,
-    };
+    this.viewport = fitViewport(viewportBoxFor(cssWidth, cssHeight), cssWidth, cssHeight);
   }
 
   /** Map a client pointer position to board coordinates through the viewport. */
   screenToBoard(canvas: HTMLCanvasElement, clientX: number, clientY: number): Vec2 {
     const rect = canvas.getBoundingClientRect();
-    const { scale, offsetX, offsetY } = this.viewport;
-    return vec2((clientX - rect.left - offsetX) / scale, (clientY - rect.top - offsetY) / scale);
+    return toBoard(vec2(clientX - rect.left, clientY - rect.top), this.viewport);
   }
 
-  /** Set only the base transform, used before the first frame and while idle. */
+  /** Clear to the background and set the base transform, used while idle. */
   applyIdleTransform(ctx: CanvasRenderingContext2D): void {
+    this.clearCanvas(ctx);
     this.setTransform(ctx, 0, 0);
   }
 
   /** Apply the transform (shifted by `shake`) and draw the scene. */
   draw(ctx: CanvasRenderingContext2D, shake: Vec2, scene: RenderScene): void {
+    this.clearCanvas(ctx);
     this.setTransform(ctx, shake.x, shake.y);
     this.render.render(ctx, scene);
+  }
+
+  /**
+   * Paint the whole backing store, not just the fitted board. In portrait the
+   * canvas is taller than the fitted square, and the RenderSystem only clears
+   * board coordinates: without this the bands above and below would keep
+   * whatever the previous frame left there.
+   */
+  private clearCanvas(ctx: CanvasRenderingContext2D): void {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = BACKGROUND;
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   }
 
   /**
