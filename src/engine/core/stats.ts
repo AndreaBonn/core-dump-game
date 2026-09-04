@@ -1,4 +1,4 @@
-import type { RunMode } from '@/engine/core/runController';
+import { isScoredMode, type ScoreMode } from '@/engine/core/runController';
 import type { RunResult } from '@/types/game.types';
 
 /** Everything the profile screen shows, accumulated across every run. */
@@ -9,8 +9,8 @@ export interface PlayerStats {
   readonly powerUpsTriggered: number;
   /** Largest number of chained explosions in a single shot. */
   readonly bestCombo: number;
-  readonly bestScore: Readonly<Record<RunMode, number>>;
-  readonly bestLevel: Readonly<Record<RunMode, number>>;
+  readonly bestScore: Readonly<Record<ScoreMode, number>>;
+  readonly bestLevel: Readonly<Record<ScoreMode, number>>;
 }
 
 export const EMPTY_STATS: PlayerStats = {
@@ -29,6 +29,11 @@ export const EMPTY_STATS: PlayerStats = {
  * without the caller having to know when a copy was made.
  */
 export function recordRun(stats: PlayerStats, result: RunResult): PlayerStats {
+  // The tutorial is not a run: counting it would put a teaching level in the
+  // records and skew every average on the profile screen.
+  if (!isScoredMode(result.mode)) {
+    return stats;
+  }
   return {
     ...stats,
     runsPlayed: stats.runsPlayed + 1,

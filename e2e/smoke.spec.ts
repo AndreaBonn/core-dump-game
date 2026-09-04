@@ -10,6 +10,9 @@ import { expect, test, type Page } from '@playwright/test';
 
 async function startCampaign(page: Page): Promise<void> {
   await page.goto('/');
+  // Skip the first-run tutorial: these specs are about the game itself.
+  await page.evaluate(() => localStorage.setItem('coredump.tutorialSeen', 'true'));
+  await page.reload();
   await page.getByRole('button', { name: 'Play Campaign' }).click();
   await expect(page.getByTestId('hud-level')).toHaveText('1/10');
 }
@@ -75,11 +78,33 @@ test('the pause overlay can be dismissed with the keyboard', async ({ page }) =>
 test('each mode reaches a playable board from the menu', async ({ page }) => {
   for (const mode of ['Play Campaign', 'Endless', 'Daily Challenge']) {
     await page.goto('/');
+    await page.evaluate(() => localStorage.setItem('coredump.tutorialSeen', 'true'));
+    await page.reload();
     await page.getByRole('button', { name: mode }).click();
 
     await expect(page.locator('canvas')).toBeVisible();
     await expect(page.getByTestId('hud-score')).toHaveText('0');
   }
+});
+
+test('a first-time player is taught before being dropped into level 1', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Play Campaign' }).click();
+
+  const tutorial = page.getByRole('region', { name: 'Tutorial' });
+  await expect(tutorial).toBeVisible();
+  await expect(tutorial).toContainText(/aim and fire/i);
+
+  await tutorial.getByRole('button', { name: /got it/i }).click();
+  await expect(tutorial).toContainText(/match three/i);
+
+  await tutorial.getByRole('button', { name: /skip tutorial/i }).click();
+  await expect(page.getByRole('button', { name: 'Play Campaign' })).toBeVisible();
+
+  // Having seen it once, the same button now starts the campaign itself.
+  await page.getByRole('button', { name: 'Play Campaign' }).click();
+  await expect(page.getByTestId('hud-level')).toHaveText('1/10');
+  await expect(page.getByRole('region', { name: 'Tutorial' })).toBeHidden();
 });
 
 test('the leaderboard opens on every mode without a Firebase project', async ({ page }) => {

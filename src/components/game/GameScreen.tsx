@@ -4,6 +4,7 @@ import { HUD } from '@/components/game/HUD';
 import { GameOverScreen } from '@/components/game/GameOverScreen';
 import { LevelCompleteScreen } from '@/components/game/LevelCompleteScreen';
 import { PauseOverlay } from '@/components/game/PauseOverlay';
+import { TutorialOverlay } from '@/components/game/TutorialOverlay';
 import { POWER_UPS } from '@/config/powerUps';
 import type { GameEngine } from '@/engine/GameEngine';
 import { runConfigForMode } from '@/engine/core/runController';
@@ -22,6 +23,7 @@ export function GameScreen() {
   );
 
   const status = useGameStore((state) => state.status);
+  const mode = useGameStore((state) => state.mode);
   const score = useGameStore((state) => state.score);
   const levelResult = useGameStore((state) => state.levelResult);
   const gameResult = useGameStore((state) => state.gameResult);
@@ -77,6 +79,14 @@ export function GameScreen() {
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, []);
+
+  // Finishing or losing the tutorial counts as having seen it, the same as
+  // skipping: it must not come back on the next Play Campaign.
+  useEffect(() => {
+    if (mode === 'tutorial' && (status === 'gameWon' || status === 'gameOver')) {
+      useSettingsStore.getState().markTutorialSeen();
+    }
+  }, [mode, status]);
 
   const resume = () => {
     engineRef.current?.resume();
@@ -134,6 +144,7 @@ export function GameScreen() {
     <div className="relative h-full w-full">
       <GameCanvas events={events} onReady={(engine) => (engineRef.current = engine)} />
       <HUD onPause={pause} />
+      {mode === 'tutorial' && status === 'playing' && <TutorialOverlay />}
 
       {status === 'paused' && (
         <PauseOverlay onResume={resume} onRestart={restartLevel} onMenu={goToMenu} />

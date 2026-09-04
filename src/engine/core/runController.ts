@@ -7,7 +7,16 @@ import {
 } from '@/config/levels';
 import { dailySeed } from '@/engine/core/dailySeed';
 
-export type RunMode = 'campaign' | 'endless' | 'daily';
+/** Modes whose scores belong on a leaderboard and in the statistics. */
+export type ScoreMode = 'campaign' | 'endless' | 'daily';
+
+/** Every mode the engine can run, including the one that only teaches. */
+export type RunMode = ScoreMode | 'tutorial';
+
+/** Whether a run in this mode counts towards records and statistics. */
+export function isScoredMode(mode: RunMode): mode is ScoreMode {
+  return mode !== 'tutorial';
+}
 
 /**
  * Resolve the config for a 1-based level index, or null when the run has no
@@ -74,6 +83,29 @@ export function dailyConfig(date: Date): RunConfig {
   };
 }
 
+/**
+ * Tutorial: a single short, slow level with few colours and no power-ups or
+ * hazards, so the overlay can teach one thing at a time. Clearing it ends the
+ * run as a win, which is what closes the overlay.
+ */
+export function tutorialConfig(): RunConfig {
+  const base = buildLevelConfig(1, CAMPAIGN_SEED_BASE);
+  const level: LevelConfig = {
+    ...base,
+    chainLength: 12,
+    colorCount: 3,
+    chainSpeed: 16,
+    powerUpChance: 0,
+    hazardChance: 0,
+  };
+  return {
+    mode: 'tutorial',
+    levelProvider: (index) => (index === 1 ? level : null),
+    startIndex: 1,
+    finalLevel: 1,
+  };
+}
+
 /** Largest 32-bit signed integer, the upper bound for a random endless seed. */
 const MAX_SEED = 0x7fffffff;
 
@@ -85,6 +117,8 @@ const MAX_SEED = 0x7fffffff;
  */
 export function runConfigForMode(mode: RunMode, startIndex = 1): RunConfig {
   switch (mode) {
+    case 'tutorial':
+      return tutorialConfig();
     case 'endless':
       return endlessConfig(Math.floor(Math.random() * MAX_SEED));
     case 'daily':
