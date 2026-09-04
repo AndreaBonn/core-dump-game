@@ -91,6 +91,13 @@ describe('GameOverScreen', () => {
     expect(screen.queryByRole('button', { name: /save score/i })).not.toBeInTheDocument();
   });
 
+  it('does not offer to save a tutorial run, which has no board to go to', () => {
+    renderScreen({ saveStatus: 'notScored' });
+
+    expect(screen.queryByRole('button', { name: /save score/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(/not scored/i);
+  });
+
   it('always offers a way back to the menu', async () => {
     const props = renderScreen();
 

@@ -14,6 +14,7 @@ import { Privacy } from '@/components/menu/Privacy';
 import { deletePersonalScore, isLeaderboardAvailable } from '@/services/leaderboardService';
 import { useGameStore } from '@/store/useGameStore';
 import { useProgressStore } from '@/store/useProgressStore';
+import { useSettingsStore } from '@/store/useSettingsStore';
 
 describe('Privacy', () => {
   beforeEach(() => {
@@ -84,6 +85,19 @@ describe('Privacy', () => {
     await userEvent.click(screen.getByRole('button', { name: /delete my online scores/i }));
 
     expect(await screen.findByRole('status')).toHaveTextContent(/could not delete/i);
+  });
+
+  it('erases the preferences too, which the page promises and the profile alone did not', async () => {
+    useSettingsStore.getState().setNickname('trinity');
+    useSettingsStore.getState().markTutorialSeen();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<Privacy />);
+
+    await userEvent.click(screen.getByRole('button', { name: /erase this device/i }));
+
+    expect(useSettingsStore.getState().nickname).toBe('');
+    expect(useSettingsStore.getState().tutorialSeen).toBe(false);
+    expect(localStorage.getItem('coredump.nickname')).toBeNull();
   });
 
   it('erases the local profile on confirmation', async () => {

@@ -116,6 +116,41 @@ describe('useProgressStore', () => {
     expect(store.getState().stats.runsPlayed).toBe(1);
   });
 
+  it('fills in a mode missing from a profile saved before it existed', async () => {
+    // The regression this guards: a shallow spread replaced the whole record
+    // with the partial one, the first Math.max hit undefined, and that mode's
+    // best became NaN for the rest of the profile's life.
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ stats: { runsPlayed: 3, bestScore: { campaign: 500 } } }),
+    );
+    const store = await loadStore();
+
+    store.getState().recordRunEnd(run({ mode: 'endless', score: 100 }));
+
+    expect(store.getState().stats.bestScore.endless).toBe(100);
+    expect(store.getState().stats.bestScore.campaign).toBe(500);
+    expect(Number.isNaN(store.getState().stats.bestScore.daily)).toBe(false);
+  });
+
+  it('drops values a hand-edited profile could not have produced', async () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        progress: { stars: { 1: 7, 2: -1, notALevel: 3 }, unlockedThrough: -5 },
+        stats: { runsPlayed: 'many', bestCombo: Number.POSITIVE_INFINITY },
+        earned: ['hello-world', 42],
+      }),
+    );
+    const store = await loadStore();
+
+    expect(store.getState().progress.stars).toEqual({});
+    expect(store.getState().progress.unlockedThrough).toBe(1);
+    expect(store.getState().stats.runsPlayed).toBe(0);
+    expect(store.getState().stats.bestCombo).toBe(0);
+    expect(store.getState().earned).toEqual(['hello-world']);
+  });
+
   it('clears the profile on request', async () => {
     const store = await loadStore();
     store.getState().recordRunEnd(run());

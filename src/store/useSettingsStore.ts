@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { audioManager } from '@/engine/audio/AudioManager';
-import { readStored, writeStored } from '@/store/persistence';
+import { readStored, removeStored, writeStored } from '@/store/persistence';
 
 const MUTED_KEY = 'coredump.muted';
 const NICKNAME_KEY = 'coredump.nickname';
@@ -22,6 +22,7 @@ interface SettingsState {
   toggleMuted: () => void;
   setNickname: (nickname: string) => void;
   markTutorialSeen: () => void;
+  resetSettings: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => {
@@ -37,6 +38,14 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
       audioManager.setMuted(next);
       writeStored(MUTED_KEY, String(next));
       set({ muted: next });
+    },
+    /** Wipe every preference this store owns, for the privacy screen. */
+    resetSettings: () => {
+      removeStored(MUTED_KEY);
+      removeStored(NICKNAME_KEY);
+      removeStored(TUTORIAL_KEY);
+      audioManager.setMuted(false);
+      set({ muted: false, nickname: '', tutorialSeen: false });
     },
     markTutorialSeen: () => {
       writeStored(TUTORIAL_KEY, 'true');

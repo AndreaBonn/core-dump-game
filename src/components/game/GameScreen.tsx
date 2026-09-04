@@ -7,7 +7,7 @@ import { PauseOverlay } from '@/components/game/PauseOverlay';
 import { TutorialOverlay } from '@/components/game/TutorialOverlay';
 import { POWER_UPS } from '@/config/powerUps';
 import type { GameEngine } from '@/engine/GameEngine';
-import { runConfigForMode } from '@/engine/core/runController';
+import { isScoredMode, runConfigForMode } from '@/engine/core/runController';
 import { ensureSignedIn } from '@/services/authService';
 import { isLeaderboardAvailable, saveScore } from '@/services/leaderboardService';
 import { useGameStore } from '@/store/useGameStore';
@@ -113,6 +113,11 @@ export function GameScreen() {
   const goToMenu = () => useGameStore.getState().setScreen('menu');
 
   const handleSave = async (typedNickname: string) => {
+    const runMode = useGameStore.getState().mode;
+    if (!isScoredMode(runMode)) {
+      setSaveStatus('notScored');
+      return;
+    }
     if (!isLeaderboardAvailable()) {
       setSaveStatus('unavailable');
       return;
@@ -132,7 +137,7 @@ export function GameScreen() {
           levelReached: gameResult.levelReached,
         },
         uid,
-        useGameStore.getState().mode,
+        runMode,
       );
       setSaveStatus(outcome === 'saved' ? 'saved' : 'notABest');
     } catch {
@@ -160,7 +165,7 @@ export function GameScreen() {
         <GameOverScreen
           result={gameResult}
           defaultNickname={nickname}
-          saveStatus={saveStatus}
+          saveStatus={isScoredMode(mode) ? saveStatus : 'notScored'}
           onSave={handleSave}
           onRetry={retry}
           onMenu={goToMenu}

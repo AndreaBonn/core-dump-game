@@ -21,12 +21,16 @@ export function createPacket({
   powerUpType = null,
   matchable = true,
 }: CreatePacketOptions): DataPacket {
+  // A hazard carrying a power-up would be a reward for an obstacle, and the
+  // player could never collect it anyway since it cannot be matched away. The
+  // factory drops it rather than trusting every call site to remember.
+  const carried = matchable ? powerUpType : null;
   return {
     id: nextPacketId++,
     type,
     distance,
-    isPowerUp: powerUpType !== null,
-    powerUpType,
+    isPowerUp: carried !== null,
+    powerUpType: carried,
     matchable,
   };
 }

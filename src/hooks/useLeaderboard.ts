@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { RunMode } from '@/engine/core/runController';
+import type { ScoreMode } from '@/engine/core/runController';
 import {
   fetchPersonalBest,
   fetchTopScores,
@@ -25,7 +25,7 @@ function initialData(): LeaderboardData {
 }
 
 /** Top scores and the player's own entry for one mode's board. */
-export function useLeaderboard(mode: RunMode): LeaderboardData {
+export function useLeaderboard(mode: ScoreMode): LeaderboardData {
   const uid = useAuthStore((state) => state.uid);
   const [data, setData] = useState<LeaderboardData>(initialData);
 

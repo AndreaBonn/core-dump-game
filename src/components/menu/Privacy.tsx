@@ -5,6 +5,7 @@ import type { ScoreMode } from '@/engine/core/runController';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useGameStore } from '@/store/useGameStore';
 import { useProgressStore } from '@/store/useProgressStore';
+import { useSettingsStore } from '@/store/useSettingsStore';
 
 const SCORED_MODES: readonly ScoreMode[] = ['campaign', 'endless', 'daily'];
 
@@ -33,6 +34,7 @@ export function Privacy() {
   const setScreen = useGameStore((state) => state.setScreen);
   const uid = useAuthStore((state) => state.uid);
   const clearProfile = useProgressStore((state) => state.clearProfile);
+  const resetSettings = useSettingsStore((state) => state.resetSettings);
   const [erase, setErase] = useState<EraseState>('idle');
 
   const eraseOnlineScores = async () => {
@@ -91,8 +93,15 @@ export function Privacy() {
           <Button
             variant="ghost"
             onClick={() => {
-              if (window.confirm('Erase your progress, stars and achievements on this device?')) {
+              // "Everything" has to mean everything: progress, statistics and
+              // achievements, and the preferences too, nickname included.
+              if (
+                window.confirm(
+                  'Erase your progress, stars, achievements, nickname and settings on this device?',
+                )
+              ) {
                 clearProfile();
+                resetSettings();
               }
             }}
           >

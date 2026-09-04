@@ -1,4 +1,11 @@
-export type SaveStatus = 'idle' | 'saving' | 'saved' | 'notABest' | 'error' | 'unavailable';
+export type SaveStatus =
+  | 'idle'
+  | 'saving'
+  | 'saved'
+  | 'notABest'
+  | 'error'
+  | 'unavailable'
+  | 'notScored';
 
 export interface ScoreEntry {
   id: string;

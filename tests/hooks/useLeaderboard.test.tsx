@@ -16,7 +16,7 @@ import {
   fetchTopScores,
   isLeaderboardAvailable,
 } from '@/services/leaderboardService';
-import type { RunMode } from '@/engine/core/runController';
+import type { ScoreMode } from '@/engine/core/runController';
 import type { ScoreEntry } from '@/types/leaderboard.types';
 
 function entry(id: string, score: number): ScoreEntry {
@@ -68,12 +68,12 @@ describe('useLeaderboard', () => {
     (fetchPersonalBest as Mock).mockResolvedValue(null);
 
     const { result, rerender } = renderHook(({ mode }) => useLeaderboard(mode), {
-      initialProps: { mode: 'campaign' as RunMode },
+      initialProps: { mode: 'campaign' as ScoreMode },
     });
     await waitFor(() => expect(result.current.status).toBe('ready'));
 
     (fetchTopScores as Mock).mockResolvedValue([entry('b', 999)]);
-    rerender({ mode: 'daily' as RunMode });
+    rerender({ mode: 'daily' as ScoreMode });
 
     await waitFor(() => expect(result.current.top[0]?.id).toBe('b'));
     expect(fetchTopScores).toHaveBeenLastCalledWith('daily');

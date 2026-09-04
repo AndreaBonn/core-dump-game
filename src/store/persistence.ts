@@ -22,3 +22,11 @@ export function writeStored(key: string, value: string): void {
     // Storage refused the write; the in-memory state is still updated.
   }
 }
+
+export function removeStored(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Storage refused the removal; the in-memory state is still reset.
+  }
+}

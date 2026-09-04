@@ -1,5 +1,5 @@
 import type { DocumentData, DocumentSnapshot, QueryDocumentSnapshot } from 'firebase/firestore';
-import type { RunMode } from '@/engine/core/runController';
+import type { ScoreMode } from '@/engine/core/runController';
 import { getFirebase, isFirebaseConfigured } from '@/services/firebase';
 import { normalizeScore } from '@/services/scoreValidation';
 import type { NewScore, ScoreEntry } from '@/types/leaderboard.types';
@@ -40,7 +40,7 @@ function mapDoc(snapshot: QueryDocumentSnapshot<DocumentData> | DocumentSnapshot
 export async function saveScore(
   input: NewScore,
   userId: string,
-  mode: RunMode,
+  mode: ScoreMode,
 ): Promise<SaveOutcome> {
   const firebase = await getFirebase();
   if (!firebase) {
@@ -58,7 +58,7 @@ export async function saveScore(
 }
 
 /** Top scores for one mode, highest first. Returns [] when not configured. */
-export async function fetchTopScores(mode: RunMode, max = TOP_LIMIT): Promise<ScoreEntry[]> {
+export async function fetchTopScores(mode: ScoreMode, max = TOP_LIMIT): Promise<ScoreEntry[]> {
   const firebase = await getFirebase();
   if (!firebase) {
     return [];
@@ -78,7 +78,7 @@ export async function fetchTopScores(mode: RunMode, max = TOP_LIMIT): Promise<Sc
  * read, no scan, and no way for the answer to depend on how many runs they
  * have played.
  */
-export async function fetchPersonalBest(userId: string, mode: RunMode): Promise<ScoreEntry | null> {
+export async function fetchPersonalBest(userId: string, mode: ScoreMode): Promise<ScoreEntry | null> {
   const firebase = await getFirebase();
   if (!firebase) {
     return null;
@@ -89,7 +89,7 @@ export async function fetchPersonalBest(userId: string, mode: RunMode): Promise<
 }
 
 /** Remove the player's score for one mode (the right to erasure, spec F8). */
-export async function deletePersonalScore(userId: string, mode: RunMode): Promise<void> {
+export async function deletePersonalScore(userId: string, mode: ScoreMode): Promise<void> {
   const firebase = await getFirebase();
   if (!firebase) {
     throw new Error('Leaderboard is not configured');

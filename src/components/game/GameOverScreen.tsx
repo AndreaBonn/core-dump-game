@@ -20,6 +20,7 @@ const SAVE_MESSAGES: Record<SaveStatus, string> = {
   notABest: 'Your saved best for this mode is still higher.',
   error: 'Score not saved - check your connection.',
   unavailable: 'Leaderboard is not configured.',
+  notScored: 'Tutorial runs are not scored.',
 };
 
 export function GameOverScreen({
@@ -33,6 +34,9 @@ export function GameOverScreen({
   const [nickname, setNickname] = useState(defaultNickname);
   const title = result.won ? 'SYSTEM STABLE' : 'CORE DUMPED';
   const canSave = saveStatus === 'idle' || saveStatus === 'error';
+  // Nothing to save when there is no board to save to, or when the run was not
+  // a scored one: showing a dead nickname field would only be confusing.
+  const canOfferSaving = saveStatus !== 'unavailable' && saveStatus !== 'notScored';
 
   return (
     <Modal title={title}>
@@ -49,7 +53,7 @@ export function GameOverScreen({
         </div>
       </dl>
 
-      {saveStatus !== 'unavailable' && (
+      {canOfferSaving && (
         <div className="mb-4">
           <label htmlFor="nickname" className="mb-1 block text-xs uppercase text-terminal-muted">
             nickname
@@ -78,7 +82,7 @@ export function GameOverScreen({
       )}
 
       <div className="flex flex-col gap-2">
-        {saveStatus !== 'unavailable' && (
+        {canOfferSaving && (
           <Button className="w-full" disabled={!canSave} onClick={() => onSave(nickname)}>
             Save score
           </Button>

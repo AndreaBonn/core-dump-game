@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/shared/Button';
-import type { RunMode } from '@/engine/core/runController';
+import { isScoredMode, type ScoreMode } from '@/engine/core/runController';
 import { useGameStore } from '@/store/useGameStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
@@ -12,7 +12,7 @@ const STATUS_MESSAGE: Record<string, string> = {
   unavailable: 'The online leaderboard is not configured in this build.',
 };
 
-const MODES: readonly { mode: RunMode; label: string }[] = [
+const MODES: readonly { mode: ScoreMode; label: string }[] = [
   { mode: 'campaign', label: 'Campaign' },
   { mode: 'endless', label: 'Endless' },
   { mode: 'daily', label: 'Daily' },
@@ -21,7 +21,12 @@ const MODES: readonly { mode: RunMode; label: string }[] = [
 export function Leaderboard() {
   const setScreen = useGameStore((state) => state.setScreen);
   const uid = useAuthStore((state) => state.uid);
-  const [mode, setMode] = useState<RunMode>(() => useGameStore.getState().mode);
+  const [mode, setMode] = useState<ScoreMode>(() => {
+    // The board has nothing to show for the tutorial, so it opens on the
+    // campaign instead of on a mode that has no leaderboard.
+    const played = useGameStore.getState().mode;
+    return isScoredMode(played) ? played : 'campaign';
+  });
   const { status, top, personalBest } = useLeaderboard(mode);
 
   return (
