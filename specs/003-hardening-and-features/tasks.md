@@ -53,12 +53,16 @@ Il dettaglio (verify per step, motivazioni, rischi) è in `plan.md`.
   modalità raggiungibili, la leaderboard senza Firebase. Screenshot allegati al report, non su disco.
   Rosso verificato azzerando il punteggio dei match: il test fallisce col proprio messaggio
 
-## Blocco 4 — Error boundary e prompt di aggiornamento [F5, F6]
+## Blocco 4 — Error boundary e prompt di aggiornamento [F5, F6] — CHIUSO
 
-- 4.1 | 3.1 | `components/shared/ErrorBoundary.tsx` con fallback e ricarica
-- 4.2 | 4.1 | Monta il boundary in `main.tsx`
-- 4.3 | 3.1 | `registerType: 'prompt'` + componente `UpdatePrompt` (z-index toast 500)
-- 4.4 | 4.3 | Verifica manuale: build, preview, secondo build, ricarica, compare il prompt
+- [x] 4.1 | 3.1 | `ErrorBoundary` con fallback, spiegazione e ricarica; 4 test RTL
+- [x] 4.2 | 4.1 | Montato in `main.tsx` attorno ad `App`
+- [x] 4.3 | 3.1 | `registerType: 'prompt'` + `UpdatePrompt` (z-index 500, `role="status"` per non rubare il focus); 4 test
+- [x] 4.4 | 4.3 | Verificato a runtime con due build successive: il prompt compare solo con una versione
+  in attesa, e il click ricarica sulla nuova versione. Il primo tentativo non provava nulla:
+  la pagina non era controllata dal service worker (`controller: null`), quindi il nuovo si
+  attivava da solo e non c'era niente da promuovere
+- [~] Monitoring esterno: **fuori scope per decisione DEC3**, non rimandato
 
 ## Blocco 5 — CI e manutenzione dipendenze [F7]
 

@@ -1,4 +1,5 @@
 import { GameScreen } from '@/components/game/GameScreen';
+import { UpdatePrompt } from '@/components/shared/UpdatePrompt';
 import { MainMenu } from '@/components/menu/MainMenu';
 import { Leaderboard } from '@/components/menu/Leaderboard';
 import { Settings } from '@/components/menu/Settings';
@@ -13,6 +14,7 @@ function App() {
       {screen === 'game' && <GameScreen />}
       {screen === 'leaderboard' && <Leaderboard />}
       {screen === 'settings' && <Settings />}
+      <UpdatePrompt />
     </div>
   );
 }

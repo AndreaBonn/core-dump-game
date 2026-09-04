@@ -10,7 +10,9 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // The player is told and chooses: an update that swaps the app mid-run
+      // reloads the board with no explanation.
+      registerType: 'prompt',
       includeAssets: ['favicon.svg', 'robots.txt'],
       manifest: {
         name: 'Core Dump',
