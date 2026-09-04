@@ -98,6 +98,7 @@ export class EngineRenderer {
     const { chain, cursor, fx, path } = frame;
     fx.update(dt);
     fx.syncChain(chain.packets, dt);
+    fx.trackProjectiles(frame.projectiles);
     this.draw(ctx, fx.shakeOffset(), {
       path,
       packets: chain.packets,

@@ -2,6 +2,7 @@ import {
   BOARD_HEIGHT,
   BOARD_WIDTH,
   FIXED_TIMESTEP,
+  HIT_STOP_STEPS,
   LEVEL_CLEAR_BONUS,
   MAX_FRAME_TIME,
   PACKET_RADIUS,
@@ -69,6 +70,9 @@ export class GameEngine {
   private rafId = 0;
   private lastTime = 0;
   private accumulator = 0;
+  /** Simulation steps to skip for hit-stop; time still passes, the sim does not. */
+  private hitStopSteps = 0;
+  private reducedMotion = false;
 
   constructor(canvas: HTMLCanvasElement, events: EngineEvents) {
     const context = canvas.getContext('2d');
@@ -175,8 +179,10 @@ export class GameEngine {
     }
   }
 
-  /** Toggle reduced-motion, suppressing screen shake and particle bursts. */
+  /** Toggle reduced-motion: no shake, no particles, and no hit-stop. */
   setReducedMotion(reduced: boolean): void {
+    this.reducedMotion = reduced;
+    this.hitStopSteps = 0;
     this.fx.setReducedMotion(reduced);
   }
 
@@ -218,7 +224,11 @@ export class GameEngine {
       // Re-check the phase each step: fixedUpdate can end the level or the game
       // mid-frame, and remaining steps must not keep simulating past that.
       while (this.phase === 'playing' && this.accumulator >= FIXED_TIMESTEP) {
-        this.fixedUpdate(FIXED_TIMESTEP);
+        if (this.hitStopSteps > 0) {
+          this.hitStopSteps -= 1;
+        } else {
+          this.fixedUpdate(FIXED_TIMESTEP);
+        }
         this.accumulator -= FIXED_TIMESTEP;
       }
     }
@@ -278,6 +288,7 @@ export class GameEngine {
       audioManager.playMatch(outcome.combo);
       if (outcome.combo) {
         this.events.onComboChange(outcome.combo);
+        this.freezeForCombo(outcome.combo.multiplier);
       }
       for (const powerUp of outcome.powerUps) {
         this.applyPowerUp(powerUp);
@@ -303,6 +314,15 @@ export class GameEngine {
     }
     this.phase = 'levelComplete';
     this.events.onLevelComplete(levelScore, LEVEL_CLEAR_BONUS);
+  }
+
+  /** Hold the simulation still for a moment so a big cascade reads. */
+  private freezeForCombo(multiplier: number): void {
+    if (this.reducedMotion) {
+      return;
+    }
+    const steps = HIT_STOP_STEPS[Math.min(multiplier, HIT_STOP_STEPS.length - 1)] ?? 0;
+    this.hitStopSteps = Math.max(this.hitStopSteps, steps);
   }
 
   private applyPowerUp(type: PowerUpType): void {

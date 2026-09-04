@@ -36,6 +36,8 @@ const MAX_SHAKE = 22;
 /** Shake for a plain match, and the extra each chained explosion adds. */
 const SHAKE_BASE = 4;
 const SHAKE_PER_EXPLOSION = 4;
+/** Positions kept behind each projectile for its tracer. */
+const TRACER_LENGTH = 8;
 
 /**
  * Transient, view-only animation state layered on top of the deterministic
@@ -51,6 +53,7 @@ export class VisualFx {
   private readonly renderDist = new Map<number, number>();
   private shakeMag = 0;
   private reducedMotion = false;
+  private readonly tracers = new Map<number, Vec2[]>();
   time = 0;
 
   /** When on, suppress screen shake and particle bursts (prefers-reduced-motion). */
@@ -182,6 +185,38 @@ export class VisualFx {
       return;
     }
     this.shakeMag = Math.min(MAX_SHAKE, Math.max(this.shakeMag, magnitude));
+  }
+
+  /**
+   * Remember where each live projectile has been, for the tracer behind it.
+   * Keyed by projectile so several forked shots keep separate trails, and
+   * pruned to the ones still in flight so the map cannot grow unbounded.
+   */
+  trackProjectiles(projectiles: readonly { id: number; position: Vec2 }[]): void {
+    if (this.reducedMotion) {
+      this.tracers.clear();
+      return;
+    }
+    const live = new Set<number>();
+    for (const projectile of projectiles) {
+      live.add(projectile.id);
+      const trail = this.tracers.get(projectile.id) ?? [];
+      trail.push({ x: projectile.position.x, y: projectile.position.y });
+      if (trail.length > TRACER_LENGTH) {
+        trail.shift();
+      }
+      this.tracers.set(projectile.id, trail);
+    }
+    for (const id of this.tracers.keys()) {
+      if (!live.has(id)) {
+        this.tracers.delete(id);
+      }
+    }
+  }
+
+  /** Past positions of a projectile, oldest first. */
+  tracerFor(id: number): readonly Vec2[] {
+    return this.tracers.get(id) ?? [];
   }
 
   /** A small ring plus a few sparks where a projectile lodges into the chain. */

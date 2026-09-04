@@ -21,6 +21,13 @@ export const FIXED_TIMESTEP = 1 / 120;
 /** Upper bound on accumulated time processed per frame, to avoid spirals. */
 export const MAX_FRAME_TIME = 0.25;
 
+/**
+ * Simulation steps frozen when a shot chains explosions, by combo size. The
+ * pause is what makes a big cascade land; it skips whole fixed steps rather
+ * than shortening one, so the simulation stays on the same timestep.
+ */
+export const HIT_STOP_STEPS: readonly number[] = [0, 0, 6, 10, 16];
+
 /** Bonus awarded for clearing a level without a packet reaching the void. */
 export const LEVEL_CLEAR_BONUS = 500;
 

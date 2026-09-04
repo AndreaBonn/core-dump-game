@@ -63,6 +63,7 @@ export class RenderSystem {
       this.guides.urgency(ctx, scene);
     }
     for (const projectile of scene.projectiles) {
+      this.drawTracer(ctx, scene.fx.tracerFor(projectile.id), colorForType(projectile.type));
       this.drawProjectile(ctx, projectile);
     }
     this.drawCursor(ctx, scene.cursor, scene.fx.time);
@@ -192,6 +193,26 @@ export class RenderSystem {
     ctx.moveTo(position.x + arm, position.y - arm);
     ctx.lineTo(position.x - arm, position.y + arm);
     ctx.stroke();
+  }
+
+  /** The glowing streak a shot leaves behind, fading toward its oldest point. */
+  private drawTracer(ctx: CanvasRenderingContext2D, trail: readonly Vec2[], color: string): void {
+    if (trail.length < 2) {
+      return;
+    }
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = color;
+    for (let i = 1; i < trail.length; i += 1) {
+      const strength = i / trail.length;
+      ctx.globalAlpha = 0.05 + strength * 0.35;
+      ctx.lineWidth = PACKET_RADIUS * 0.3 * strength;
+      ctx.beginPath();
+      ctx.moveTo(trail[i - 1]!.x, trail[i - 1]!.y);
+      ctx.lineTo(trail[i]!.x, trail[i]!.y);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   private drawProjectile(ctx: CanvasRenderingContext2D, projectile: Projectile): void {
