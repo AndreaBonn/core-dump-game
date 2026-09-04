@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { RunMode } from '@/engine/core/runController';
-import type { ComboLabel, PacketType } from '@/types/game.types';
+import type { ComboLabel, PacketType, RunResult } from '@/types/game.types';
 
 export type Screen = 'menu' | 'game' | 'leaderboard' | 'settings';
 export type GameStatus = 'playing' | 'paused' | 'levelComplete' | 'gameOver' | 'gameWon';
@@ -37,8 +37,7 @@ interface GameUIState {
   setNextPacket: (nextPacket: PacketType | null) => void;
   reportLevelComplete: (levelScore: number, bonus: number) => void;
   advanceLevel: () => void;
-  reportGameOver: (finalScore: number, levelReached: number) => void;
-  reportGameWon: (finalScore: number, levelReached: number) => void;
+  reportRunEnd: (result: RunResult) => void;
   setStatus: (status: GameStatus) => void;
 }
 
@@ -68,9 +67,10 @@ export const useGameStore = create<GameUIState>((set) => ({
   reportLevelComplete: (levelScore, bonus) =>
     set({ status: 'levelComplete', levelResult: { levelScore, bonus } }),
   advanceLevel: () => set({ status: 'playing', levelResult: null, combo: null }),
-  reportGameOver: (finalScore, levelReached) =>
-    set({ status: 'gameOver', gameResult: { finalScore, levelReached, won: false } }),
-  reportGameWon: (finalScore, levelReached) =>
-    set({ status: 'gameWon', gameResult: { finalScore, levelReached, won: true } }),
+  reportRunEnd: (result) =>
+    set({
+      status: result.won ? 'gameWon' : 'gameOver',
+      gameResult: { finalScore: result.score, levelReached: result.levelReached, won: result.won },
+    }),
   setStatus: (status) => set({ status }),
 }));

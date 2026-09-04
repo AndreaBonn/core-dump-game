@@ -8,8 +8,7 @@ export function createNoopEngineEvents(): EngineEvents {
     onComboChange: () => {},
     onNextPacketChange: () => {},
     onLevelComplete: () => {},
-    onGameOver: () => {},
-    onGameWon: () => {},
+    onRunEnd: () => {},
     onPowerUp: () => {},
   };
 }

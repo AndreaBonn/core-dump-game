@@ -34,8 +34,7 @@ export function GameScreen() {
       onComboChange: store.setCombo,
       onNextPacketChange: store.setNextPacket,
       onLevelComplete: store.reportLevelComplete,
-      onGameOver: store.reportGameOver,
-      onGameWon: store.reportGameWon,
+      onRunEnd: store.reportRunEnd,
       onPowerUp: (type) => store.setPowerUp(POWER_UPS[type].name),
     };
   }, []);

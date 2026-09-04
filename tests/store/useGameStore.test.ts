@@ -30,7 +30,13 @@ describe('useGameStore', () => {
 
     it('clears the previous run instead of carrying its result over', () => {
       state().setScore(4200);
-      state().reportGameOver(4200, 7);
+      state().reportRunEnd({
+        mode: 'campaign',
+        score: 4200,
+        levelReached: 7,
+        levelScore: 200,
+        won: false,
+      });
 
       state().startGame('daily');
 
@@ -43,14 +49,26 @@ describe('useGameStore', () => {
 
   describe('run reporting', () => {
     it('records a game over as a run that was not won', () => {
-      state().reportGameOver(1500, 4);
+      state().reportRunEnd({
+        mode: 'campaign',
+        score: 1500,
+        levelReached: 4,
+        levelScore: 100,
+        won: false,
+      });
 
       expect(state().status).toBe('gameOver');
       expect(state().gameResult).toEqual({ finalScore: 1500, levelReached: 4, won: false });
     });
 
     it('records a win as a won run', () => {
-      state().reportGameWon(9000, 10);
+      state().reportRunEnd({
+        mode: 'campaign',
+        score: 9000,
+        levelReached: 10,
+        levelScore: 500,
+        won: true,
+      });
 
       expect(state().status).toBe('gameWon');
       expect(state().gameResult).toEqual({ finalScore: 9000, levelReached: 10, won: true });

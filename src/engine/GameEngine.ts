@@ -25,7 +25,13 @@ import { applyShot, spawnProjectiles } from '@/engine/systems/ShotSystem';
 import { InputSystem } from '@/engine/systems/InputSystem';
 import { EngineRenderer } from '@/engine/systems/EngineRenderer';
 import { VisualFx } from '@/engine/systems/VisualFx';
-import type { EngineEvents, GamePhase, PacketType, PowerUpType } from '@/types/game.types';
+import type {
+  EngineEvents,
+  GamePhase,
+  PacketType,
+  PowerUpType,
+  RunResult,
+} from '@/types/game.types';
 
 const PROJECTILE_MARGIN = PACKET_RADIUS * 2;
 /** Screen shake when a level is cleared, and when the chain reaches the void. */
@@ -279,7 +285,7 @@ export class GameEngine {
     audioManager.play('level-complete');
     if (isRunWon(this.level, this.runConfig.finalLevel)) {
       this.phase = 'gameWon';
-      this.events.onGameWon(this.score, this.level);
+      this.events.onRunEnd(this.runResult(levelScore, true));
       return;
     }
     this.phase = 'levelComplete';
@@ -306,7 +312,18 @@ export class GameEngine {
     this.projectiles = [];
     this.fx.addShake(GAME_OVER_SHAKE);
     audioManager.play('game-over');
-    this.events.onGameOver(this.score, this.level);
+    this.events.onRunEnd(this.runResult(this.score - this.levelStartScore, false));
+  }
+
+  /** Everything the meta layer needs about a finished run, in one value. */
+  private runResult(levelScore: number, won: boolean): RunResult {
+    return {
+      mode: this.runConfig.mode,
+      score: this.score,
+      levelReached: this.level,
+      levelScore,
+      won,
+    };
   }
 
   private drawFrame(dt: number): void {

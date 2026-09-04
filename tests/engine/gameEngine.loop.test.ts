@@ -15,8 +15,8 @@ describe('GameEngine fixed-timestep loop', () => {
 
   it('ends the game exactly once even when many steps accumulate in one frame', () => {
     const events = createNoopEngineEvents();
-    const onGameOver = vi.fn();
-    const engine = new GameEngine(createCanvasMock(), { ...events, onGameOver });
+    const onRunEnd = vi.fn();
+    const engine = new GameEngine(createCanvasMock(), { ...events, onRunEnd });
     engine.resize(960, 600, 1);
     engine.startLevel(1);
 
@@ -35,7 +35,7 @@ describe('GameEngine fixed-timestep loop', () => {
     // One frame worth of ~0.25s accumulates dozens of fixed steps.
     (engine as unknown as { loop: (now: number) => void }).loop(500);
 
-    expect(onGameOver).toHaveBeenCalledTimes(1);
+    expect(onRunEnd).toHaveBeenCalledTimes(1);
     engine.destroy();
   });
 });

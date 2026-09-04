@@ -46,8 +46,7 @@ function spyEvents(): EngineEvents & Record<keyof EngineEvents, ReturnType<typeo
     onComboChange: vi.fn(),
     onNextPacketChange: vi.fn(),
     onLevelComplete: vi.fn(),
-    onGameOver: vi.fn(),
-    onGameWon: vi.fn(),
+    onRunEnd: vi.fn(),
     onPowerUp: vi.fn(),
   } as EngineEvents & Record<keyof EngineEvents, ReturnType<typeof vi.fn>>;
 }
@@ -407,7 +406,13 @@ describe('GameEngine', () => {
       internals.tryInsert(new Projectile(vec2(208, 0), 0, 'ERROR'));
 
       expect(internals.phase).toBe('gameWon');
-      expect(events.onGameWon).toHaveBeenCalledWith(30 + LEVEL_CLEAR_BONUS, TOTAL_LEVELS);
+      expect(events.onRunEnd).toHaveBeenCalledWith({
+        mode: 'campaign',
+        score: 30 + LEVEL_CLEAR_BONUS,
+        levelReached: TOTAL_LEVELS,
+        levelScore: 30,
+        won: true,
+      });
     });
   });
 
@@ -452,7 +457,13 @@ describe('GameEngine', () => {
       internals.fixedUpdate(FIXED_TIMESTEP);
 
       expect(internals.phase).toBe('gameOver');
-      expect(events.onGameOver).toHaveBeenCalledWith(0, internals.level);
+      expect(events.onRunEnd).toHaveBeenCalledWith({
+        mode: 'campaign',
+        score: 0,
+        levelReached: internals.level,
+        levelScore: 0,
+        won: false,
+      });
       expect(internals.projectiles).toHaveLength(0);
     });
   });

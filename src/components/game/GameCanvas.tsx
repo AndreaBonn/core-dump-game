@@ -31,8 +31,7 @@ export function GameCanvas({ events, onReady }: GameCanvasProps) {
       onComboChange: (value) => eventsRef.current.onComboChange(value),
       onNextPacketChange: (value) => eventsRef.current.onNextPacketChange(value),
       onLevelComplete: (score, bonus) => eventsRef.current.onLevelComplete(score, bonus),
-      onGameOver: (score, reached) => eventsRef.current.onGameOver(score, reached),
-      onGameWon: (score, reached) => eventsRef.current.onGameWon(score, reached),
+      onRunEnd: (result) => eventsRef.current.onRunEnd(result),
       onPowerUp: (type) => eventsRef.current.onPowerUp(type),
     };
 
