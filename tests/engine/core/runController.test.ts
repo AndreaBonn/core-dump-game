@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { campaignConfig, dailyConfig, endlessConfig } from '@/engine/core/runController';
+import { campaignConfig, dailyConfig, endlessConfig, isRunWon } from '@/engine/core/runController';
 import { getLevel, TOTAL_LEVELS } from '@/config/levels';
 
 describe('campaignConfig', () => {
@@ -70,5 +70,24 @@ describe('dailyConfig', () => {
   it('is an unbounded run (never null)', () => {
     const { levelProvider } = dailyConfig(new Date(2026, 6, 22));
     expect(levelProvider(30)).not.toBeNull();
+  });
+});
+
+describe('isRunWon', () => {
+  it('is won on the final level of a bounded run', () => {
+    expect(isRunWon(TOTAL_LEVELS, TOTAL_LEVELS)).toBe(true);
+  });
+
+  it('is not won before the final level', () => {
+    expect(isRunWon(TOTAL_LEVELS - 1, TOTAL_LEVELS)).toBe(false);
+  });
+
+  it('is won past the final level, so an overshoot cannot strand the run', () => {
+    expect(isRunWon(TOTAL_LEVELS + 1, TOTAL_LEVELS)).toBe(true);
+  });
+
+  it('is never won without a final level (endless and daily)', () => {
+    expect(isRunWon(1, null)).toBe(false);
+    expect(isRunWon(500, null)).toBe(false);
   });
 });

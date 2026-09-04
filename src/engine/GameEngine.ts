@@ -11,8 +11,9 @@ import { type LevelConfig } from '@/config/levels';
 import { colorForType } from '@/config/packetTypes';
 import { FORK_SPREAD } from '@/config/powerUps';
 import { audioManager } from '@/engine/audio/AudioManager';
+import { isInsideBoard } from '@/engine/core/bounds';
 import { buildLevelState, drawPacketType } from '@/engine/core/levelBuilder';
-import { campaignConfig, type RunConfig } from '@/engine/core/runController';
+import { campaignConfig, isRunWon, type RunConfig } from '@/engine/core/runController';
 import type { Chain } from '@/engine/entities/Chain';
 import type { CpuCursor } from '@/engine/entities/CpuCursor';
 import type { Path } from '@/engine/entities/Path';
@@ -28,6 +29,9 @@ import { VisualFx } from '@/engine/systems/VisualFx';
 import type { EngineEvents, GamePhase, PacketType, PowerUpType } from '@/types/game.types';
 
 const PROJECTILE_MARGIN = PACKET_RADIUS * 2;
+/** Screen shake when a level is cleared, and when the chain reaches the void. */
+const LEVEL_CLEAR_SHAKE = 6;
+const GAME_OVER_SHAKE = 16;
 
 export class GameEngine {
   private readonly ctx: CanvasRenderingContext2D;
@@ -241,7 +245,7 @@ export class GameEngine {
       if (this.tryInsert(projectile)) {
         continue;
       }
-      if (this.isInsideBoard(projectile.position)) {
+      if (isInsideBoard(projectile.position, PROJECTILE_MARGIN)) {
         survivors.push(projectile);
       }
     }
@@ -253,21 +257,13 @@ export class GameEngine {
     if (!outcome.hit) {
       return false;
     }
-    this.fx.spawnImpact(projectile.position, colorForType(projectile.type));
-    this.fx.popPacket(outcome.insertedId);
+    this.fx.reactToShot(outcome, projectile.position, colorForType(projectile.type));
     if (outcome.explosions > 0) {
       this.score += outcome.score;
       this.events.onScoreChange(this.score);
-      audioManager.play('match');
-      for (const burst of outcome.bursts) {
-        this.fx.spawnExplosion(burst.point, burst.color);
-      }
-      this.fx.addShake(4 + outcome.explosions * 4);
+      audioManager.playMatch(outcome.combo);
       if (outcome.combo) {
         this.events.onComboChange(outcome.combo);
-        audioManager.play(
-          `combo-${Math.min(outcome.combo.multiplier, 4)}` as 'combo-2' | 'combo-3' | 'combo-4',
-        );
       }
       for (const powerUp of outcome.powerUps) {
         this.applyPowerUp(powerUp);
@@ -284,20 +280,15 @@ export class GameEngine {
     const levelScore = this.score - this.levelStartScore;
     this.score += LEVEL_CLEAR_BONUS;
     this.events.onScoreChange(this.score);
-    this.fx.addShake(6);
+    this.fx.addShake(LEVEL_CLEAR_SHAKE);
     audioManager.play('level-complete');
-    // A run ends in victory only when the mode has a final level and we reached
-    // it; endless and daily runs have no final level, so they only end on game
-    // over.
-    const finalLevel = this.runConfig.finalLevel;
-    const isFinalLevel = finalLevel !== null && this.level >= finalLevel;
-    if (isFinalLevel) {
+    if (isRunWon(this.level, this.runConfig.finalLevel)) {
       this.phase = 'gameWon';
       this.events.onGameWon(this.score, this.level);
-    } else {
-      this.phase = 'levelComplete';
-      this.events.onLevelComplete(levelScore, LEVEL_CLEAR_BONUS);
+      return;
     }
+    this.phase = 'levelComplete';
+    this.events.onLevelComplete(levelScore, LEVEL_CLEAR_BONUS);
   }
 
   private applyPowerUp(type: PowerUpType): void {
@@ -315,19 +306,10 @@ export class GameEngine {
     this.events.onPowerUp(type);
   }
 
-  private isInsideBoard(point: Vec2): boolean {
-    return (
-      point.x >= -PROJECTILE_MARGIN &&
-      point.x <= BOARD_WIDTH + PROJECTILE_MARGIN &&
-      point.y >= -PROJECTILE_MARGIN &&
-      point.y <= BOARD_HEIGHT + PROJECTILE_MARGIN
-    );
-  }
-
   private endGame(): void {
     this.phase = 'gameOver';
     this.projectiles = [];
-    this.fx.addShake(16);
+    this.fx.addShake(GAME_OVER_SHAKE);
     audioManager.play('game-over');
     this.events.onGameOver(this.score, this.level);
   }

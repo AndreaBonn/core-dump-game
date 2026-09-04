@@ -25,6 +25,14 @@ export interface RunConfig {
   readonly finalLevel: number | null;
 }
 
+/**
+ * Whether clearing `level` ends the run in victory. Only a mode with a final
+ * level can be won: endless and daily have none, so they end on game over.
+ */
+export function isRunWon(level: number, finalLevel: number | null): boolean {
+  return finalLevel !== null && level >= finalLevel;
+}
+
 /** Campaign: the fixed TOTAL_LEVELS sequence; past the last level the run is won. */
 export function campaignConfig(): RunConfig {
   return {

@@ -1,6 +1,7 @@
 import { PACKET_RADIUS } from '@/config/constants';
 import { easeOutBack } from '@/engine/math/easing';
 import type { Vec2 } from '@/engine/math/vec2';
+import type { ShotOutcome } from '@/engine/systems/ShotSystem';
 import type { DataPacket } from '@/types/game.types';
 
 interface Particle {
@@ -32,6 +33,9 @@ const PARTICLE_DRAG = 2.2;
 const SHAKE_DECAY = 9;
 const SHAKE_FREQ = 47;
 const MAX_SHAKE = 22;
+/** Shake for a plain match, and the extra each chained explosion adds. */
+const SHAKE_BASE = 4;
+const SHAKE_PER_EXPLOSION = 4;
 
 /**
  * Transient, view-only animation state layered on top of the deterministic
@@ -154,6 +158,23 @@ export class VisualFx {
     if (id !== null) {
       this.pops.set(id, 0);
     }
+  }
+
+  /**
+   * Every visual reaction to one shot landing: the impact where it lodged, the
+   * pop of the inserted packet, a burst per destroyed packet and a shake that
+   * grows with the size of the cascade.
+   */
+  reactToShot(outcome: ShotOutcome, impact: Vec2, color: string): void {
+    this.spawnImpact(impact, color);
+    this.popPacket(outcome.insertedId);
+    if (outcome.explosions === 0) {
+      return;
+    }
+    for (const burst of outcome.bursts) {
+      this.spawnExplosion(burst.point, burst.color);
+    }
+    this.addShake(SHAKE_BASE + outcome.explosions * SHAKE_PER_EXPLOSION);
   }
 
   addShake(magnitude: number): void {

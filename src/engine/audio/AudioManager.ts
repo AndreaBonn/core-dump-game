@@ -1,11 +1,14 @@
 import { renderSpec } from '@/engine/audio/renderSpec';
 import { SOUND_SPECS, type SoundName } from '@/engine/audio/soundSpecs';
+import type { ComboLabel } from '@/types/game.types';
 
 export type { SoundName };
 
 type ContextFactory = () => AudioContext;
 
 const MASTER_GAIN = 0.5;
+/** Highest combo sample available; longer cascades reuse it. */
+const MAX_COMBO_SOUND = 4;
 
 /**
  * Synthesizes short sound effects with the Web Audio API — no audio assets. The
@@ -31,6 +34,14 @@ export class AudioManager {
 
   isMuted(): boolean {
     return this.muted;
+  }
+
+  /** The match sound, escalated by the combo that came with it. */
+  playMatch(combo: ComboLabel | null): void {
+    this.play('match');
+    if (combo) {
+      this.play(`combo-${Math.min(combo.multiplier, MAX_COMBO_SOUND)}` as SoundName);
+    }
   }
 
   play(name: SoundName): void {
