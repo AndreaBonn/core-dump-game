@@ -42,6 +42,7 @@ export function buildLevelState(config: LevelConfig): LevelState {
       types,
       rng,
       powerUpChance: config.powerUpChance,
+      hazardChance: config.hazardChance,
     }),
     config.chainSpeed,
   );

@@ -1,5 +1,10 @@
 import { compactBehind } from '@/engine/core/chainOps';
-import { ROLLBACK_DISTANCE, SLEEP_DURATION, SLEEP_FACTOR } from '@/config/powerUps';
+import {
+  KILL_RANGE,
+  ROLLBACK_DISTANCE,
+  SLEEP_DURATION,
+  SLEEP_FACTOR,
+} from '@/config/powerUps';
 import type { Rng } from '@/engine/math/rng';
 import type { DataPacket, PacketType, PowerUpType } from '@/types/game.types';
 
@@ -49,6 +54,8 @@ export interface PowerUpEffect {
   readonly sleepSeconds: number | null;
   /** Whether the next shot splits into three projectiles. */
   readonly armsFork: boolean;
+  /** Whether the run gains a shield against the next reach of the void. */
+  readonly grantsShield: boolean;
 }
 
 /** Everything a power-up may read or mutate, without reaching into the engine. */
@@ -57,7 +64,39 @@ export interface PowerUpContext {
   rng: Rng;
 }
 
-const NO_EFFECT: PowerUpEffect = { speedFactor: null, sleepSeconds: null, armsFork: false };
+const NO_EFFECT: PowerUpEffect = {
+  speedFactor: null,
+  sleepSeconds: null,
+  armsFork: false,
+  grantsShield: false,
+};
+
+/**
+ * Terminate the `count` packets closest to the void (`kill -9`). Hitting the
+ * front is what buys time, and it is the only part of the chain the player
+ * cannot always reach with a shot.
+ */
+export function killRange(packets: DataPacket[], count: number): DataPacket[] {
+  const removed = packets.splice(Math.max(0, packets.length - count), count);
+  return removed;
+}
+
+/** The packet type the chain holds most of, or null on an empty chain. */
+export function mostFrequentType(packets: readonly DataPacket[]): PacketType | null {
+  const counts = new Map<PacketType, number>();
+  for (const packet of packets) {
+    counts.set(packet.type, (counts.get(packet.type) ?? 0) + 1);
+  }
+  let best: PacketType | null = null;
+  let bestCount = 0;
+  for (const [type, count] of counts) {
+    if (count > bestCount) {
+      best = type;
+      bestCount = count;
+    }
+  }
+  return best;
+}
 
 /**
  * Apply the chain-side part of a power-up and describe the run-side part the
@@ -68,7 +107,7 @@ const NO_EFFECT: PowerUpEffect = { speedFactor: null, sleepSeconds: null, armsFo
 export function resolvePowerUp(type: PowerUpType, ctx: PowerUpContext): PowerUpEffect {
   switch (type) {
     case 'SLEEP':
-      return { speedFactor: SLEEP_FACTOR, sleepSeconds: SLEEP_DURATION, armsFork: false };
+      return { ...NO_EFFECT, speedFactor: SLEEP_FACTOR, sleepSeconds: SLEEP_DURATION };
     case 'FORK':
       return { ...NO_EFFECT, armsFork: true };
     case 'GARBAGE_COLLECT': {
@@ -81,5 +120,19 @@ export function resolvePowerUp(type: PowerUpType, ctx: PowerUpContext): PowerUpE
     case 'ROLLBACK':
       rollbackChain(ctx.packets, ROLLBACK_DISTANCE);
       return NO_EFFECT;
+    case 'KILL_9':
+      killRange(ctx.packets, KILL_RANGE);
+      return NO_EFFECT;
+    case 'TRY_CATCH':
+      return { ...NO_EFFECT, grantsShield: true };
+    case 'REGEX': {
+      // Unlike garbage collect, which picks at random, regex matches the type
+      // the chain holds most of: a bigger, aimed sweep.
+      const target = mostFrequentType(ctx.packets);
+      if (target) {
+        removeAllOfType(ctx.packets, target);
+      }
+      return NO_EFFECT;
+    }
   }
 }

@@ -31,16 +31,20 @@ export function scoreForMatch(length: number): number {
  */
 export function findRun(packets: readonly DataPacket[], index: number): MatchRun {
   const anchor = packets[index];
-  if (!anchor) {
+  // A hazard neither forms a run nor extends one: it breaks the chain into
+  // segments that have to be cleared around it.
+  if (!anchor || !anchor.matchable) {
     return { start: index, length: 0 };
   }
   const type = anchor.type;
+  const joins = (packet: DataPacket | undefined): boolean =>
+    packet !== undefined && packet.matchable && packet.type === type;
   let start = index;
-  while (start > 0 && packets[start - 1]!.type === type) {
+  while (start > 0 && joins(packets[start - 1])) {
     start -= 1;
   }
   let end = index;
-  while (end < packets.length - 1 && packets[end + 1]!.type === type) {
+  while (end < packets.length - 1 && joins(packets[end + 1])) {
     end += 1;
   }
   return { start, length: end - start + 1 };

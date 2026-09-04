@@ -9,6 +9,7 @@ import {
 } from '@/config/constants';
 import { type LevelConfig } from '@/config/levels';
 import { colorForType } from '@/config/packetTypes';
+import { SHIELD_ROLLBACK } from '@/config/powerUps';
 import { audioManager } from '@/engine/audio/AudioManager';
 import { isInsideBoard } from '@/engine/core/bounds';
 import { buildLevelState, drawPacketType } from '@/engine/core/levelBuilder';
@@ -20,7 +21,7 @@ import type { Projectile } from '@/engine/entities/Projectile';
 import type { VoidHole } from '@/engine/entities/VoidHole';
 import { createRng, type Rng } from '@/engine/math/rng';
 import { type Vec2 } from '@/engine/math/vec2';
-import { resolvePowerUp } from '@/engine/systems/PowerUpSystem';
+import { resolvePowerUp, rollbackChain } from '@/engine/systems/PowerUpSystem';
 import { applyShot, spawnProjectiles } from '@/engine/systems/ShotSystem';
 import { InputSystem } from '@/engine/systems/InputSystem';
 import { EngineRenderer } from '@/engine/systems/EngineRenderer';
@@ -57,6 +58,8 @@ export class GameEngine {
   private baseSpeed = 0;
   private sleepTimer = 0;
   private pendingFork = false;
+  /** A caught reach of the void, granted by try/catch and spent once. */
+  private shielded = false;
 
   private runConfig: RunConfig = campaignConfig();
   private level = 1;
@@ -134,6 +137,7 @@ export class GameEngine {
     this.baseSpeed = state.baseSpeed;
     this.sleepTimer = 0;
     this.pendingFork = false;
+    this.shielded = false;
     this.projectiles = [];
   }
 
@@ -226,6 +230,15 @@ export class GameEngine {
     this.chain.advance(dt);
     this.updateProjectiles(dt);
     if (this.voidHole.hasSwallowed(this.chain.frontDistance, VOID_RADIUS)) {
+      // try/catch turns the first reach of the void into a hard shove back
+      // instead of a game over. The second one ends the run.
+      if (this.shielded) {
+        this.shielded = false;
+        rollbackChain(this.chain.packets, SHIELD_ROLLBACK);
+        this.fx.addShake(GAME_OVER_SHAKE);
+        audioManager.play('powerup');
+        return;
+      }
       this.endGame();
     }
   }
@@ -303,6 +316,9 @@ export class GameEngine {
     if (effect.armsFork) {
       this.pendingFork = true;
     }
+    if (effect.grantsShield) {
+      this.shielded = true;
+    }
     audioManager.play('powerup');
     this.events.onPowerUp(type);
   }
@@ -315,7 +331,11 @@ export class GameEngine {
     this.events.onRunEnd(this.runResult(this.score - this.levelStartScore, false));
   }
 
-  /** Everything the meta layer needs about a finished run, in one value. */
+  /**
+   * Everything the meta layer needs about a finished run. `won` is passed in
+   * rather than derived: losing on the final campaign level reaches the same
+   * level as winning it, and only the caller knows which happened.
+   */
   private runResult(levelScore: number, won: boolean): RunResult {
     return {
       mode: this.runConfig.mode,

@@ -14,6 +14,9 @@ export const POWER_UPS: Record<PowerUpType, PowerUpDefinition> = {
   FORK: { type: 'FORK', name: 'fork()', glyph: 'Y' },
   GARBAGE_COLLECT: { type: 'GARBAGE_COLLECT', name: 'garbage collect', glyph: '#' },
   ROLLBACK: { type: 'ROLLBACK', name: 'rollback()', glyph: '<' },
+  KILL_9: { type: 'KILL_9', name: 'kill -9', glyph: 'K' },
+  TRY_CATCH: { type: 'TRY_CATCH', name: 'try/catch', glyph: 'T' },
+  REGEX: { type: 'REGEX', name: 'regex', glyph: '*' },
 };
 
 export const POWER_UP_TYPES: readonly PowerUpType[] = Object.keys(POWER_UPS) as PowerUpType[];
@@ -26,3 +29,7 @@ export const SLEEP_FACTOR = 0.35;
 export const FORK_SPREAD = 0.16;
 /** Arc-length the chain retreats when `rollback()` triggers. */
 export const ROLLBACK_DISTANCE = PACKET_SPACING * 6;
+/** Packets `kill -9` terminates, taken from the front of the chain. */
+export const KILL_RANGE = 5;
+/** Arc-length the chain is pushed back when `try/catch` catches the void. */
+export const SHIELD_ROLLBACK = PACKET_SPACING * 10;

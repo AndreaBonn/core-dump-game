@@ -11,12 +11,15 @@ export interface CreatePacketOptions {
   type: PacketType;
   distance: number;
   powerUpType?: PowerUpType | null;
+  /** Pass false for a hazard packet: it can never take part in a match. */
+  matchable?: boolean;
 }
 
 export function createPacket({
   type,
   distance,
   powerUpType = null,
+  matchable = true,
 }: CreatePacketOptions): DataPacket {
   return {
     id: nextPacketId++,
@@ -24,5 +27,6 @@ export function createPacket({
     distance,
     isPowerUp: powerUpType !== null,
     powerUpType,
+    matchable,
   };
 }

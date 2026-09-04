@@ -2,7 +2,14 @@ import type { RunMode } from '@/engine/core/runController';
 
 export type PacketType = 'ERROR' | 'SUCCESS' | 'INFO' | 'WARNING' | 'DEBUG' | 'TRACE' | 'FATAL';
 
-export type PowerUpType = 'SLEEP' | 'FORK' | 'GARBAGE_COLLECT' | 'ROLLBACK';
+export type PowerUpType =
+  | 'SLEEP'
+  | 'FORK'
+  | 'GARBAGE_COLLECT'
+  | 'ROLLBACK'
+  | 'KILL_9'
+  | 'TRY_CATCH'
+  | 'REGEX';
 
 export interface DataPacket {
   readonly id: number;
@@ -11,6 +18,11 @@ export interface DataPacket {
   distance: number;
   isPowerUp: boolean;
   powerUpType: PowerUpType | null;
+  /**
+   * False for a hazard packet: it never forms a run and never explodes with
+   * one, so it has to be worked around rather than matched away.
+   */
+  matchable: boolean;
 }
 
 export type GamePhase = 'idle' | 'playing' | 'paused' | 'levelComplete' | 'gameOver' | 'gameWon';

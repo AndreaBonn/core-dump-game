@@ -19,6 +19,9 @@ const VOID_RING = '#ff5555';
 const CURSOR_BODY = '#1e2a38';
 const CURSOR_PIN = '#2fb344';
 const INK = '#0a0e14';
+/** Hazard packets are drawn dead, outside the packet palette. */
+const HAZARD_BODY = '#33404f';
+const HAZARD_MARK = '#0a0e14';
 
 export interface RenderScene {
   path: Path;
@@ -146,8 +149,12 @@ export class RenderSystem {
   }
 
   drawPacket(ctx: CanvasRenderingContext2D, packet: DataPacket, position: Vec2, scale = 1): void {
-    const color = colorForType(packet.type);
     const radius = PACKET_RADIUS * scale;
+    if (!packet.matchable) {
+      this.drawHazard(ctx, position, radius);
+      return;
+    }
+    const color = colorForType(packet.type);
     this.roundedSquare(ctx, position, radius, color, true);
 
     if (packet.isPowerUp && packet.powerUpType) {
@@ -167,6 +174,24 @@ export class RenderSystem {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(glyph, position.x, position.y + 1);
+  }
+
+  /**
+   * A hazard: dead grey and crossed out, so it reads as "not part of any
+   * match" by shape as well as by colour, on a greyscale screen too.
+   */
+  private drawHazard(ctx: CanvasRenderingContext2D, position: Vec2, radius: number): void {
+    this.roundedSquare(ctx, position, radius, HAZARD_BODY, false);
+    ctx.strokeStyle = HAZARD_MARK;
+    ctx.lineWidth = Math.max(2, radius * 0.18);
+    ctx.lineCap = 'round';
+    const arm = radius * 0.5;
+    ctx.beginPath();
+    ctx.moveTo(position.x - arm, position.y - arm);
+    ctx.lineTo(position.x + arm, position.y + arm);
+    ctx.moveTo(position.x + arm, position.y - arm);
+    ctx.lineTo(position.x - arm, position.y + arm);
+    ctx.stroke();
   }
 
   private drawProjectile(ctx: CanvasRenderingContext2D, projectile: Projectile): void {

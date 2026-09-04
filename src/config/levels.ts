@@ -1,4 +1,4 @@
-import { buildSpiral } from '@/config/paths';
+import { buildTrack, type PathKind } from '@/config/paths';
 import type { StarThresholds } from '@/engine/core/stars';
 import type { Vec2 } from '@/engine/math/vec2';
 
@@ -13,6 +13,10 @@ export interface LevelConfig {
   readonly chainSpeed: number;
   /** Probability that a generated packet is a power-up. */
   readonly powerUpChance: number;
+  /** Probability that a generated packet is an unmatchable hazard. */
+  readonly hazardChance: number;
+  /** Shape of the track this level is played on. */
+  readonly pathKind: PathKind;
   /** Deterministic seed for chain generation. */
   readonly seed: number;
   /** Level scores that earn one, two and three stars. */
@@ -22,6 +26,35 @@ export interface LevelConfig {
 export const TOTAL_LEVELS = 10;
 
 const POWER_UP_CHANCE = 0.05;
+
+/**
+ * Hazards start appearing once the player knows the rules, and are capped well
+ * below the density that would wall off a segment of the chain: they are an
+ * obstacle to play around, not a way to make a level unwinnable.
+ */
+const HAZARD_FROM_LEVEL = 4;
+const HAZARD_STEP = 0.015;
+const MAX_HAZARD_CHANCE = 0.12;
+
+function hazardChanceFor(level: number): number {
+  if (level < HAZARD_FROM_LEVEL) {
+    return 0;
+  }
+  return Math.min((level - HAZARD_FROM_LEVEL + 1) * HAZARD_STEP, MAX_HAZARD_CHANCE);
+}
+
+/**
+ * The track shape of a level, derived rather than tabulated so endless and
+ * daily runs past the campaign keep varying. Levels 1-3 stay on the spiral
+ * while the player learns the game.
+ */
+function pathKindFor(level: number): PathKind {
+  if (level <= 3) {
+    return 'spiral';
+  }
+  const shapes: readonly PathKind[] = ['spiral', 'serpentine', 'spiral', 'loop'];
+  return shapes[(level - 4) % shapes.length]!;
+}
 
 /**
  * Points per packet asked for one, two and three stars. Clearing a chain in
@@ -77,10 +110,11 @@ function tuningForLevel(level: number): LevelTuning {
  */
 export function buildLevelConfig(level: number, seedBase: number): LevelConfig {
   const tuning = tuningForLevel(level);
-  const waypoints: readonly Vec2[] = buildSpiral({
-    turns: tuning.turns,
-    startRadius: tuning.startRadius,
-    endRadius: 54,
+  const pathKind = pathKindFor(level);
+  const waypoints: readonly Vec2[] = buildTrack({
+    kind: pathKind,
+    reach: tuning.startRadius,
+    sweeps: pathKind === 'spiral' ? tuning.turns : Math.max(2, Math.round(tuning.turns)),
     waypoints: 64,
   });
   return {
@@ -90,6 +124,8 @@ export function buildLevelConfig(level: number, seedBase: number): LevelConfig {
     colorCount: tuning.colorCount,
     chainSpeed: tuning.chainSpeed,
     powerUpChance: POWER_UP_CHANCE,
+    hazardChance: hazardChanceFor(level),
+    pathKind,
     seed: seedBase + level * SEED_STEP,
     starThresholds: starThresholdsFor(tuning.chainLength),
   };

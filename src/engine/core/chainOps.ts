@@ -10,6 +10,8 @@ export interface ChainGenerationOptions {
   rng: Rng;
   /** Probability in [0, 1] that a generated packet carries a power-up. */
   powerUpChance?: number;
+  /** Probability in [0, 1] that a generated packet is an unmatchable hazard. */
+  hazardChance?: number;
 }
 
 /**
@@ -23,16 +25,22 @@ export function generateChainPackets({
   types,
   rng,
   powerUpChance = 0,
+  hazardChance = 0,
 }: ChainGenerationOptions): DataPacket[] {
   const packets: DataPacket[] = [];
   for (let i = 0; i < count; i += 1) {
     const distanceFromFront = count - i;
-    const powerUpType = rng.next() < powerUpChance ? rng.pick(POWER_UP_TYPES) : null;
+    // Draw order is fixed so a seed keeps producing the same chain: hazard
+    // first, then power-up, then type. A hazard carries no power-up, or
+    // clearing it would be a reward instead of an obstacle.
+    const isHazard = rng.next() < hazardChance;
+    const powerUpType = !isHazard && rng.next() < powerUpChance ? rng.pick(POWER_UP_TYPES) : null;
     packets.push(
       createPacket({
         type: rng.pick(types),
         distance: -distanceFromFront * PACKET_SPACING,
         powerUpType,
+        matchable: !isHazard,
       }),
     );
   }
