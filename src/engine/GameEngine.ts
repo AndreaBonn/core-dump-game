@@ -22,16 +22,12 @@ import { createRng, type Rng } from '@/engine/math/rng';
 import { type Vec2 } from '@/engine/math/vec2';
 import { resolvePowerUp } from '@/engine/systems/PowerUpSystem';
 import { applyShot } from '@/engine/systems/ShotSystem';
-import { predictLanding } from '@/engine/systems/trajectory';
-import { frontUrgency } from '@/engine/systems/urgency';
 import { InputSystem } from '@/engine/systems/InputSystem';
 import { EngineRenderer } from '@/engine/systems/EngineRenderer';
 import { VisualFx } from '@/engine/systems/VisualFx';
 import type { EngineEvents, GamePhase, PacketType, PowerUpType } from '@/types/game.types';
 
 const PROJECTILE_MARGIN = PACKET_RADIUS * 2;
-/** Arc-length before the void within which the chain front reads as "in danger". */
-const URGENCY_THRESHOLD = VOID_RADIUS * 6;
 
 export class GameEngine {
   private readonly ctx: CanvasRenderingContext2D;
@@ -349,26 +345,24 @@ export class GameEngine {
   }
 
   private drawFrame(dt: number): void {
+    // Before the first level is built the entities do not exist yet, so only
+    // the base transform is applied and nothing is read.
     if (this.phase === 'idle') {
       this.presenter.applyIdleTransform(this.ctx);
       return;
     }
-    this.fx.update(dt);
-    this.fx.syncChain(this.chain.packets, dt);
-    const trajectory =
-      this.phase === 'playing'
-        ? predictLanding(this.cursor.position, this.cursor.angle, this.chain.packets, this.path)
-        : null;
-    const urgency = frontUrgency(this.chain.frontDistance, this.path.length, URGENCY_THRESHOLD);
-    this.presenter.draw(this.ctx, this.fx.shakeOffset(), {
-      path: this.path,
-      packets: this.chain.packets,
-      voidPosition: this.voidHole.position,
-      cursor: this.cursor,
-      projectiles: this.projectiles,
-      fx: this.fx,
-      trajectory,
-      urgency,
-    });
+    this.presenter.present(
+      this.ctx,
+      {
+        phase: this.phase,
+        path: this.path,
+        chain: this.chain,
+        voidPosition: this.voidHole.position,
+        cursor: this.cursor,
+        projectiles: this.projectiles,
+        fx: this.fx,
+      },
+      dt,
+    );
   }
 }
