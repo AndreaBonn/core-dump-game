@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { applyShot } from '@/engine/systems/ShotSystem';
+import { applyShot, spawnProjectiles } from '@/engine/systems/ShotSystem';
 import { Path } from '@/engine/entities/Path';
 import { createPacket, resetPacketIds } from '@/engine/entities/DataPacket';
 import { vec2 } from '@/engine/math/vec2';
+import { FORK_SPREAD } from '@/config/powerUps';
 import type { DataPacket, PacketType, PowerUpType } from '@/types/game.types';
 
 const straightPath = new Path([vec2(0, 0), vec2(600, 0)]);
@@ -83,5 +84,29 @@ describe('applyShot', () => {
     expect(outcome.bursts).toHaveLength(3);
     expect(outcome.bursts[0]!.color).toBe('#ff5555');
     expect(typeof outcome.insertedId).toBe('number');
+  });
+});
+
+describe('spawnProjectiles', () => {
+  const origin = vec2(480, 300);
+
+  it('launches one projectile down the aimed angle', () => {
+    const shots = spawnProjectiles(origin, 0.5, 'INFO', false);
+
+    expect(shots).toHaveLength(1);
+    expect(shots[0]!.type).toBe('INFO');
+    expect(shots[0]!.position).toEqual(origin);
+  });
+
+  it('launches three spread around the angle when a fork is armed', () => {
+    const shots = spawnProjectiles(origin, 0.5, 'INFO', true);
+
+    expect(shots).toHaveLength(3);
+    // Every projectile carries the same packet, only the direction differs.
+    expect(shots.every((shot) => shot.type === 'INFO')).toBe(true);
+    const headings = shots.map((shot) => Math.atan2(shot.velocity.y, shot.velocity.x));
+    expect(headings[0]).toBeCloseTo(0.5 - FORK_SPREAD);
+    expect(headings[1]).toBeCloseTo(0.5);
+    expect(headings[2]).toBeCloseTo(0.5 + FORK_SPREAD);
   });
 });

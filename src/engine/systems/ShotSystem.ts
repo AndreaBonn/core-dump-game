@@ -1,7 +1,9 @@
 import { comboLabel } from '@/config/combos';
 import { colorForType } from '@/config/packetTypes';
+import { FORK_SPREAD } from '@/config/powerUps';
 import { insertPacketAt } from '@/engine/core/chainOps';
 import { createPacket } from '@/engine/entities/DataPacket';
+import { Projectile } from '@/engine/entities/Projectile';
 import type { Vec2 } from '@/engine/math/vec2';
 import {
   findCollisionIndex,
@@ -15,6 +17,20 @@ import type { ComboLabel, DataPacket, PacketType, PowerUpType } from '@/types/ga
 export interface Shot {
   position: Vec2;
   type: PacketType;
+}
+
+/**
+ * The projectiles one trigger pull launches: a single one aimed down the
+ * cursor angle, or the three of a pending `fork()`, spread around it.
+ */
+export function spawnProjectiles(
+  origin: Vec2,
+  angle: number,
+  type: PacketType,
+  forked: boolean,
+): Projectile[] {
+  const angles = forked ? [angle - FORK_SPREAD, angle, angle + FORK_SPREAD] : [angle];
+  return angles.map((shotAngle) => new Projectile(origin, shotAngle, type));
 }
 
 /** Where a removed packet detonated, for the caller to spawn an effect. */

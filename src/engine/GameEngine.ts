@@ -9,7 +9,6 @@ import {
 } from '@/config/constants';
 import { type LevelConfig } from '@/config/levels';
 import { colorForType } from '@/config/packetTypes';
-import { FORK_SPREAD } from '@/config/powerUps';
 import { audioManager } from '@/engine/audio/AudioManager';
 import { isInsideBoard } from '@/engine/core/bounds';
 import { buildLevelState, drawPacketType } from '@/engine/core/levelBuilder';
@@ -17,12 +16,12 @@ import { campaignConfig, isRunWon, type RunConfig } from '@/engine/core/runContr
 import type { Chain } from '@/engine/entities/Chain';
 import type { CpuCursor } from '@/engine/entities/CpuCursor';
 import type { Path } from '@/engine/entities/Path';
-import { Projectile } from '@/engine/entities/Projectile';
+import type { Projectile } from '@/engine/entities/Projectile';
 import type { VoidHole } from '@/engine/entities/VoidHole';
 import { createRng, type Rng } from '@/engine/math/rng';
 import { type Vec2 } from '@/engine/math/vec2';
 import { resolvePowerUp } from '@/engine/systems/PowerUpSystem';
-import { applyShot } from '@/engine/systems/ShotSystem';
+import { applyShot, spawnProjectiles } from '@/engine/systems/ShotSystem';
 import { InputSystem } from '@/engine/systems/InputSystem';
 import { EngineRenderer } from '@/engine/systems/EngineRenderer';
 import { VisualFx } from '@/engine/systems/VisualFx';
@@ -191,12 +190,8 @@ export class GameEngine {
       return;
     }
     const type = this.cursor.loadNext(this.drawType());
-    const angles = this.pendingFork
-      ? [this.cursor.angle - FORK_SPREAD, this.cursor.angle, this.cursor.angle + FORK_SPREAD]
-      : [this.cursor.angle];
-    for (const angle of angles) {
-      this.projectiles.push(new Projectile(this.cursor.position, angle, type));
-    }
+    const { position, angle } = this.cursor;
+    this.projectiles.push(...spawnProjectiles(position, angle, type, this.pendingFork));
     this.pendingFork = false;
     this.fx.spawnImpact(this.cursor.position, colorForType(type));
     audioManager.play('shoot');
