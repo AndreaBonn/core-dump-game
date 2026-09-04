@@ -17,6 +17,7 @@ const SAVE_MESSAGES: Record<SaveStatus, string> = {
   idle: '',
   saving: 'Saving...',
   saved: 'Score saved to the leaderboard.',
+  notABest: 'Your saved best for this mode is still higher.',
   error: 'Score not saved - check your connection.',
   unavailable: 'Leaderboard is not configured.',
 };

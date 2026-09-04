@@ -5,24 +5,27 @@ vi.mock('@/services/firebase', () => ({
   isFirebaseConfigured: vi.fn(),
 }));
 vi.mock('firebase/firestore', () => ({
-  addDoc: vi.fn(() => Promise.resolve({ id: 'new' })),
-  collection: vi.fn((db: unknown, name: string) => ({ db, name })),
-  serverTimestamp: vi.fn(() => 'TS'),
+  collection: vi.fn((db: unknown, ...path: string[]) => ({ db, path: path.join('/') })),
+  doc: vi.fn((db: unknown, ...path: string[]) => ({ db, path: path.join('/') })),
+  getDoc: vi.fn(),
   getDocs: vi.fn(),
+  setDoc: vi.fn(() => Promise.resolve()),
+  deleteDoc: vi.fn(() => Promise.resolve()),
+  serverTimestamp: vi.fn(() => 'TS'),
   limit: vi.fn((n: number) => ({ limit: n })),
-  orderBy: vi.fn(() => 'orderBy'),
+  orderBy: vi.fn((field: string, direction: string) => ({ orderBy: field, direction })),
   query: vi.fn((...args: unknown[]) => ({ query: args })),
-  where: vi.fn(() => 'where'),
 }));
 
 import {
+  deletePersonalScore,
   fetchPersonalBest,
   fetchTopScores,
   isLeaderboardAvailable,
   saveScore,
 } from '@/services/leaderboardService';
 import { getFirebase, isFirebaseConfigured } from '@/services/firebase';
-import { addDoc, getDocs } from 'firebase/firestore';
+import { deleteDoc, getDoc, getDocs, orderBy, setDoc } from 'firebase/firestore';
 
 interface RawScore {
   userId?: string;
@@ -33,8 +36,10 @@ interface RawScore {
 }
 
 function fakeSnapshot(id: string, data: RawScore) {
-  return { id, data: () => data };
+  return { id, data: () => data, exists: () => true };
 }
+
+const missing = { id: 'none', data: () => undefined, exists: () => false };
 
 describe('leaderboardService', () => {
   beforeEach(() => {
@@ -53,59 +58,121 @@ describe('leaderboardService', () => {
   describe('saveScore', () => {
     it('throws when the leaderboard is not configured', async () => {
       (getFirebase as Mock).mockResolvedValue(null);
-      await expect(saveScore({ displayName: 'a', score: 1, levelReached: 1 }, 'u')).rejects.toThrow(
-        'Leaderboard is not configured',
+      await expect(
+        saveScore({ displayName: 'a', score: 1, levelReached: 1 }, 'u', 'campaign'),
+      ).rejects.toThrow('Leaderboard is not configured');
+    });
+
+    it('writes a normalised first score under the mode and the user id', async () => {
+      (getFirebase as Mock).mockResolvedValue({ db: {} });
+      (getDoc as Mock).mockResolvedValue(missing);
+
+      const outcome = await saveScore(
+        { displayName: '  Neo  ', score: 12.9, levelReached: 999 },
+        'uid123',
+        'endless',
+      );
+
+      expect(outcome).toBe('saved');
+      expect(setDoc).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'leaderboards/endless/scores/uid123' }),
+        {
+          userId: 'uid123',
+          displayName: 'Neo',
+          score: 12,
+          levelReached: 100,
+          timestamp: 'TS',
+        },
       );
     });
 
-    it('persists a normalised document under the user id with a server timestamp', async () => {
+    it('replaces the stored score when the new run beats it', async () => {
       (getFirebase as Mock).mockResolvedValue({ db: {} });
+      (getDoc as Mock).mockResolvedValue(fakeSnapshot('uid123', { score: 100 }));
 
-      await saveScore({ displayName: '  Neo  ', score: 12.9, levelReached: 999 }, 'uid123');
+      const outcome = await saveScore(
+        { displayName: 'neo', score: 300, levelReached: 4 },
+        'uid123',
+        'campaign',
+      );
 
-      expect(addDoc).toHaveBeenCalledWith(expect.objectContaining({ name: 'scores' }), {
-        userId: 'uid123',
-        displayName: 'Neo',
-        score: 12,
-        levelReached: 100,
-        timestamp: 'TS',
-      });
+      expect(outcome).toBe('saved');
+      expect(setDoc).toHaveBeenCalled();
+    });
+
+    it('writes nothing when the run does not beat the stored best', async () => {
+      (getFirebase as Mock).mockResolvedValue({ db: {} });
+      (getDoc as Mock).mockResolvedValue(fakeSnapshot('uid123', { score: 500 }));
+
+      const outcome = await saveScore(
+        { displayName: 'neo', score: 300, levelReached: 4 },
+        'uid123',
+        'campaign',
+      );
+
+      expect(outcome).toBe('notABest');
+      expect(setDoc).not.toHaveBeenCalled();
+    });
+
+    it('treats an equal score as not a best, so the rules never reject the write', async () => {
+      (getFirebase as Mock).mockResolvedValue({ db: {} });
+      (getDoc as Mock).mockResolvedValue(fakeSnapshot('uid123', { score: 300 }));
+
+      const outcome = await saveScore(
+        { displayName: 'neo', score: 300, levelReached: 4 },
+        'uid123',
+        'campaign',
+      );
+
+      expect(outcome).toBe('notABest');
+      expect(setDoc).not.toHaveBeenCalled();
     });
   });
 
   describe('fetchTopScores', () => {
     it('returns an empty list when not configured', async () => {
       (getFirebase as Mock).mockResolvedValue(null);
-      expect(await fetchTopScores()).toEqual([]);
+      expect(await fetchTopScores('campaign')).toEqual([]);
+    });
+
+    it('reads the requested mode, ordered by score', async () => {
+      (getFirebase as Mock).mockResolvedValue({ db: {} });
+      (getDocs as Mock).mockResolvedValue({ docs: [] });
+
+      await fetchTopScores('daily');
+
+      expect(orderBy).toHaveBeenCalledWith('score', 'desc');
+      const { collection } = await import('firebase/firestore');
+      expect(collection).toHaveBeenCalledWith({}, 'leaderboards', 'daily', 'scores');
     });
 
     it('maps documents and fills defaults for missing fields', async () => {
       (getFirebase as Mock).mockResolvedValue({ db: {} });
       (getDocs as Mock).mockResolvedValue({
         docs: [
-          fakeSnapshot('d1', {
+          fakeSnapshot('u1', {
             userId: 'u1',
             displayName: 'neo',
             score: 500,
             levelReached: 3,
             timestamp: { toMillis: () => 1234 },
           }),
-          fakeSnapshot('d2', {}),
+          fakeSnapshot('u2', {}),
         ],
       });
 
-      const result = await fetchTopScores();
+      const result = await fetchTopScores('campaign');
 
       expect(result).toEqual([
         {
-          id: 'd1',
+          id: 'u1',
           userId: 'u1',
           displayName: 'neo',
           score: 500,
           levelReached: 3,
           timestampMs: 1234,
         },
-        { id: 'd2', userId: '', displayName: 'anon', score: 0, levelReached: 1, timestampMs: 0 },
+        { id: 'u2', userId: '', displayName: 'anon', score: 0, levelReached: 1, timestampMs: 0 },
       ]);
     });
   });
@@ -113,29 +180,47 @@ describe('leaderboardService', () => {
   describe('fetchPersonalBest', () => {
     it('returns null when not configured', async () => {
       (getFirebase as Mock).mockResolvedValue(null);
-      expect(await fetchPersonalBest('u')).toBeNull();
+      expect(await fetchPersonalBest('u', 'campaign')).toBeNull();
     });
 
-    it('returns null when the user has no scores', async () => {
+    it('returns null when the player has no score in that mode', async () => {
       (getFirebase as Mock).mockResolvedValue({ db: {} });
-      (getDocs as Mock).mockResolvedValue({ docs: [] });
-      expect(await fetchPersonalBest('u')).toBeNull();
+      (getDoc as Mock).mockResolvedValue(missing);
+      expect(await fetchPersonalBest('u', 'campaign')).toBeNull();
     });
 
-    it('returns the highest-scoring entry for the user', async () => {
+    it('reads the score straight from the document, whatever the play history', async () => {
       (getFirebase as Mock).mockResolvedValue({ db: {} });
-      (getDocs as Mock).mockResolvedValue({
-        docs: [
-          fakeSnapshot('a', { userId: 'u', score: 100, levelReached: 2 }),
-          fakeSnapshot('b', { userId: 'u', score: 300, levelReached: 5 }),
-          fakeSnapshot('c', { userId: 'u', score: 200, levelReached: 4 }),
-        ],
-      });
+      (getDoc as Mock).mockResolvedValue(
+        fakeSnapshot('u', { userId: 'u', score: 9999, levelReached: 7 }),
+      );
 
-      const best = await fetchPersonalBest('u');
+      const best = await fetchPersonalBest('u', 'endless');
 
-      expect(best?.id).toBe('b');
-      expect(best?.score).toBe(300);
+      expect(best?.score).toBe(9999);
+      // One read of one document: no scan whose result depends on how many
+      // runs the player has saved (the defect this schema removes).
+      expect(getDocs).not.toHaveBeenCalled();
+      expect(getDoc).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('deletePersonalScore', () => {
+    it('throws when the leaderboard is not configured', async () => {
+      (getFirebase as Mock).mockResolvedValue(null);
+      await expect(deletePersonalScore('u', 'campaign')).rejects.toThrow(
+        'Leaderboard is not configured',
+      );
+    });
+
+    it('deletes the document of that player in that mode only', async () => {
+      (getFirebase as Mock).mockResolvedValue({ db: {} });
+
+      await deletePersonalScore('uid123', 'daily');
+
+      expect(deleteDoc).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'leaderboards/daily/scores/uid123' }),
+      );
     });
   });
 });

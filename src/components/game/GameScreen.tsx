@@ -95,15 +95,16 @@ export function GameScreen() {
     }
     useSettingsStore.getState().setNickname(typedNickname);
     try {
-      await saveScore(
+      const outcome = await saveScore(
         {
           displayName: typedNickname,
           score: gameResult.finalScore,
           levelReached: gameResult.levelReached,
         },
         uid,
+        useGameStore.getState().mode,
       );
-      setSaveStatus('saved');
+      setSaveStatus(outcome === 'saved' ? 'saved' : 'notABest');
     } catch {
       setSaveStatus('error');
     }

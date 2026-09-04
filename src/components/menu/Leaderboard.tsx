@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Button } from '@/components/shared/Button';
+import type { RunMode } from '@/engine/core/runController';
 import { useGameStore } from '@/store/useGameStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
@@ -10,14 +12,35 @@ const STATUS_MESSAGE: Record<string, string> = {
   unavailable: 'The online leaderboard is not configured in this build.',
 };
 
+const MODES: readonly { mode: RunMode; label: string }[] = [
+  { mode: 'campaign', label: 'Campaign' },
+  { mode: 'endless', label: 'Endless' },
+  { mode: 'daily', label: 'Daily' },
+];
+
 export function Leaderboard() {
   const setScreen = useGameStore((state) => state.setScreen);
   const uid = useAuthStore((state) => state.uid);
-  const { status, top, personalBest } = useLeaderboard();
+  const [mode, setMode] = useState<RunMode>(() => useGameStore.getState().mode);
+  const { status, top, personalBest } = useLeaderboard(mode);
 
   return (
     <main className="mx-auto flex h-full w-full max-w-md flex-col gap-5 p-6">
       <h1 className="mt-4 text-3xl font-bold text-terminal-accent">Leaderboard</h1>
+
+      <div className="flex gap-2" role="group" aria-label="Leaderboard mode">
+        {MODES.map((entry) => (
+          <Button
+            key={entry.mode}
+            variant={entry.mode === mode ? 'primary' : 'ghost'}
+            className="flex-1"
+            aria-pressed={entry.mode === mode}
+            onClick={() => setMode(entry.mode)}
+          >
+            {entry.label}
+          </Button>
+        ))}
+      </div>
 
       {status === 'ready' ? (
         <ol className="flex flex-col divide-y divide-terminal-border rounded border border-terminal-border">
@@ -40,6 +63,11 @@ export function Leaderboard() {
           <Row rank={0} entry={personalBest} highlight />
         </div>
       )}
+
+      <p className="font-mono text-xs text-terminal-muted">
+        Scores are reported by each player&apos;s browser and are not verified. Treat the board as a
+        friendly ranking, not a record book.
+      </p>
 
       <Button variant="ghost" className="w-full" onClick={() => setScreen('menu')}>
         Back

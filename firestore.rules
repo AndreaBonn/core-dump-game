@@ -2,26 +2,48 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /scores/{scoreId} {
+    // One document per player per mode. The mode lives in the path, so it
+    // cannot be forged in the payload, each board is a collection of its own
+    // (no composite index needed), and a player has exactly one row to read,
+    // update or erase.
+    match /leaderboards/{mode}/scores/{uid} {
       allow read: if true;
 
-      allow create: if request.auth != null
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.keys().hasOnly(
-          ['userId', 'displayName', 'score', 'levelReached', 'timestamp']
-        )
-        && request.resource.data.displayName is string
-        && request.resource.data.displayName.size() > 0
-        && request.resource.data.displayName.size() <= 24
-        && request.resource.data.score is int
-        && request.resource.data.score >= 0
-        && request.resource.data.score < 1000000
-        && request.resource.data.levelReached is int
-        && request.resource.data.levelReached >= 1
-        && request.resource.data.levelReached <= 100
-        && request.resource.data.timestamp == request.time;
+      function validShape() {
+        let incoming = request.resource.data;
+        return incoming.keys().hasOnly(
+            ['userId', 'displayName', 'score', 'levelReached', 'timestamp']
+          )
+          && incoming.userId == uid
+          && incoming.userId == request.auth.uid
+          && incoming.displayName is string
+          && incoming.displayName.size() > 0
+          && incoming.displayName.size() <= 24
+          && incoming.score is int
+          && incoming.score >= 0
+          && incoming.score < 1000000
+          && incoming.levelReached is int
+          && incoming.levelReached >= 1
+          && incoming.levelReached <= 100
+          && incoming.timestamp == request.time
+          && mode in ['campaign', 'endless', 'daily'];
+      }
 
-      allow update, delete: if false;
+      allow create: if request.auth != null
+        && uid == request.auth.uid
+        && validShape();
+
+      // Re-validate the whole document on update, not just the score: without
+      // it the bounds checked at creation could be bypassed later, and extra
+      // fields could be injected.
+      allow update: if request.auth != null
+        && uid == request.auth.uid
+        && resource.data.userId == request.auth.uid
+        && validShape()
+        && request.resource.data.score > resource.data.score;
+
+      // The player can erase their own score (right to erasure); nobody else can.
+      allow delete: if request.auth != null && uid == request.auth.uid;
     }
   }
 }
