@@ -10,7 +10,7 @@ import {
 import { type LevelConfig } from '@/config/levels';
 import { colorForType, typesForCount } from '@/config/packetTypes';
 import { BOARD_CENTER } from '@/config/paths';
-import { FORK_SPREAD, ROLLBACK_DISTANCE, SLEEP_DURATION, SLEEP_FACTOR } from '@/config/powerUps';
+import { FORK_SPREAD } from '@/config/powerUps';
 import { audioManager } from '@/engine/audio/AudioManager';
 import { generateChainPackets } from '@/engine/core/chainOps';
 import { campaignConfig, type RunConfig } from '@/engine/core/runController';
@@ -21,7 +21,7 @@ import { Projectile } from '@/engine/entities/Projectile';
 import { VoidHole } from '@/engine/entities/VoidHole';
 import { createRng, type Rng } from '@/engine/math/rng';
 import { type Vec2 } from '@/engine/math/vec2';
-import { presentTypes, removeAllOfType, rollbackChain } from '@/engine/systems/PowerUpSystem';
+import { resolvePowerUp } from '@/engine/systems/PowerUpSystem';
 import { applyShot } from '@/engine/systems/ShotSystem';
 import { predictLanding } from '@/engine/systems/trajectory';
 import { frontUrgency } from '@/engine/systems/urgency';
@@ -325,24 +325,15 @@ export class GameEngine {
   }
 
   private applyPowerUp(type: PowerUpType): void {
-    switch (type) {
-      case 'SLEEP':
-        this.chain.speed = this.baseSpeed * SLEEP_FACTOR;
-        this.sleepTimer = SLEEP_DURATION;
-        break;
-      case 'FORK':
-        this.pendingFork = true;
-        break;
-      case 'GARBAGE_COLLECT': {
-        const candidates = presentTypes(this.chain.packets);
-        if (candidates.length > 0) {
-          removeAllOfType(this.chain.packets, this.rng.pick(candidates));
-        }
-        break;
-      }
-      case 'ROLLBACK':
-        rollbackChain(this.chain.packets, ROLLBACK_DISTANCE);
-        break;
+    const effect = resolvePowerUp(type, { packets: this.chain.packets, rng: this.rng });
+    if (effect.speedFactor !== null) {
+      this.chain.speed = this.baseSpeed * effect.speedFactor;
+    }
+    if (effect.sleepSeconds !== null) {
+      this.sleepTimer = effect.sleepSeconds;
+    }
+    if (effect.armsFork) {
+      this.pendingFork = true;
     }
     audioManager.play('powerup');
     this.events.onPowerUp(type);
