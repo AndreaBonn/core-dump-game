@@ -8,17 +8,16 @@ import {
   VOID_RADIUS,
 } from '@/config/constants';
 import { type LevelConfig } from '@/config/levels';
-import { colorForType, typesForCount } from '@/config/packetTypes';
-import { BOARD_CENTER } from '@/config/paths';
+import { colorForType } from '@/config/packetTypes';
 import { FORK_SPREAD } from '@/config/powerUps';
 import { audioManager } from '@/engine/audio/AudioManager';
-import { generateChainPackets } from '@/engine/core/chainOps';
+import { buildLevelState, drawPacketType } from '@/engine/core/levelBuilder';
 import { campaignConfig, type RunConfig } from '@/engine/core/runController';
-import { Chain } from '@/engine/entities/Chain';
-import { CpuCursor } from '@/engine/entities/CpuCursor';
-import { Path } from '@/engine/entities/Path';
+import type { Chain } from '@/engine/entities/Chain';
+import type { CpuCursor } from '@/engine/entities/CpuCursor';
+import type { Path } from '@/engine/entities/Path';
 import { Projectile } from '@/engine/entities/Projectile';
-import { VoidHole } from '@/engine/entities/VoidHole';
+import type { VoidHole } from '@/engine/entities/VoidHole';
 import { createRng, type Rng } from '@/engine/math/rng';
 import { type Vec2 } from '@/engine/math/vec2';
 import { resolvePowerUp } from '@/engine/systems/PowerUpSystem';
@@ -131,28 +130,21 @@ export class GameEngine {
   }
 
   private buildLevel(config: LevelConfig): void {
-    this.path = new Path(config.waypoints);
-    this.voidHole = new VoidHole(this.path.voidPosition, this.path.length);
-    this.rng = createRng(config.seed);
-    this.types = typesForCount(config.colorCount);
-    this.baseSpeed = config.chainSpeed;
+    const state = buildLevelState(config);
+    this.path = state.path;
+    this.voidHole = state.voidHole;
+    this.chain = state.chain;
+    this.cursor = state.cursor;
+    this.rng = state.rng;
+    this.types = state.types;
+    this.baseSpeed = state.baseSpeed;
     this.sleepTimer = 0;
     this.pendingFork = false;
-    this.chain = new Chain(
-      generateChainPackets({
-        count: config.chainLength,
-        types: this.types,
-        rng: this.rng,
-        powerUpChance: config.powerUpChance,
-      }),
-      config.chainSpeed,
-    );
-    this.cursor = new CpuCursor(BOARD_CENTER, this.drawType(), this.drawType());
     this.projectiles = [];
   }
 
   private drawType(): PacketType {
-    return this.rng.pick(this.types);
+    return drawPacketType(this.rng, this.types);
   }
 
   start(): void {
