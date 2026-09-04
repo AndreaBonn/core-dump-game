@@ -107,3 +107,96 @@ Il gioco ora offre tre modi per giocare, oltre alla campagna classica a 10 livel
 
 Complessità: Media-Alta. Stato: Completato.
 190 test superati, controlli di tipo e lint puliti, build funzionante, code review approvata con un solo finding minore già risolto. Debito tecnico pre-esistente su GameEngine.ts documentato e non nascosto, in attesa di decisione dell'utente su priorità di rientro.
+
+
+---
+
+## 2026-09-04 | Sessione #3 [FEATURE] [FIX] [REFACTOR] [TEST]
+
+### Richiesta
+
+Analisi dello stato del progetto in vista della produzione, poi implementazione di tutto quanto
+emerso: i nove finding di prontezza (F1-F9) e il completamento del piano
+`specs/002-game-features-expansion` (Incrementi B, C, D; E resta fuori per decisione).
+
+### Azioni Eseguite
+
+Pianificazione con workflow RPI: `planner` per la scomposizione, `architect` per due decisioni
+architetturali, `security-reviewer` e `database-reviewer` per la validazione di dominio. Artefatti
+in `specs/003-hardening-and-features/`. 30 commit atomici.
+
+**Messa in sicurezza e infrastruttura**
+
+- Motore riportato da 391 a 333 righe con sei estrazioni in moduli puri, tutti al 100% di
+  copertura. Il target di 300 righe non era raggiungibile senza riscrivere i test che pilotano 22
+  membri privati: numero misurato, deroga decisa dall'utente e registrata nel piano.
+- Classifica ridisegnata: un documento per giocatore per modalità
+  (`leaderboards/{mode}/scores/{uid}`), aggiornabile solo verso l'alto. Il difetto per cui il
+  record personale veniva calcolato sui primi 50 salvataggi non è più rappresentabile. Endless non
+  inquina più la classifica della campagna. Le regole di sicurezza sono state eseguite per la prima
+  volta: 19 casi sull'emulatore Firestore, verificati rossi con le regole precedenti.
+- Giocabilità su telefono: in verticale si adatta il quadrato che il gioco occupa invece del board
+  intero. A 375 px l'area di gioco passa da 234 a 375 px e un pacchetto da ~6 a ~21 px; il desktop
+  resta identico. Simulazione, tracciati e semi non toccati, quindi la sfida del giorno resta la
+  stessa su ogni dispositivo.
+- Test: da 190 a 464 unitari più 10 end-to-end su due profili di viewport e 19 sulle regole.
+  Copertura estesa a store e hook, soglie in CI al 95%.
+- Error boundary al posto della pagina nera, e aggiornamento della PWA che chiede invece di
+  sostituire l'app a metà partita.
+- CI allineata al branch reale: prima puntava a `main`, che in questo repository non esiste, quindi
+  non era mai stata eseguita.
+
+**Feature (piano 002 residuo)**
+
+- Progressi persistenti: stelle per livello, statistiche, 18 achievement, selezione livello,
+  profilo, toast di sblocco. Tutto sul dispositivo, nulla caricato online.
+- Varietà di gioco: pacchetti ostacolo che non si combinano, tre power-up nuovi (kill -9,
+  try/catch, regex), due tracciati oltre la spirale.
+- Colpo che pesa: fermo immagine sulle combo e scia dietro ai proiettili, entrambi soppressi con
+  reduced-motion.
+- Tutorial al primo avvio, skippabile e rigiocabile.
+
+**Legale e dati**
+
+Licenza Apache 2.0, pagina privacy raggiungibile dalle impostazioni, cancellazione reale dei
+propri punteggi online e del profilo locale. Due ADR (0007 classifica, 0008 viewport) che
+dichiarano anche ciò che non difendono.
+
+### Verifica
+
+- 464 test unitari, 10 end-to-end, 19 sulle regole: tutti verdi. Typecheck e lint puliti. Build ok.
+- Comportamento osservato a runtime, non solo compilato: partita giocata fino al game over con il
+  profilo che compare in `localStorage` e il primo achievement sbloccato; prompt di aggiornamento
+  provato con due build successive; livello con ostacoli e tracciato serpentina osservato in gioco.
+- Gate cross-artefatto `/analyze` a fine sessione: ha prodotto tre difetti reali, tutti riprodotti
+  prima di essere corretti e ognuno con un test che fallisce senza la correzione.
+
+### Debito Tecnico e Note Aperte
+
+- `GameEngine.ts` è a 390 righe, sopra il limite di 300 delle convenzioni. Le estrazioni hanno
+  ridotto il file, le feature successive lo hanno riempito di nuovo. Rientrare davvero richiede di
+  riscrivere i test dell'engine su un'API di ispezione: mezza giornata, decisione dell'utente.
+- App Check non attivato: è l'unica difesa che chiude la scrittura da script fuori dal browser, e
+  l'ADR-0007 fissa la condizione, va attivato prima della pubblicazione, non dopo il primo abuso.
+- Nessun workflow di deploy: non esiste ancora un progetto Firebase reale contro cui verificarlo.
+- Avvio offline della PWA non ancora provato dopo le modifiche al rendering.
+- Incremento E (boss) fuori sequenza per decisione: si riapre da un design doc.
+
+### Note per il Cliente (linguaggio NON tecnico)
+
+Il gioco era un buon prototipo ma non era pubblicabile: su telefono era di fatto ingiocabile, la
+classifica si sarebbe rovinata da sola, e non c'era nulla che trattenesse un giocatore dopo la
+prima partita. Ora si gioca bene anche in verticale sul telefono, la classifica è divisa per
+modalità e tiene solo il record di ciascun giocatore, e chi gioca trova stelle da conquistare,
+statistiche, obiettivi da sbloccare e un tutorial che spiega le regole al primo avvio. Sono stati
+aggiunti ostacoli e nuovi potenziamenti perché le partite non si somiglino tutte. Il gioco ora
+dichiara anche, in una pagina dedicata, quali dati conserva e permette di cancellarli davvero.
+Restano due cose da fare prima di pubblicare: attivare la protezione contro gli invii automatici
+di punteggi falsi, e preparare la procedura di pubblicazione vera e propria.
+
+### Riepilogo (Complessità / Stato)
+
+Complessità: Alta. Stato: Completato per i blocchi pianificati.
+30 commit atomici, 464 test unitari più 10 end-to-end e 19 sulle regole, tutti verdi. Nove finding
+di prontezza chiusi su nove, con due condizioni esplicite rimaste aperte (App Check e deploy) e un
+debito dimensionale sull'engine dichiarato invece che nascosto. Nessun push effettuato.
