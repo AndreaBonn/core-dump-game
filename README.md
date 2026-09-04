@@ -136,4 +136,11 @@ The specification left a few points open; the decisions taken here are:
 
 ## License
 
-Not yet specified.
+Licensed under the Apache License, Version 2.0. See [`LICENSE`](LICENSE).
+
+## Privacy
+
+The game keeps progress, stars, statistics and settings in the browser, and they
+never leave the device. Saving a score to the online leaderboard sends only the
+nickname you type, the score, the level reached and an anonymous account id.
+Everything can be deleted from Settings, under "Privacy and your data".

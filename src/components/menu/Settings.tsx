@@ -40,6 +40,10 @@ export function Settings() {
         />
       </div>
 
+      <Button variant="ghost" className="w-full" onClick={() => setScreen('privacy')}>
+        Privacy and your data
+      </Button>
+
       <Button variant="ghost" className="w-full" onClick={() => setScreen('menu')}>
         Back
       </Button>

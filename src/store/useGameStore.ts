@@ -9,7 +9,8 @@ export type Screen =
   | 'leaderboard'
   | 'settings'
   | 'profile'
-  | 'achievements';
+  | 'achievements'
+  | 'privacy';
 export type GameStatus = 'playing' | 'paused' | 'levelComplete' | 'gameOver' | 'gameWon';
 
 export interface LevelResult {

@@ -5,6 +5,7 @@ import { Achievements } from '@/components/menu/Achievements';
 import { LevelSelect } from '@/components/menu/LevelSelect';
 import { MainMenu } from '@/components/menu/MainMenu';
 import { Leaderboard } from '@/components/menu/Leaderboard';
+import { Privacy } from '@/components/menu/Privacy';
 import { Profile } from '@/components/menu/Profile';
 import { Settings } from '@/components/menu/Settings';
 import { useGameStore } from '@/store/useGameStore';
@@ -21,6 +22,7 @@ function App() {
       {screen === 'achievements' && <Achievements />}
       {screen === 'leaderboard' && <Leaderboard />}
       {screen === 'settings' && <Settings />}
+      {screen === 'privacy' && <Privacy />}
       <AchievementToast />
       <UpdatePrompt />
     </div>
