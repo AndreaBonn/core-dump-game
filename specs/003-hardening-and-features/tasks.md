@@ -37,17 +37,19 @@ Il dettaglio (verify per step, motivazioni, rischi) è in `plan.md`.
 - [x] 2.6 | 2.4 | Verifica runtime: a 375 px il lato del gioco passa da 234 a 375, il packet da ~6 a ~21 px;
   a 1280x800 nessuna differenza visibile rispetto alla baseline
 
-## Blocco 3 — Test UI React ed E2E [F3]
+## Blocco 3 — Test UI React ed E2E [F3] — parte RTL chiusa, E2E aperto
 
-- 3.1 | - | Installa Testing Library, estendi `tests/setup.ts`, primo render di `<Button>`
-- 3.2 | 3.1 | Test `useGameStore`: reset run, mode preservato, gameOver, advanceLevel
-- 3.3 | 3.1 | Test `useSettingsStore`: persistenza muted/nickname + `localStorage` che lancia
-- 3.4 | 3.1 | Test `useLeaderboard`: loading, dati, errore
-- 3.5 | 3.1 | Test `MainMenu`: i 5 pulsanti portano allo screen o al mode atteso
-- 3.6 | 3.1 | Test `GameOverScreen`: submit del nickname e tutti gli stati di `SaveStatus`
-- 3.7 | 3.2,3.3,3.4 | Estendi `coverage.include` a `src/store/**` e `src/hooks/**`; annota la baseline
-- 3.8 | - | Installa Playwright, `playwright.config.ts` con webServer su preview, gitignore artefatti
-- 3.9 | 3.8 | Spec E2E smoke: menu → campagna → tiro → score cambia; screenshot 375 e 1280
+- [x] 3.1 | - | Testing Library installata, `tests/setup.ts` con jest-dom e cleanup
+- [x] 3.2 | 3.1 | Test `useGameStore`: 8 casi (reset run, modalità preservata, esiti, eventi engine)
+- [x] 3.3 | 3.1 | Test `useSettingsStore`: 6 casi. Ha scoperto un difetto reale: `localStorage` che lancia
+  impediva l'avvio dell'app. Corretto con `src/store/persistence.ts`
+- [x] 3.4 | 3.1 | Test `useLeaderboard`: unavailable, loading→ready, errore, cambio modalità
+- [x] 3.5 | 3.1 | Test `MainMenu`: i 5 pulsanti
+- [x] 3.6 | 3.1 | Test `GameOverScreen`: 9 casi, tutti gli stati di `SaveStatus`
+- [x] 3.7 | 3.2,3.3,3.4 | `coverage.include` esteso a store e hooks. Baseline misurata: **99,4% righe**
+  su 325 test (era 99,31% su 190 con store e hooks esclusi)
+- [ ] 3.8 | - | Playwright: config con webServer su preview, artefatti in gitignore
+- [ ] 3.9 | 3.8 | Spec E2E smoke: menu → campagna → tiro → score cambia; screenshot 375 e 1280
 
 ## Blocco 4 — Error boundary e prompt di aggiornamento [F5, F6]
 
