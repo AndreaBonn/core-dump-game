@@ -1,5 +1,13 @@
-import { describe, expect, it } from 'vitest';
-import { campaignConfig, dailyConfig, endlessConfig, isRunWon } from '@/engine/core/runController';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  campaignConfig,
+  dailyConfig,
+  endlessConfig,
+  isRunWon,
+  isScoredMode,
+  runConfigForMode,
+  tutorialConfig,
+} from '@/engine/core/runController';
 import { getLevel, TOTAL_LEVELS } from '@/config/levels';
 
 describe('campaignConfig', () => {
@@ -89,5 +97,85 @@ describe('isRunWon', () => {
   it('is never won without a final level (endless and daily)', () => {
     expect(isRunWon(1, null)).toBe(false);
     expect(isRunWon(500, null)).toBe(false);
+  });
+});
+
+describe('isScoredMode', () => {
+  it.each(['campaign', 'endless', 'daily'] as const)('counts a %s run', (mode) => {
+    expect(isScoredMode(mode)).toBe(true);
+  });
+
+  it('does not count the tutorial, which only teaches', () => {
+    expect(isScoredMode('tutorial')).toBe(false);
+  });
+});
+
+describe('tutorialConfig', () => {
+  it('teaches on a single short, slow level with no power-ups or hazards', () => {
+    const level = tutorialConfig().levelProvider(1)!;
+
+    expect(level.chainLength).toBe(12);
+    expect(level.colorCount).toBe(3);
+    expect(level.chainSpeed).toBe(16);
+    expect(level.powerUpChance).toBe(0);
+    expect(level.hazardChance).toBe(0);
+  });
+
+  it('is won by clearing its one level, which is what closes the overlay', () => {
+    const config = tutorialConfig();
+
+    expect(config.startIndex).toBe(1);
+    expect(config.finalLevel).toBe(1);
+    expect(isRunWon(1, config.finalLevel)).toBe(true);
+    expect(config.levelProvider(2)).toBeNull();
+  });
+});
+
+describe('runConfigForMode', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  it('starts the campaign from the requested level and ends it at the last one', () => {
+    const config = runConfigForMode('campaign', 3);
+
+    expect(config.mode).toBe('campaign');
+    expect(config.startIndex).toBe(3);
+    expect(config.finalLevel).toBe(TOTAL_LEVELS);
+  });
+
+  it('defaults to the campaign from level 1 when no mode is chosen', () => {
+    const config = runConfigForMode('campaign');
+
+    expect(config.startIndex).toBe(1);
+  });
+
+  it('builds the tutorial run for the tutorial mode', () => {
+    const config = runConfigForMode('tutorial');
+
+    expect(config.mode).toBe('tutorial');
+    expect(config.finalLevel).toBe(1);
+    expect(config.levelProvider(1)!.chainLength).toBe(12);
+  });
+
+  it('gives endless a fresh seed per run, so two runs are not the same layout', () => {
+    vi.spyOn(Math, 'random').mockReturnValueOnce(0.25).mockReturnValueOnce(0.75);
+
+    const first = runConfigForMode('endless').levelProvider(1)!;
+    const second = runConfigForMode('endless').levelProvider(1)!;
+
+    expect(first.seed).not.toBe(second.seed);
+  });
+
+  it('anchors the daily run to today, matching a run built from the same date', () => {
+    const today = new Date(2026, 6, 22);
+    vi.useFakeTimers();
+    vi.setSystemTime(today);
+
+    const fromMode = runConfigForMode('daily').levelProvider(1)!;
+
+    expect(fromMode.seed).toBe(dailyConfig(today).levelProvider(1)!.seed);
+    expect(runConfigForMode('daily').finalLevel).toBeNull();
   });
 });

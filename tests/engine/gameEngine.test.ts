@@ -7,7 +7,12 @@ import { VoidHole } from '@/engine/entities/VoidHole';
 import { createPacket } from '@/engine/entities/DataPacket';
 import { vec2 } from '@/engine/math/vec2';
 import { FIXED_TIMESTEP, LEVEL_CLEAR_BONUS } from '@/config/constants';
-import { SLEEP_DURATION, SLEEP_FACTOR, ROLLBACK_DISTANCE } from '@/config/powerUps';
+import {
+  SLEEP_DURATION,
+  SLEEP_FACTOR,
+  ROLLBACK_DISTANCE,
+  SHIELD_ROLLBACK,
+} from '@/config/powerUps';
 import { TOTAL_LEVELS } from '@/config/levels';
 import type { CpuCursor } from '@/engine/entities/CpuCursor';
 import type { DataPacket, EngineEvents, GamePhase, PowerUpType } from '@/types/game.types';
@@ -465,6 +470,39 @@ describe('GameEngine', () => {
         won: false,
       });
       expect(internals.projectiles).toHaveLength(0);
+    });
+
+    it('shoves the chain back instead of ending the run when a try/catch shield is up', () => {
+      const events = spyEvents();
+      const { internals } = makeEngine(events);
+      applyStraightBoard(internals, [createPacket({ type: 'INFO', distance: 0 })]);
+      internals.chain.speed = 0;
+      internals.applyPowerUp('TRY_CATCH');
+      internals.chain.packets[0]!.distance = internals.path.length;
+
+      internals.fixedUpdate(FIXED_TIMESTEP);
+
+      expect(internals.phase).toBe('playing');
+      expect(events.onRunEnd).not.toHaveBeenCalled();
+      expect(internals.chain.packets[0]!.distance).toBeCloseTo(
+        internals.path.length - SHIELD_ROLLBACK,
+      );
+    });
+
+    it('ends the run on the second reach of the void, the shield being spent', () => {
+      const events = spyEvents();
+      const { internals } = makeEngine(events);
+      applyStraightBoard(internals, [createPacket({ type: 'INFO', distance: 0 })]);
+      internals.chain.speed = 0;
+      internals.applyPowerUp('TRY_CATCH');
+      internals.chain.packets[0]!.distance = internals.path.length;
+      internals.fixedUpdate(FIXED_TIMESTEP);
+
+      internals.chain.packets[0]!.distance = internals.path.length;
+      internals.fixedUpdate(FIXED_TIMESTEP);
+
+      expect(internals.phase).toBe('gameOver');
+      expect(events.onRunEnd).toHaveBeenCalledTimes(1);
     });
   });
 

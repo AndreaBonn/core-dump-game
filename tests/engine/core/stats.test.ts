@@ -50,6 +50,15 @@ describe('recordRun', () => {
     expect(stats.runsWon).toBe(1);
   });
 
+  it('ignores the tutorial, so a teaching level never enters the records', () => {
+    const played = recordRun(EMPTY_STATS, run({ mode: 'campaign', score: 500 }));
+
+    const afterTutorial = recordRun(played, run({ mode: 'tutorial', score: 9999, won: true }));
+
+    expect(afterTutorial).toBe(played);
+    expect(afterTutorial.runsPlayed).toBe(1);
+  });
+
   it('leaves the stats it was given untouched', () => {
     const before: PlayerStats = EMPTY_STATS;
 

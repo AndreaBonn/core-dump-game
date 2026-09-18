@@ -115,4 +115,12 @@ describe('Privacy', () => {
 
     expect(useProgressStore.getState().stats.runsPlayed).toBe(0);
   });
+
+  it('goes back to the settings it was opened from, not to the menu', async () => {
+    render(<Privacy />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+
+    expect(useGameStore.getState().screen).toBe('settings');
+  });
 });

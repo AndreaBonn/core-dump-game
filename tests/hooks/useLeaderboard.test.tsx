@@ -6,8 +6,9 @@ vi.mock('@/services/leaderboardService', () => ({
   fetchPersonalBest: vi.fn(),
   isLeaderboardAvailable: vi.fn(),
 }));
+const auth: { uid: string | null } = { uid: 'uid1' };
 vi.mock('@/store/useAuthStore', () => ({
-  useAuthStore: (selector: (state: { uid: string | null }) => unknown) => selector({ uid: 'uid1' }),
+  useAuthStore: (selector: (state: { uid: string | null }) => unknown) => selector(auth),
 }));
 
 import { useLeaderboard } from '@/hooks/useLeaderboard';
@@ -26,6 +27,7 @@ function entry(id: string, score: number): ScoreEntry {
 describe('useLeaderboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    auth.uid = 'uid1';
     (isLeaderboardAvailable as Mock).mockReturnValue(true);
   });
 
@@ -50,6 +52,18 @@ describe('useLeaderboard', () => {
     expect(result.current.personalBest?.score).toBe(120);
     expect(fetchTopScores).toHaveBeenCalledWith('endless');
     expect(fetchPersonalBest).toHaveBeenCalledWith('uid1', 'endless');
+  });
+
+  it('shows the board without a personal best for a player who is not signed in', async () => {
+    auth.uid = null;
+    (fetchTopScores as Mock).mockResolvedValue([entry('a', 300)]);
+
+    const { result } = renderHook(() => useLeaderboard('campaign'));
+
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+    expect(result.current.top).toHaveLength(1);
+    expect(result.current.personalBest).toBeNull();
+    expect(fetchPersonalBest).not.toHaveBeenCalled();
   });
 
   it('reports an error without leaving stale rows on screen', async () => {

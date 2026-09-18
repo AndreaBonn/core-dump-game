@@ -49,6 +49,14 @@ describe('LevelSelect', () => {
 
     expect(screen.getAllByRole('listitem')).toHaveLength(TOTAL_LEVELS);
   });
+
+  it('goes back to the menu', async () => {
+    render(<LevelSelect />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+
+    expect(useGameStore.getState().screen).toBe('menu');
+  });
 });
 
 describe('Profile', () => {
@@ -107,6 +115,39 @@ describe('Profile', () => {
 
     expect(useProgressStore.getState().stats.runsPlayed).toBe(1);
   });
+
+  it('shows a dash instead of a zero combo the player never chained', () => {
+    useProgressStore.getState().recordRunEnd({
+      mode: 'campaign',
+      score: 100,
+      levelReached: 1,
+      levelScore: 100,
+      won: false,
+    });
+    render(<Profile />);
+    expect(screen.getByText('best combo').nextElementSibling).toHaveTextContent('-');
+
+    act(() => useProgressStore.getState().noteCombo(5));
+
+    expect(screen.getByText('best combo').nextElementSibling).toHaveTextContent('x5');
+  });
+
+  it('goes back to the menu', async () => {
+    render(<Profile />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+
+    expect(useGameStore.getState().screen).toBe('menu');
+  });
+
+  it('starts a campaign run from the empty profile', async () => {
+    render(<Profile />);
+
+    await userEvent.click(screen.getByRole('button', { name: /play a first run/i }));
+
+    expect(useGameStore.getState().screen).toBe('game');
+    expect(useGameStore.getState().mode).toBe('campaign');
+  });
 });
 
 describe('Achievements', () => {
@@ -124,8 +165,17 @@ describe('Achievements', () => {
 
     render(<Achievements />);
 
-    expect(screen.getAllByText('unlocked').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('unlocked')).toHaveLength(3);
+    expect(screen.getAllByText('locked')).toHaveLength(ACHIEVEMENTS.length - 3);
     expect(screen.getByText(`3/${ACHIEVEMENTS.length}`)).toBeInTheDocument();
+  });
+
+  it('goes back to the menu', async () => {
+    render(<Achievements />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+
+    expect(useGameStore.getState().screen).toBe('menu');
   });
 });
 
@@ -133,6 +183,17 @@ describe('AchievementToast', () => {
   beforeEach(resetStores);
 
   it('shows nothing when nothing was just unlocked', () => {
+    render(<AchievementToast />);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    act(() => useProgressStore.setState({ pending: [ACHIEVEMENTS[0]!.id] }));
+
+    expect(screen.getByRole('status')).toHaveTextContent(ACHIEVEMENTS[0]!.name);
+  });
+
+  it('stays silent on an id the catalogue no longer has, rather than announcing a blank', () => {
+    useProgressStore.setState({ pending: ['retired-achievement'] });
+
     render(<AchievementToast />);
 
     expect(screen.queryByRole('status')).not.toBeInTheDocument();

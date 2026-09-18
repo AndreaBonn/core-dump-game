@@ -127,6 +127,20 @@ describe('leaderboardService', () => {
       expect(outcome).toBe('notABest');
       expect(setDoc).not.toHaveBeenCalled();
     });
+
+    it('overwrites a stored document that carries no score, instead of reading it as unbeatable', async () => {
+      (getFirebase as Mock).mockResolvedValue({ db: {} });
+      (getDoc as Mock).mockResolvedValue(fakeSnapshot('uid123', {}));
+
+      const outcome = await saveScore(
+        { displayName: 'neo', score: 10, levelReached: 1 },
+        'uid123',
+        'campaign',
+      );
+
+      expect(outcome).toBe('saved');
+      expect(setDoc).toHaveBeenCalled();
+    });
   });
 
   describe('fetchTopScores', () => {

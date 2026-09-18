@@ -133,22 +133,48 @@ describe('useProgressStore', () => {
     expect(Number.isNaN(store.getState().stats.bestScore.daily)).toBe(false);
   });
 
-  it('drops values a hand-edited profile could not have produced', async () => {
+  it('drops values a hand-edited profile could not have produced, keeping the valid ones', async () => {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
-        progress: { stars: { 1: 7, 2: -1, notALevel: 3 }, unlockedThrough: -5 },
-        stats: { runsPlayed: 'many', bestCombo: Number.POSITIVE_INFINITY },
+        progress: { stars: { 1: 3, 2: 7, 3: -1, notALevel: 3 }, unlockedThrough: -5 },
+        stats: { runsPlayed: 'many', bestCombo: Number.POSITIVE_INFINITY, runsWon: 2 },
         earned: ['hello-world', 42],
       }),
     );
     const store = await loadStore();
 
-    expect(store.getState().progress.stars).toEqual({});
+    expect(store.getState().progress.stars).toEqual({ 1: 3 });
     expect(store.getState().progress.unlockedThrough).toBe(1);
     expect(store.getState().stats.runsPlayed).toBe(0);
+    expect(store.getState().stats.runsWon).toBe(2);
     expect(store.getState().stats.bestCombo).toBe(0);
     expect(store.getState().earned).toEqual(['hello-world']);
+  });
+
+  it('rounds a stored rating to a whole number of stars', async () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ progress: { stars: { 4: 2.4 } } }));
+    const store = await loadStore();
+
+    expect(store.getState().progress.stars).toEqual({ 4: 2 });
+  });
+
+  it('counts every power-up triggered during a run', async () => {
+    const store = await loadStore();
+
+    store.getState().notePowerUp();
+    store.getState().notePowerUp();
+
+    expect(store.getState().stats.powerUpsTriggered).toBe(2);
+  });
+
+  it('keeps the power-up count across a reload', async () => {
+    const first = await loadStore();
+    first.getState().notePowerUp();
+
+    const reloaded = await loadStore();
+
+    expect(reloaded.getState().stats.powerUpsTriggered).toBe(1);
   });
 
   it('clears the profile on request', async () => {
