@@ -108,7 +108,6 @@ Il gioco ora offre tre modi per giocare, oltre alla campagna classica a 10 livel
 Complessità: Media-Alta. Stato: Completato.
 190 test superati, controlli di tipo e lint puliti, build funzionante, code review approvata con un solo finding minore già risolto. Debito tecnico pre-esistente su GameEngine.ts documentato e non nascosto, in attesa di decisione dell'utente su priorità di rientro.
 
-
 ---
 
 ## 2026-09-04 | Sessione #3 [FEATURE] [FIX] [REFACTOR] [TEST]
@@ -200,3 +199,93 @@ Complessità: Alta. Stato: Completato per i blocchi pianificati.
 30 commit atomici, 464 test unitari più 10 end-to-end e 19 sulle regole, tutti verdi. Nove finding
 di prontezza chiusi su nove, con due condizioni esplicite rimaste aperte (App Check e deploy) e un
 debito dimensionale sull'engine dichiarato invece che nascosto. Nessun push effettuato.
+
+---
+
+## 2026-09-18 | Sessione #4 [FEATURE] [TEST]
+
+### Richiesta
+
+Aggiungere un launcher locale cross-platform, così chi clona il repository può giocare senza
+conoscere npm. Workflow RPI completo (Research, planner, Qualify/Plan, Implement), 9 commit
+atomici da `731b367` a `0c77cca`.
+
+### Azioni Eseguite
+
+- Core puro in `scripts/lib/playLogic.mjs` con sei funzioni: `parseNodeMajor`,
+  `parseRequiredMajor`, `isNodeSupported`, `buildUnsupportedNodeMessage`, `planSteps`,
+  `resolveInstallCommand`.
+- Guscio imperativo `scripts/play.mjs`: installa e builda solo ciò che manca, poi serve la build
+  di produzione e apre il browser.
+- Tre wrapper minimi (`play.sh`, `play.command`, `play.cmd`) che verificano solo la presenza di
+  `node` e delegano al guscio imperativo.
+- `.gitattributes` nuovo nel repository, per fissare `eol=lf` sugli script Unix e `eol=crlf` su
+  `play.cmd`.
+
+**Decisioni**
+
+- Node è un prerequisito dichiarato, non scaricato dallo script. Variante scelta dall'utente fra
+  tre opzioni proposte, le altre due erano il bootstrap di Node in locale e un HTML autocontenuto.
+- La soglia di versione si legge da `engines.node`, non è hardcodata: evita una terza copia del
+  numero che resterebbe indietro al primo bump.
+- `allowJs` in `tsconfig.json` serve perché `tsconfig.include` contiene `tests/`, e un test `.ts`
+  che importa un `.mjs` romperebbe `npm run typecheck`, che gira in CI.
+- Vite è invocato via `process.execPath` e non via `npm run`, perché su Windows `npm` è uno shim
+  `.cmd`. npm resta solo per l'installazione, con `shell: true` limitato a win32.
+- `--rebuild` forza installazione e build: correzione emersa in review, un `git pull` può
+  aggiungere una dipendenza che il check "solo ciò che manca" non vedrebbe.
+
+### File Modificati
+
+| File                                  | Tipo       | Descrizione                                                                   |
+| ------------------------------------- | ---------- | ----------------------------------------------------------------------------- |
+| scripts/lib/playLogic.mjs             | Nuovo      | Core puro: parsing versione Node, pianificazione step, scelta comando install |
+| scripts/play.mjs                      | Nuovo      | Guscio imperativo: install/build condizionati, avvio server, apertura browser |
+| play.sh                               | Nuovo      | Wrapper Unix (modo 755), verifica node e delega a play.mjs                    |
+| play.command                          | Nuovo      | Copia di play.sh per il doppio click su macOS (modo 755)                      |
+| play.cmd                              | Nuovo      | Wrapper Windows (fine riga CRLF), verifica node e delega a play.mjs           |
+| .gitattributes                        | Nuovo      | Fissa eol=lf sugli script Unix e eol=crlf su play.cmd                         |
+| tests/scripts/playLogic.test.ts       | Nuovo      | 23 test comportamentali sul core puro                                         |
+| specs/004-local-play-scripts/plan.md  | Nuovo      | Piano del workflow RPI                                                        |
+| specs/004-local-play-scripts/tasks.md | Nuovo      | Scomposizione in task del piano                                               |
+| tsconfig.json                         | Modificato | Aggiunto allowJs, per permettere a un test .ts di importare un .mjs           |
+| package.json                          | Modificato | Aggiunto script npm play                                                      |
+| README.md                             | Modificato | Aggiunta la sezione "Play it"                                                 |
+
+### Verifica
+
+- Gate verdi: lint, typecheck, test:coverage (487 test), build.
+- Verifica runtime su un clone pulito nella scratchpad: avvio a freddo (installazione, build,
+  risposta HTTP 200 sulla porta 4173), avvio a caldo (246 ms, con controllo preventivo che la
+  porta fosse libera), sola build con `dist` rimossa, `--rebuild`, Node troppo vecchio (misurato
+  sia impostando `engines` a `">=99"` sia contro un Node 18 reale presente in `/usr/bin`), Node
+  assente dal PATH. Rosso osservato prima del verde sui test.
+- Fine riga e bit di esecuzione verificati su un clone fresco.
+- Review: `code-reviewer` (2 finding MAJOR e 1 MINOR, tutti risolti), `comment-analyzer` (2
+  commenti che affermavano come certo qualcosa di dedotto, corretti), `/analyze` (nessun finding
+  CRITICAL).
+
+### Debito Tecnico e Note Aperte
+
+Non verificato: il percorso Windows (`play.cmd`, doppio click, messaggio di pausa, Ctrl+C) e il
+doppio click su macOS. Nessuna delle due piattaforme è disponibile su questa macchina di sviluppo.
+L'utente dispone di una macchina Windows e lo proverà lì.
+
+### Note per il Cliente (linguaggio NON tecnico)
+
+Chi scarica il progetto ora può avviare il gioco con un solo doppio click, senza installare nulla
+oltre a Node.js e senza conoscere gli strumenti da riga di comando degli sviluppatori. Esiste un
+file di avvio per Windows, uno per macOS e uno per Linux: al primo avvio il programma prepara da
+solo tutto il necessario, alle volte successive parte in pochi secondi perché riusa quanto già
+pronto. Se il progetto viene aggiornato con nuove dipendenze, basta lanciarlo di nuovo forzando la
+reinstallazione. Il percorso su Windows e il doppio click su macOS sono stati scritti e controllati
+nel codice, ma non ancora provati su un computer vero con quei sistemi operativi: la prova pratica
+resta da fare.
+
+### Riepilogo (Complessità / Stato)
+
+Complessità: Media. Stato: Completato, con verifica pratica limitata a Linux.
+9 commit atomici, 487 test superati, lint e typecheck puliti, build funzionante. Review di codice e
+di commenti superate con correzioni applicate, gate di consistenza `/analyze` senza finding
+bloccanti. Verifica runtime completa sui percorsi Linux, dichiarata esplicitamente non eseguita su
+Windows e macOS. Nessun push effettuato.
