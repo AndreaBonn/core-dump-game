@@ -2,8 +2,10 @@
 # Starts the game. Identical to play.command, which is the same script under the
 # name macOS needs for a double-click to open it in Terminal.
 #
-# The cd is load-bearing: Finder starts a .command with the working directory set
-# to the home folder, so without it the script looks for the game where it isn't.
+# The cd matters: a double-click can start the script from a directory that is
+# not the repo (Finder is documented to start a .command from the home folder,
+# though that has not been observed from here), and without it the script would
+# look for the game where it isn't.
 # The version number deliberately lives only in package.json; this wrapper checks
 # that Node exists at all and leaves the rest to scripts/play.mjs.
 

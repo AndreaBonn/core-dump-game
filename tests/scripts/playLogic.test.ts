@@ -77,6 +77,14 @@ describe('buildUnsupportedNodeMessage', () => {
     expect(message).toContain('20');
     expect(message).toContain('https://nodejs.org');
   });
+
+  it('says so rather than leaving a gap when a version is unreadable', () => {
+    const message = buildUnsupportedNodeMessage({ current: null, required: 20 });
+
+    expect(message).toContain('unknown');
+    expect(message).toContain('20');
+    expect(message).toContain('https://nodejs.org');
+  });
 });
 
 describe('planSteps', () => {
@@ -108,9 +116,12 @@ describe('planSteps', () => {
     });
   });
 
-  it('builds anyway when a rebuild is forced', () => {
+  // A forced rebuild is what a player runs after a git pull, and a pull can add
+  // a dependency: redoing the build without the install would leave them on a
+  // tree that cannot build what they just fetched.
+  it('reinstalls and rebuilds when a rebuild is forced', () => {
     expect(planSteps({ hasNodeModules: true, hasDist: true, forceRebuild: true })).toEqual({
-      install: false,
+      install: true,
       build: true,
     });
   });

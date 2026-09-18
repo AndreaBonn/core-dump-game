@@ -84,12 +84,16 @@ export function buildUnsupportedNodeMessage(versions) {
  * automatic trigger for a build: staleness after a `git pull` is handled by the
  * player passing `--rebuild`, which keeps the warm start instant.
  *
+ * A forced rebuild redoes the install too. It is what someone runs after a pull,
+ * and a pull can add a dependency, so rebuilding alone would leave them unable
+ * to build what they just fetched.
+ *
  * @param {{ hasNodeModules: boolean, hasDist: boolean, forceRebuild: boolean }} state
  * @returns {{ install: boolean, build: boolean }}
  */
 export function planSteps(state) {
   return {
-    install: !state.hasNodeModules,
+    install: !state.hasNodeModules || state.forceRebuild,
     build: !state.hasDist || state.forceRebuild,
   };
 }
@@ -98,9 +102,11 @@ export function planSteps(state) {
  * Pick the install command. `npm ci` when a lockfile is present, so a first run
  * by a stranger cannot leave the working tree dirty by rewriting it.
  *
- * On Windows `npm` is a `.cmd` shim, and since the fix for CVE-2024-27980 Node
- * refuses to spawn one without a shell. The arguments are literals and the repo
- * path travels in `cwd`, which does not pass through the shell.
+ * On Windows `npm` is a `.cmd` shim, which per the Node advisory for
+ * CVE-2024-27980 cannot be spawned without a shell. That behaviour comes from
+ * the advisory and has not been exercised on Windows from here. The arguments
+ * are literals and the repo path travels in `cwd`, which does not pass through
+ * the shell.
  *
  * @param {{ hasLockfile: boolean, platform: string }} environment
  * @returns {{ command: string, args: string[], shell: boolean }}
