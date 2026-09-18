@@ -9,8 +9,12 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -28,18 +32,156 @@ jobs:
         run: npm run typecheck
 
       # Coverage thresholds live in vite.config.ts, so the same run fails
-      # locally and here rather than only in CI.
+      # locally and here rather than only in CI. The extra reporters feed the
+      # README badges and change nothing about what is executed.
       - name: Test with coverage
-        run: npm run test:coverage
+        run: |
+          npx vitest run --coverage \
+            --coverage.reporter=text --coverage.reporter=json-summary \
+            --reporter=default --reporter=junit \
+            --outputFile.junit=test-results.xml
+
+      # Badges are regenerated even when the tests fail: a red badge with the
+      # real count is information, a missing badge is not. A cancelled run is
+      # different, and must not overwrite a valid badge with "unknown".
+      - name: Generate the badges
+        if: ${{ !cancelled() }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import xml.etree.ElementTree as ET
+
+          os.makedirs('badges', exist_ok=True)
+
+          try:
+              root = ET.parse('test-results.xml').getroot()
+              if root.tag == 'testsuites':
+                  suites = root.findall('testsuite')
+              else:
+                  suites = [root]
+              total = sum(int(s.attrib.get('tests', 0)) for s in suites)
+              bad = sum(
+                  int(s.attrib.get('failures', 0))
+                  + int(s.attrib.get('errors', 0))
+                  for s in suites
+              )
+              passed = total - bad
+              badge = {
+                  'schemaVersion': 1,
+                  'label': 'tests',
+                  'message': (
+                      f'{passed}/{total} passed' if bad
+                      else f'{passed} passed'
+                  ),
+                  'color': 'red' if bad else 'brightgreen',
+              }
+          except (OSError, ET.ParseError):
+              badge = {
+                  'schemaVersion': 1,
+                  'label': 'tests',
+                  'message': 'unknown',
+                  'color': 'lightgrey',
+              }
+          with open('badges/test-badge.json', 'w') as handle:
+              json.dump(badge, handle)
+
+          summary = 'coverage/coverage-summary.json'
+          if os.path.exists(summary):
+              with open(summary) as handle:
+                  pct = json.load(handle)['total']['lines']['pct']
+              color = (
+                  'brightgreen' if pct >= 90
+                  else 'green' if pct >= 80
+                  else 'yellow' if pct >= 60
+                  else 'red'
+              )
+              badge = {
+                  'schemaVersion': 1,
+                  'label': 'coverage',
+                  'message': f'{pct}%',
+                  'color': color,
+              }
+          else:
+              badge = {
+                  'schemaVersion': 1,
+                  'label': 'coverage',
+                  'message': 'N/A',
+                  'color': 'lightgrey',
+              }
+          with open('badges/coverage-badge.json', 'w') as handle:
+              json.dump(badge, handle)
+          PY
+
+      # Handed to the badges job, which is the only one allowed to write.
+      - name: Upload the badges
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: badges
+          path: badges/
+          retention-days: 1
 
       - name: Build
         run: npm run build
 
+  # Isolated from verify so that write access to the repository lives in the
+  # one job that needs it, and only on a push to the default branch.
+  badges:
+    name: Badges
+    needs: verify
+    if: >-
+      ${{ !cancelled() && github.event_name == 'push'
+      && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    # Two merges in quick succession would otherwise race on the same push.
+    concurrency:
+      group: badges-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: badges
+          path: badges/
+
+      - name: Commit the badges
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add badges/test-badge.json badges/coverage-badge.json
+          git diff --cached --quiet && exit 0
+          git commit -m "ci: update badges [skip ci]"
+          remote="https://x-access-token:${GH_TOKEN}@github.com"
+          remote="${remote}/${GITHUB_REPOSITORY}.git"
+          # Another run may have landed a commit in the meantime; rebase and
+          # retry instead of failing the job over a race it can resolve.
+          for attempt in 1 2 3; do
+            if git push "${remote}" HEAD:main; then
+              exit 0
+            fi
+            echo "push rejected, rebasing (attempt ${attempt})"
+            git pull --rebase "${remote}" main || exit 1
+            sleep 5
+          done
+          exit 1
+
   rules:
     name: Firestore rules
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -67,8 +209,12 @@ jobs:
   e2e:
     name: End-to-end
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@v7
