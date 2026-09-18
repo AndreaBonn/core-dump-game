@@ -20,8 +20,9 @@ nella scratchpad, senza `node_modules` e senza `dist`.
       e build, presenza di una riga che dichiara quale build sta servendo.
 - [ ] **DoD-3 (solo build)** Con `node_modules` presente e `dist` rimossa, `./play.sh` esegue la
       build e non l'install.
-- [ ] **DoD-4 (rebuild forzato)** `./play.sh --rebuild` ricostruisce anche con `dist` presente.
-      Osservabile: la build gira e `dist/index.html` cambia mtime.
+- [ ] **DoD-4 (rebuild forzato)** `./play.sh --rebuild` reinstalla e ricostruisce anche con
+      `node_modules` e `dist` presenti. Osservabile: girano sia l'install sia la build, e
+      `dist/index.html` cambia mtime.
 - [ ] **DoD-5 (Node troppo vecchio)** In `<CLONE>` con `engines.node` portato a `">=99"`,
       `./play.sh` stampa un messaggio che contiene la versione trovata, quella richiesta e
       `https://nodejs.org`, non esegue install né build, ed esce con codice 1. Comando:
@@ -116,6 +117,12 @@ has an 'any' type` (probe eseguita con gli stessi compilerOptions del repo). `np
 **Raccomandata: A**, con la riga di stato obbligatoria e una frase nel README ("dopo un
 `git pull`, lancia `./play.sh --rebuild`"). Trigger dichiarato per salire a B: la prima
 segnalazione reale di qualcuno che ha giocato una build vecchia.
+
+**Correzione in implementazione:** `--rebuild` forza anche l'**install**, non la sola build. Il
+`code-reviewer` ha rilevato che il README promette di "giocare la versione nuova" dopo un
+`git pull`, mentre un pull può aggiungere una dipendenza: rifare la sola build lascia
+`node_modules` indietro e la promessa è falsa. Il caso caldo resta istantaneo perché `--rebuild`
+è esplicito e nessuno lo passa per sbaglio.
 
 ### D4. Come si lancia npm per l'install
 
@@ -313,14 +320,14 @@ doppio click.
 
 **Coperto da vitest, `measured` a implementazione fatta:**
 
-| Funzione                      | Casi                                                                                                                        |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `parseNodeMajor`              | `'v24.12.0'` → 24; `'20.0.0'` → 20; `''` e `'garbage'` → `null`                                                             |
-| `parseRequiredMajor`          | `'>=20'` → 20; `'>=20.0.0'` → 20; `'^20 \|\| ^22'` → 20; `undefined` → `null`                                               |
-| `isNodeSupported`             | 24/20 true; 20/20 true (il confine, il caso che si sbaglia); 18/20 false                                                    |
-| `buildUnsupportedNodeMessage` | Contiene `https://nodejs.org`, la versione trovata e quella richiesta. Asserzione positiva sui contenuti, non "non è vuoto" |
-| `planSteps`                   | Le quattro combinazioni di `hasNodeModules` × `hasDist`, più `forceRebuild: true` che forza `build` con `dist` presente     |
-| `resolveInstallCommand`       | Con lockfile → `npm ci`; senza → `npm install`; su `win32` l'oggetto ritornato porta `shell: true`, altrove `false`         |
+| Funzione                      | Casi                                                                                                                                            |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `parseNodeMajor`              | `'v24.12.0'` → 24; `'20.0.0'` → 20; `''` e `'garbage'` → `null`                                                                                 |
+| `parseRequiredMajor`          | `'>=20'` → 20; `'>=20.0.0'` → 20; `'^20 \|\| ^22'` → 20; `undefined` → `null`                                                                   |
+| `isNodeSupported`             | 24/20 true; 20/20 true (il confine, il caso che si sbaglia); 18/20 false                                                                        |
+| `buildUnsupportedNodeMessage` | Contiene `https://nodejs.org`, la versione trovata e quella richiesta. Asserzione positiva sui contenuti, non "non è vuoto"                     |
+| `planSteps`                   | Le quattro combinazioni di `hasNodeModules` × `hasDist`, più `forceRebuild: true` che forza `install` **e** `build` anche con entrambi presenti |
+| `resolveInstallCommand`       | Con lockfile → `npm ci`; senza → `npm install`; su `win32` l'oggetto ritornato porta `shell: true`, altrove `false`                             |
 
 **Verificabile a runtime su questa macchina (Linux), non da vitest ma dalla sequenza di 1.6:** i
 cinque rami di `play.mjs`, il ramo Node-assente del wrapper, l'exit code, l'apertura del
