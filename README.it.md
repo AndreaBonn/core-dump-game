@@ -285,3 +285,9 @@ Distribuito con licenza Apache 2.0. Vedi [LICENSE](./LICENSE).
 ## Supporta il progetto
 
 Se il gioco ti è piaciuto o il codice ti è stato utile, lascia una stella su [GitHub](https://github.com/AndreaBonn/core-dump-game). Aiuta altri a scoprirlo.
+
+Core Dump è gratuita. Se ti è utile e vuoi contribuire, puoi lasciare un'offerta tramite PayPal. L'importo lo scegli tu ed è del tutto facoltativo.
+
+<p align="center">
+  <a href="https://paypal.me/AndreaBonacci19"><img src="https://img.shields.io/badge/Dona-PayPal-00457C?logo=paypal&logoColor=white&style=for-the-badge" alt="Dona con PayPal"></a>
+</p>
