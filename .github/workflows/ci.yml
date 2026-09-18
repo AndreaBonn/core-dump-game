@@ -50,7 +50,7 @@ jobs:
       # The emulator runs on the JVM; without it the rules stay untested,
       # which is how they shipped unverified in the first place.
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '21'
