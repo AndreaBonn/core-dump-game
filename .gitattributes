@@ -1,0 +1,7 @@
+# The launchers are the one place where a wrong line ending is fatal rather
+# than cosmetic: a play.sh checked out with CRLF dies with "bad interpreter",
+# and cmd.exe needs CRLF to read play.cmd reliably.
+play.sh text eol=lf
+play.command text eol=lf
+play.cmd text eol=crlf
+scripts/*.mjs text eol=lf
