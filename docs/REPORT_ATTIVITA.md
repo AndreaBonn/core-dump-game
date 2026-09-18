@@ -289,3 +289,98 @@ Complessità: Media. Stato: Completato, con verifica pratica limitata a Linux.
 di commenti superate con correzioni applicate, gate di consistenza `/analyze` senza finding
 bloccanti. Verifica runtime completa sui percorsi Linux, dichiarata esplicitamente non eseguita su
 Windows e macOS. Nessun push effettuato.
+
+---
+
+## 2026-09-19 | Sessione #5 [DOCS]
+
+### Richiesta
+
+Rigenerare da zero la documentazione del repository con la skill `repo-readme-generator`, in
+versione bilingue (inglese canonico più italiano), comprensiva di guida utente che spieghi come
+avviare il gioco, le regole e come si gioca, politica di sicurezza, diagrammi, schermate catturate
+dal gioco reale e badge aggiornati dalla CI.
+
+### Azioni Eseguite
+
+- Discovery strutturata sul repository: manifest, script, configurazione di build, CI, regole
+  Firestore, contenuti di gioco (livelli, power-up, achievement, modalità) e superficie di
+  sicurezza, con ogni affermazione ricondotta al file che la sostiene.
+- README riscritto in inglese e tradotto in italiano, con due diagrammi Mermaid (architettura a
+  layer e sequenza del salvataggio punteggio) validati renderizzandoli davvero.
+- Guida utente nuova, in entrambe le lingue: avvio passo passo per Windows, macOS e Linux, tabella
+  dei fallimenti del launcher, installazione come PWA, regole, comandi, tipi di pacchetto, combo,
+  power-up, ostacoli, punteggio e stelle, modalità, achievement, classifica e dati personali.
+- Politica di sicurezza nuova, in entrambe le lingue: solo misure verificate nel codice con
+  riferimento `file:riga`, più una sezione esplicita su ciò che non è implementato (nessun rate
+  limiting, nessuno scanner delle dipendenze in CI, nessuna verifica di plausibilità dei punteggi).
+- Sette asset catturati con Playwright sulla build di produzione servita in locale, GIF inclusa.
+- Badge dinamici: file seed in `badges/`, generazione in CI da JUnit XML e riepilogo di copertura.
+- Scrittura sul repository isolata in un quarto job `badges`, che gira solo sul push a `main`: è
+  l'unico con `contents: write`, ha un gruppo di `concurrency` proprio e riprova il push con
+  rebase. Gli altri tre job hanno `contents: read`, tutti i checkout `persist-credentials: false`
+  e il push usa un token esplicito invece della credenziale persistita.
+
+### File Toccati
+
+| File                       | Stato      | Contenuto                                                               |
+| -------------------------- | ---------- | ----------------------------------------------------------------------- |
+| README.md                  | Riscritto  | README inglese, 287 righe, banner, badge, due diagrammi, screenshot     |
+| README.it.md               | Nuovo      | Traduzione italiana speculare, 287 righe                                |
+| docs/how-to-play.md        | Nuovo      | Guida utente inglese, 212 righe                                         |
+| docs/how-to-play.it.md     | Nuovo      | Guida utente italiana, 212 righe                                        |
+| SECURITY.md                | Nuovo      | Politica di disclosure inglese, misure verificate e non implementate    |
+| SECURITY.it.md             | Nuovo      | Versione italiana speculare                                             |
+| docs/assets/               | Nuovo      | 6 PNG e 1 GIF catturati dal gioco in esecuzione                         |
+| badges/test-badge.json     | Nuovo      | Seed del badge dei test                                                 |
+| badges/coverage-badge.json | Nuovo      | Seed del badge di copertura                                             |
+| .github/workflows/ci.yml   | Modificato | Reporter JUnit e json-summary, generazione e commit dei badge, permessi |
+| .gitignore                 | Modificato | Aggiunto `test-results.xml`                                             |
+
+### Verifica
+
+- `npm run test:coverage` eseguito: 617 test su 60 file, copertura 99.89% righe, 99.78% statement,
+  99.2% funzioni, 97.89% branch. I numeri nella documentazione vengono da questa esecuzione.
+- `npm run build` eseguito, build servita in locale su 4173 e usata per catturare gli asset.
+- Gate `md_audit` eseguito sui 6 file Markdown, incluse le tre coppie bilingui: uscita 0 su tutti.
+- I 4 blocchi Mermaid renderizzati davvero in un browser headless: nessun errore di sintassi, classi
+  semantiche applicate a 9 nodi su 10. Diagramma riletto a 900 px e passato da `LR` a `TB` perché a
+  quella larghezza le etichette erano compresse.
+- Lo script di generazione dei badge in CI eseguito in locale sul JUnit XML e sul riepilogo di
+  copertura reali: produce esattamente i file seed committati.
+- `yamllint` pulito sul workflow modificato.
+- Le descrizioni di `garbage collect` e `regex` erano invertite nella prima stesura della guida:
+  corrette dopo aver letto `resolvePowerUp`.
+- Review del solo diff del workflow con `code-reviewer`: un finding MAJOR (push dei badge senza
+  rebase né `concurrency`, che avrebbe reso rosso un job verde su due merge ravvicinati) e due
+  MINOR (`always()` invece di `!cancelled()`, permesso di scrittura concesso anche ai run da pull
+  request). Tutti e tre risolti estraendo il job `badges`.
+
+### Debito Tecnico e Note Aperte
+
+Il README precedente citava quattro power-up e nessun comando di scambio: il codice ne ha sette e
+lo scambio esiste da tempo (click destro o `S`). La documentazione nuova segue il codice.
+
+Le schermate di selezione livelli e achievement sono catturate con un profilo di gioco preparato
+per l'occasione, perché una partita reale abbastanza lunga non era automatizzabile in modo
+affidabile. Le schermate di gioco e la GIF vengono invece da partite vere.
+
+Non verificato: il rendering effettivo delle pagine su GitHub e l'aggiornamento dei badge dinamici,
+che richiedono il push e una esecuzione della CI.
+
+### Note per il Cliente (linguaggio NON tecnico)
+
+Il progetto ha ora una documentazione completa in italiano e in inglese. Chi arriva sul repository
+trova subito una GIF che mostra il gioco in funzione e, se vuole giocare, una guida che parte
+dall'installazione di un solo programma e arriva alla partita, con una tabella di cosa fare quando
+qualcosa non parte. Le regole del gioco sono spiegate per intero: come si mira e si spara, come si
+fanno esplodere i pacchetti, cosa fa ognuno dei sette potenziamenti, come si guadagnano le stelle e
+in cosa differiscono le quattro modalità. C'è anche un documento che spiega come segnalare un
+problema di sicurezza e che dichiara apertamente quali difese ci sono e quali no.
+
+### Riepilogo (Complessità / Stato)
+
+Complessità: Media. Stato: Completato, non ancora pubblicato.
+6 documenti Markdown (1156 righe complessive), 7 asset catturati dal gioco reale, 2 diagrammi
+validati, badge dinamici configurati. Tutti i numeri citati nella documentazione provengono da
+comandi eseguiti in questa sessione. Nessun push effettuato.
