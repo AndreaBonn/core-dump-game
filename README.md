@@ -23,7 +23,35 @@ names, or code from any existing commercial game are used.
 - Node.js 24 (see `.nvmrc`; Node 20+ works)
 - npm 10+
 
+## Play it
+
+You do not need to know npm to play. Install Node.js 20 or newer from
+<https://nodejs.org>, then start the game from the folder you cloned:
+
+- Windows: double-click `play.cmd`
+- macOS: double-click `play.command`
+- Linux: run `./play.sh` from a terminal (most Linux desktops will not run a
+  script from a double-click)
+
+The first run installs the dependencies and builds the game, which takes a few
+minutes and only happens once. Later runs open the browser straight away. After
+a `git pull`, start it with `--rebuild` to play the new version.
+
+The game needs a local web server, which is what the launcher starts for you.
+Opening `dist/index.html` from your file manager does not work: browsers block
+module scripts on `file://`, so you get a blank page and no error.
+
+If you downloaded a ZIP instead of cloning, macOS may block `play.command` until
+you allow it under System Settings, Privacy and Security, and the file may lose
+its executable bit. `git clone` avoids both.
+
+Only the online leaderboard needs setting up (see
+[Firebase configuration](#firebase-configuration-optional)); everything else
+works offline.
+
 ## Getting started
+
+For development rather than playing:
 
 ```bash
 npm install
@@ -57,6 +85,7 @@ still works.
 
 | Command                 | Description                          |
 | ----------------------- | ------------------------------------ |
+| `npm run play`          | Build if needed, then open the game  |
 | `npm run dev`           | Start the dev server                 |
 | `npm run build`         | Type-check and build for production  |
 | `npm run preview`       | Preview the production build         |
