@@ -76,7 +76,7 @@ function prepare() {
   });
 
   if (steps.install) {
-    say('Installing dependencies. This happens once and takes a few minutes.');
+    say('Installing dependencies. This takes a few minutes.');
     const install = resolveInstallCommand({
       hasLockfile: existsSync(join(ROOT, 'package-lock.json')),
       platform: process.platform,
@@ -89,7 +89,7 @@ function prepare() {
   }
 
   if (steps.build) {
-    say('Building the game. This happens once and takes a few seconds.');
+    say('Building the game. This takes a few seconds.');
     runOrExit(process.execPath, [VITE_BIN, 'build'], false);
   } else {
     say(`Serving the existing build. After a git pull, run this with ${REBUILD_FLAG}.`);
