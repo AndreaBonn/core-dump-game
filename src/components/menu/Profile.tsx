@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/shared/Button';
 import { TOTAL_LEVELS } from '@/config/levels';
 import { totalStars } from '@/engine/core/progress';
@@ -18,58 +19,62 @@ export function Profile() {
   const stats = useProgressStore((state) => state.stats);
   const progress = useProgressStore((state) => state.progress);
   const clearProfile = useProgressStore((state) => state.clearProfile);
+  const { t } = useTranslation();
 
   const played = stats.runsPlayed > 0;
 
   return (
     <main className="mx-auto flex h-full w-full max-w-md flex-col gap-5 overflow-y-auto p-6">
-      <h1 className="mt-4 text-3xl font-bold text-terminal-accent">Profile</h1>
+      <h1 className="mt-4 text-3xl font-bold text-terminal-accent">{t('profile.title')}</h1>
 
       {played ? (
         <>
           <dl className="rounded border border-terminal-border bg-terminal-panel px-4 py-2">
-            <Row label="runs played" value={stats.runsPlayed} />
-            <Row label="campaigns completed" value={stats.runsWon} />
-            <Row label="levels cleared" value={stats.levelsCleared} />
-            <Row label="stars" value={`${totalStars(progress)} / ${TOTAL_LEVELS * 3}`} />
-            <Row label="best combo" value={stats.bestCombo > 0 ? `x${stats.bestCombo}` : '-'} />
-            <Row label="power-ups triggered" value={stats.powerUpsTriggered} />
+            <Row label={t('profile.runsPlayed')} value={stats.runsPlayed} />
+            <Row label={t('profile.campaignsCompleted')} value={stats.runsWon} />
+            <Row label={t('profile.levelsCleared')} value={stats.levelsCleared} />
+            <Row
+              label={t('profile.stars')}
+              value={`${totalStars(progress)} / ${TOTAL_LEVELS * 3}`}
+            />
+            <Row
+              label={t('profile.bestCombo')}
+              value={stats.bestCombo > 0 ? t('common.multiplier', { value: stats.bestCombo }) : '-'}
+            />
+            <Row label={t('profile.powerUpsTriggered')} value={stats.powerUpsTriggered} />
           </dl>
 
           <dl className="rounded border border-terminal-border bg-terminal-panel px-4 py-2">
-            <Row label="best campaign" value={stats.bestScore.campaign} />
-            <Row label="best endless" value={stats.bestScore.endless} />
-            <Row label="best daily" value={stats.bestScore.daily} />
-            <Row label="deepest endless level" value={stats.bestLevel.endless || '-'} />
+            <Row label={t('profile.bestCampaign')} value={stats.bestScore.campaign} />
+            <Row label={t('profile.bestEndless')} value={stats.bestScore.endless} />
+            <Row label={t('profile.bestDaily')} value={stats.bestScore.daily} />
+            <Row label={t('profile.deepestEndless')} value={stats.bestLevel.endless || '-'} />
           </dl>
 
           <Button
             variant="ghost"
             className="w-full"
             onClick={() => {
-              if (window.confirm('Erase your progress, stars and achievements on this device?')) {
+              if (window.confirm(t('profile.eraseConfirm'))) {
                 clearProfile();
               }
             }}
           >
-            Erase local progress
+            {t('profile.erase')}
           </Button>
         </>
       ) : (
         <div className="rounded border border-terminal-border bg-terminal-panel p-6 text-center">
-          <p className="mb-2 font-mono text-terminal-text">No runs recorded yet</p>
-          <p className="mb-4 font-mono text-sm text-terminal-muted">
-            Statistics appear here once you have played. Nothing is uploaded: this profile stays on
-            this device.
-          </p>
+          <p className="mb-2 font-mono text-terminal-text">{t('profile.emptyTitle')}</p>
+          <p className="mb-4 font-mono text-sm text-terminal-muted">{t('profile.emptyBody')}</p>
           <Button onClick={() => useGameStore.getState().startGame('campaign')}>
-            Play a first run
+            {t('profile.playFirst')}
           </Button>
         </div>
       )}
 
       <Button variant="ghost" className="w-full" onClick={() => setScreen('menu')}>
-        Back
+        {t('common.back')}
       </Button>
     </main>
   );

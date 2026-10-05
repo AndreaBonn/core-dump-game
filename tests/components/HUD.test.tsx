@@ -55,10 +55,10 @@ describe('HUD', () => {
 
   it('flashes the combo, then clears it so it does not sit over the board', () => {
     vi.useFakeTimers();
-    useGameStore.setState({ combo: { text: 'CHAIN', multiplier: 3 } });
+    useGameStore.setState({ combo: { id: 'kernelPanic', multiplier: 3 } });
 
     render(<HUD onPause={vi.fn()} />);
-    expect(screen.getByText(/CHAIN/)).toBeInTheDocument();
+    expect(screen.getByText(/KERNEL PANIC/)).toBeInTheDocument();
     expect(screen.getByText('x3')).toBeInTheDocument();
 
     act(() => {
@@ -71,7 +71,7 @@ describe('HUD', () => {
 
   it('flashes the power-up name, then clears it', () => {
     vi.useFakeTimers();
-    useGameStore.setState({ powerUp: 'sleep()' });
+    useGameStore.setState({ powerUp: 'SLEEP' });
 
     render(<HUD onPause={vi.fn()} />);
     expect(screen.getByText('sleep()')).toBeInTheDocument();
@@ -85,7 +85,7 @@ describe('HUD', () => {
 
   it('leaves the combo alone before its time is up', () => {
     vi.useFakeTimers();
-    useGameStore.setState({ combo: { text: 'CHAIN', multiplier: 3 } });
+    useGameStore.setState({ combo: { id: 'kernelPanic', multiplier: 3 } });
 
     render(<HUD onPause={vi.fn()} />);
     act(() => {
@@ -97,7 +97,7 @@ describe('HUD', () => {
 
   it('does not clear a combo that arrives after the HUD is gone', () => {
     vi.useFakeTimers();
-    useGameStore.setState({ combo: { text: 'CHAIN', multiplier: 3 } });
+    useGameStore.setState({ combo: { id: 'kernelPanic', multiplier: 3 } });
     const { unmount } = render(<HUD onPause={vi.fn()} />);
 
     unmount();

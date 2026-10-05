@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { Button } from '@/components/shared/Button';
 
@@ -12,6 +13,7 @@ export function UpdatePrompt() {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW();
+  const { t } = useTranslation();
 
   if (!needRefresh) {
     return null;
@@ -22,15 +24,13 @@ export function UpdatePrompt() {
       role="status"
       className="absolute inset-x-3 bottom-3 z-[500] mx-auto flex max-w-sm flex-col gap-3 rounded border border-terminal-trace bg-terminal-panel p-4 font-mono shadow-lg"
     >
-      <p className="text-sm text-terminal-text">
-        A new version of Core Dump is ready. Updating restarts the game.
-      </p>
+      <p className="text-sm text-terminal-text">{t('update.message')}</p>
       <div className="flex gap-2">
         <Button className="flex-1" onClick={() => void updateServiceWorker(true)}>
-          Update now
+          {t('update.now')}
         </Button>
         <Button variant="ghost" className="flex-1" onClick={() => setNeedRefresh(false)}>
-          Later
+          {t('update.later')}
         </Button>
       </div>
     </div>

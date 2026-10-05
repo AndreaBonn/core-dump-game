@@ -7,15 +7,15 @@ describe('comboLabel', () => {
   });
 
   it('labels a two-explosion combo SEGFAULT', () => {
-    expect(comboLabel(2)).toEqual({ multiplier: 2, text: 'SEGFAULT!' });
+    expect(comboLabel(2)).toEqual({ multiplier: 2, id: 'segfault' });
   });
 
   it('labels a three-explosion combo STACK OVERFLOW', () => {
-    expect(comboLabel(3)).toEqual({ multiplier: 3, text: 'STACK OVERFLOW!' });
+    expect(comboLabel(3)).toEqual({ multiplier: 3, id: 'stackOverflow' });
   });
 
   it('labels four or more explosions KERNEL PANIC', () => {
-    expect(comboLabel(4)).toEqual({ multiplier: 4, text: 'KERNEL PANIC!!' });
-    expect(comboLabel(7)!.text).toBe('KERNEL PANIC!!');
+    expect(comboLabel(4)).toEqual({ multiplier: 4, id: 'kernelPanic' });
+    expect(comboLabel(7)!.id).toBe('kernelPanic');
   });
 });

@@ -66,7 +66,7 @@ describe('applyShot', () => {
     const outcome = applyShot(packets, straightPath, { position: vec2(240, 0), type: 'ERROR' });
 
     expect(outcome.explosions).toBe(2);
-    expect(outcome.combo).toEqual({ multiplier: 2, text: 'SEGFAULT!' });
+    expect(outcome.combo).toEqual({ multiplier: 2, id: 'segfault' });
   });
 
   it('collects the power-ups carried by removed packets', () => {

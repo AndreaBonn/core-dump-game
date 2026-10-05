@@ -166,12 +166,12 @@ describe('GameCanvas', () => {
     // The engine reports through the handler set the canvas built for it.
     const forwarded = (engine as unknown as { events: EngineEvents }).events;
 
-    forwarded.onComboChange({ text: 'CHAIN', multiplier: 3 });
+    forwarded.onComboChange({ id: 'kernelPanic', multiplier: 3 });
     forwarded.onLevelComplete(800, 250);
     forwarded.onRunEnd({ mode: 'endless', score: 10, levelReached: 2, levelScore: 5, won: false });
     forwarded.onPowerUp('SLEEP');
 
-    expect(events.onComboChange).toHaveBeenCalledWith({ text: 'CHAIN', multiplier: 3 });
+    expect(events.onComboChange).toHaveBeenCalledWith({ id: 'kernelPanic', multiplier: 3 });
     expect(events.onLevelComplete).toHaveBeenCalledWith(800, 250);
     expect(events.onRunEnd).toHaveBeenCalledWith({
       mode: 'endless',

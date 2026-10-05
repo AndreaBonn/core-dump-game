@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { colorForType, labelForType } from '@/config/packetTypes';
 import { TOTAL_LEVELS } from '@/config/levels';
 import { useGameStore } from '@/store/useGameStore';
@@ -18,6 +19,7 @@ export function HUD({ onPause }: HUDProps) {
   const setCombo = useGameStore((state) => state.setCombo);
   const powerUp = useGameStore((state) => state.powerUp);
   const setPowerUp = useGameStore((state) => state.setPowerUp);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!combo) {
@@ -39,7 +41,7 @@ export function HUD({ onPause }: HUDProps) {
     <div className="pointer-events-none absolute inset-0 z-[200] flex flex-col p-3 font-mono">
       <div className="flex items-start justify-between gap-3">
         <div className="rounded border border-terminal-border bg-terminal-panel/80 px-3 py-2">
-          <p className="text-xs uppercase text-terminal-muted">score</p>
+          <p className="text-xs uppercase text-terminal-muted">{t('game.score')}</p>
           <p
             data-testid="hud-score"
             className="text-2xl font-bold text-terminal-accent tabular-nums"
@@ -50,7 +52,7 @@ export function HUD({ onPause }: HUDProps) {
 
         <div className="flex items-center gap-3">
           <div className="rounded border border-terminal-border bg-terminal-panel/80 px-3 py-2 text-center">
-            <p className="text-xs uppercase text-terminal-muted">level</p>
+            <p className="text-xs uppercase text-terminal-muted">{t('game.level')}</p>
             <p
               data-testid="hud-level"
               className="text-lg font-bold text-terminal-text tabular-nums"
@@ -60,7 +62,7 @@ export function HUD({ onPause }: HUDProps) {
           </div>
           {nextPacket && (
             <div className="rounded border border-terminal-border bg-terminal-panel/80 px-3 py-2 text-center">
-              <p className="text-xs uppercase text-terminal-muted">next</p>
+              <p className="text-xs uppercase text-terminal-muted">{t('game.next')}</p>
               <span
                 className="mt-1 inline-flex h-7 w-7 items-center justify-center rounded font-bold text-terminal-bg"
                 style={{ backgroundColor: colorForType(nextPacket) }}
@@ -70,7 +72,7 @@ export function HUD({ onPause }: HUDProps) {
             </div>
           )}
           <Button variant="ghost" className="pointer-events-auto" onClick={onPause}>
-            Pause
+            {t('game.pause')}
           </Button>
         </div>
       </div>
@@ -78,7 +80,10 @@ export function HUD({ onPause }: HUDProps) {
       {combo && (
         <div className="mt-10 flex justify-center">
           <p className="animate-pulse text-3xl font-extrabold uppercase tracking-widest text-packet-warning drop-shadow">
-            {combo.text} <span className="text-packet-error">x{combo.multiplier}</span>
+            {t(`combo.${combo.id}`)}{' '}
+            <span className="text-packet-error">
+              {t('common.multiplier', { value: combo.multiplier })}
+            </span>
           </p>
         </div>
       )}
@@ -86,7 +91,7 @@ export function HUD({ onPause }: HUDProps) {
       {powerUp && (
         <div className="mt-4 flex justify-center">
           <p className="rounded bg-terminal-panel/80 px-3 py-1 text-sm font-semibold text-packet-info">
-            {powerUp}
+            {t(`powerUps.${powerUp}`)}
           </p>
         </div>
       )}

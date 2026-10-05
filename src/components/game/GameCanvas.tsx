@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { GameEngine } from '@/engine/GameEngine';
 import { audioManager } from '@/engine/audio/AudioManager';
 import { runConfigForMode } from '@/engine/core/runController';
@@ -17,6 +18,7 @@ export function GameCanvas({ events, onReady }: GameCanvasProps) {
   eventsRef.current = events;
   const onReadyRef = useRef(onReady);
   onReadyRef.current = onReady;
+  const { t } = useTranslation();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -71,7 +73,7 @@ export function GameCanvas({ events, onReady }: GameCanvasProps) {
       <canvas
         ref={canvasRef}
         className="block h-full w-full"
-        aria-label="Core Dump game board. Aim with the pointer, click or press space to fire, right-click or press S to swap the ready packet."
+        aria-label={t('game.canvasLabel')}
         role="img"
       />
     </div>

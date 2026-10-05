@@ -34,15 +34,8 @@ describe('the catalogue', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('describes every entry with a name and a plain-words description', () => {
-    for (const achievement of ACHIEVEMENTS) {
-      expect(achievement.name.length).toBeGreaterThan(0);
-      expect(achievement.description.length).toBeGreaterThan(0);
-    }
-  });
-
   it('finds an achievement by id, and nothing by an unknown one', () => {
-    expect(achievementById('hello-world')?.name).toBe('hello, world');
+    expect(achievementById('hello-world')?.id).toBe('hello-world');
     expect(achievementById('not-a-thing')).toBeUndefined();
   });
 });

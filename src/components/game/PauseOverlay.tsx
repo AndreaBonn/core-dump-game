@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Modal } from '@/components/shared/Modal';
 import { Button } from '@/components/shared/Button';
 
@@ -8,17 +9,18 @@ interface PauseOverlayProps {
 }
 
 export function PauseOverlay({ onResume, onRestart, onMenu }: PauseOverlayProps) {
+  const { t } = useTranslation();
   return (
-    <Modal title="PAUSED" onClose={onResume}>
+    <Modal title={t('game.paused')} onClose={onResume}>
       <div className="flex flex-col gap-2">
         <Button className="w-full" onClick={onResume}>
-          Resume
+          {t('game.resume')}
         </Button>
         <Button variant="ghost" className="w-full" onClick={onRestart}>
-          Restart level
+          {t('game.restartLevel')}
         </Button>
         <Button variant="ghost" className="w-full" onClick={onMenu}>
-          Quit to menu
+          {t('game.quitToMenu')}
         </Button>
       </div>
     </Modal>

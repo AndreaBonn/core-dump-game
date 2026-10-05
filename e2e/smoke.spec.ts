@@ -8,6 +8,13 @@ import { expect, test, type Page } from '@playwright/test';
  * a real defect.
  */
 
+// These specs read English copy and the game defaults to Italian: every page
+// load starts as a returning English player. The language itself is covered
+// in language.spec.ts, which has no such seed.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('coredump.language', 'en'));
+});
+
 async function startCampaign(page: Page): Promise<void> {
   await page.goto('/');
   // Skip the first-run tutorial: these specs are about the game itself.

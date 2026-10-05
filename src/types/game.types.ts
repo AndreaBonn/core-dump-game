@@ -33,9 +33,12 @@ export interface RunResult {
   readonly won: boolean;
 }
 
+/** Which shout a combo earns; the text itself lives in the dictionaries. */
+export type ComboId = 'segfault' | 'stackOverflow' | 'kernelPanic';
+
 export interface ComboLabel {
   multiplier: number;
-  text: string;
+  id: ComboId;
 }
 
 /** Discrete events emitted by the engine to the React/UI layer. */

@@ -1,5 +1,6 @@
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/shared/Button';
-import { ACHIEVEMENTS } from '@/engine/core/achievements';
+import { ACHIEVEMENTS, HALFWAY_LEVEL } from '@/engine/core/achievements';
 import { useGameStore } from '@/store/useGameStore';
 import { useProgressStore } from '@/store/useProgressStore';
 
@@ -7,11 +8,12 @@ export function Achievements() {
   const setScreen = useGameStore((state) => state.setScreen);
   const earned = useProgressStore((state) => state.earned);
   const unlocked = new Set(earned);
+  const { t } = useTranslation();
 
   return (
     <main className="mx-auto flex h-full w-full max-w-md flex-col gap-5 overflow-y-auto p-6">
       <div className="mt-4 flex items-baseline justify-between gap-3">
-        <h1 className="text-3xl font-bold text-terminal-accent">Achievements</h1>
+        <h1 className="text-3xl font-bold text-terminal-accent">{t('achievements.title')}</h1>
         <p className="font-mono text-sm tabular-nums text-terminal-muted">
           {unlocked.size}/{ACHIEVEMENTS.length}
         </p>
@@ -31,21 +33,23 @@ export function Achievements() {
             >
               <div className="flex items-baseline justify-between gap-3">
                 <p className={isUnlocked ? 'text-terminal-accent' : 'text-terminal-muted'}>
-                  {achievement.name}
+                  {t(`achievements.items.${achievement.id}.name`)}
                 </p>
                 {/* Text, not colour alone: the state has to survive a greyscale screen. */}
                 <span className="text-xs uppercase text-terminal-muted">
-                  {isUnlocked ? 'unlocked' : 'locked'}
+                  {isUnlocked ? t('achievements.unlocked') : t('achievements.locked')}
                 </span>
               </div>
-              <p className="mt-1 text-xs text-terminal-muted">{achievement.description}</p>
+              <p className="mt-1 text-xs text-terminal-muted">
+                {t(`achievements.items.${achievement.id}.description`, { level: HALFWAY_LEVEL })}
+              </p>
             </li>
           );
         })}
       </ul>
 
       <Button variant="ghost" className="w-full" onClick={() => setScreen('menu')}>
-        Back
+        {t('common.back')}
       </Button>
     </main>
   );

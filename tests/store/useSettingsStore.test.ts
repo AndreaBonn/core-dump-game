@@ -56,6 +56,50 @@ describe('useSettingsStore', () => {
     expect(audioManager.isMuted()).toBe(false);
   });
 
+  it('defaults to Italian on a browser with no stored language', async () => {
+    const store = await loadStore();
+    const { i18n } = await import('@/i18n');
+
+    expect(store.getState().language).toBe('it');
+    expect(i18n.language).toBe('it');
+    expect(document.documentElement.lang).toBe('it');
+  });
+
+  it('ignores a stored language the game does not ship', async () => {
+    localStorage.setItem('coredump.language', 'fr');
+
+    const store = await loadStore();
+
+    expect(store.getState().language).toBe('it');
+  });
+
+  it('switches the UI language and reads the choice back on the next visit', async () => {
+    const store = await loadStore();
+    const { i18n } = await import('@/i18n');
+
+    store.getState().setLanguage('en');
+
+    expect(store.getState().language).toBe('en');
+    expect(localStorage.getItem('coredump.language')).toBe('en');
+    expect(i18n.t('menu.settings')).toBe('Settings');
+    expect(document.documentElement.lang).toBe('en');
+
+    const reopened = await loadStore();
+    expect(reopened.getState().language).toBe('en');
+  });
+
+  it('puts the language back to Italian when the device is erased', async () => {
+    const store = await loadStore();
+    const { i18n } = await import('@/i18n');
+    store.getState().setLanguage('en');
+
+    store.getState().resetSettings();
+
+    expect(store.getState().language).toBe('it');
+    expect(localStorage.getItem('coredump.language')).toBeNull();
+    expect(i18n.t('menu.settings')).toBe('Impostazioni');
+  });
+
   it('still starts when localStorage is unavailable, as in private mode', async () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new DOMException('The operation is insecure.');

@@ -1,5 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+// Initialise i18n before the first render reads any translation.
+import '@/i18n';
 import App from './App';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { isSaveFileAvailable, loadSaveFile } from '@/services/saveFileService';

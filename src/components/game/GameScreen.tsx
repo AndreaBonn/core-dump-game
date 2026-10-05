@@ -5,7 +5,6 @@ import { GameOverScreen } from '@/components/game/GameOverScreen';
 import { LevelCompleteScreen } from '@/components/game/LevelCompleteScreen';
 import { PauseOverlay } from '@/components/game/PauseOverlay';
 import { TutorialOverlay } from '@/components/game/TutorialOverlay';
-import { POWER_UPS } from '@/config/powerUps';
 import type { GameEngine } from '@/engine/GameEngine';
 import { isScoredMode, runConfigForMode } from '@/engine/core/runController';
 import { ensureSignedIn } from '@/services/authService';
@@ -56,7 +55,7 @@ export function GameScreen() {
         profile().recordRunEnd(result);
       },
       onPowerUp: (type) => {
-        store.setPowerUp(POWER_UPS[type].name);
+        store.setPowerUp(type);
         profile().notePowerUp();
       },
     };

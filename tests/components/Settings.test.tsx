@@ -9,6 +9,8 @@ function resetStores() {
   localStorage.clear();
   useGameStore.setState({ ...useGameStore.getInitialState(), screen: 'settings' });
   useSettingsStore.getState().resetSettings();
+  // Erasing settings restores the Italian default; these assertions read English.
+  useSettingsStore.getState().setLanguage('en');
 }
 
 describe('Settings', () => {

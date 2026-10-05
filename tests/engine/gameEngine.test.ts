@@ -328,7 +328,7 @@ describe('GameEngine', () => {
 
       internals.tryInsert(new Projectile(vec2(240, 0), 0, 'ERROR'));
 
-      expect(events.onComboChange).toHaveBeenCalledWith({ multiplier: 2, text: 'SEGFAULT!' });
+      expect(events.onComboChange).toHaveBeenCalledWith({ multiplier: 2, id: 'segfault' });
     });
 
     it('returns false and leaves the chain untouched when nothing is hit', () => {

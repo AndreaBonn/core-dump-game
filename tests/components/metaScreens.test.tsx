@@ -188,7 +188,7 @@ describe('AchievementToast', () => {
 
     act(() => useProgressStore.setState({ pending: [ACHIEVEMENTS[0]!.id] }));
 
-    expect(screen.getByRole('status')).toHaveTextContent(ACHIEVEMENTS[0]!.name);
+    expect(screen.getByRole('status')).toHaveTextContent('hello, world');
   });
 
   it('stays silent on an id the catalogue no longer has, rather than announcing a blank', () => {

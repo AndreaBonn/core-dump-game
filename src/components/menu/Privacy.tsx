@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/shared/Button';
 import { deletePersonalScore, isLeaderboardAvailable } from '@/services/leaderboardService';
 import type { ScoreMode } from '@/engine/core/runController';
@@ -11,13 +12,12 @@ const SCORED_MODES: readonly ScoreMode[] = ['campaign', 'endless', 'daily'];
 
 type EraseState = 'idle' | 'working' | 'done' | 'error' | 'unavailable';
 
-const ERASE_MESSAGE: Record<EraseState, string> = {
-  idle: '',
-  working: 'Deleting...',
-  done: 'Your scores have been deleted from the leaderboard.',
-  error: 'Could not delete them - check your connection and try again.',
-  unavailable: 'This build has no online leaderboard, so there is nothing stored online.',
-};
+const ERASE_MESSAGE_KEY = {
+  working: 'privacy.eraseWorking',
+  done: 'privacy.eraseDone',
+  error: 'privacy.eraseError',
+  unavailable: 'privacy.eraseUnavailable',
+} as const satisfies Record<Exclude<EraseState, 'idle'>, string>;
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -36,13 +36,14 @@ export function Privacy() {
   const clearProfile = useProgressStore((state) => state.clearProfile);
   const resetSettings = useSettingsStore((state) => state.resetSettings);
   const [erase, setErase] = useState<EraseState>('idle');
+  const { t } = useTranslation();
 
   const eraseOnlineScores = async () => {
     if (!isLeaderboardAvailable()) {
       setErase('unavailable');
       return;
     }
-    if (!uid || !window.confirm('Delete your scores from every leaderboard?')) {
+    if (!uid || !window.confirm(t('privacy.deleteOnlineConfirm'))) {
       return;
     }
     setErase('working');
@@ -56,67 +57,50 @@ export function Privacy() {
 
   return (
     <main className="mx-auto flex h-full w-full max-w-md flex-col gap-4 overflow-y-auto p-6">
-      <h1 className="mt-4 text-3xl font-bold text-terminal-accent">Privacy</h1>
+      <h1 className="mt-4 text-3xl font-bold text-terminal-accent">{t('privacy.title')}</h1>
 
-      <Section title="on this device">
-        <p>
-          Your progress, stars, statistics, achievements, nickname and sound setting are stored in
-          this browser and never leave it. Clearing your browser data removes them.
-        </p>
+      <Section title={t('privacy.onDeviceTitle')}>
+        <p>{t('privacy.onDeviceBody')}</p>
       </Section>
 
-      <Section title="on the leaderboard">
-        <p>
-          If you save a score, three things are sent: the nickname you type, the score and the level
-          you reached, plus the time of the save and an anonymous account id created for this
-          browser. No email, no name, no account.
-        </p>
-        <p className="text-terminal-muted">
-          The nickname is shown publicly to everyone who opens the leaderboard. Do not use your real
-          name.
-        </p>
+      <Section title={t('privacy.onLeaderboardTitle')}>
+        <p>{t('privacy.onLeaderboardBody')}</p>
+        <p className="text-terminal-muted">{t('privacy.onLeaderboardWarning')}</p>
       </Section>
 
-      <Section title="how long it is kept">
-        <p>
-          A saved score stays until you delete it. Only your best score per mode is kept: a new
-          personal best replaces the previous one.
-        </p>
+      <Section title={t('privacy.retentionTitle')}>
+        <p>{t('privacy.retentionBody')}</p>
       </Section>
 
-      <Section title="deleting it">
-        <p>You can remove everything, at any time, without asking anyone.</p>
+      <Section title={t('privacy.deletingTitle')}>
+        <p>{t('privacy.deletingBody')}</p>
         <div className="flex flex-col gap-2 pt-1">
           <Button onClick={() => void eraseOnlineScores()} disabled={erase === 'working'}>
-            Delete my online scores
+            {t('privacy.deleteOnline')}
           </Button>
           <Button
             variant="ghost"
             onClick={() => {
               // "Everything" has to mean everything: progress, statistics and
               // achievements, and the preferences too, nickname included.
-              if (
-                window.confirm(
-                  'Erase your progress, stars, achievements, nickname and settings on this device?',
-                )
-              ) {
+              if (window.confirm(t('privacy.eraseDeviceConfirm'))) {
                 clearProfile();
                 resetSettings();
               }
             }}
           >
-            Erase this device
+            {t('privacy.eraseDevice')}
           </Button>
         </div>
-        {ERASE_MESSAGE[erase] && (
+        {erase !== 'idle' && (
           <p role="status" className="pt-1 text-xs text-terminal-muted">
-            {ERASE_MESSAGE[erase]}
+            {t(ERASE_MESSAGE_KEY[erase])}
           </p>
         )}
       </Section>
 
       <Button variant="ghost" className="w-full" onClick={() => setScreen('settings')}>
-        Back
+        {t('common.back')}
       </Button>
     </main>
   );

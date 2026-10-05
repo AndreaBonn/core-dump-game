@@ -118,7 +118,7 @@ describe('AudioManager', () => {
     it('adds the combo sound for the combo size', () => {
       const { manager, played } = trackedManager();
 
-      manager.playMatch({ multiplier: 3, text: 'STACK OVERFLOW!' });
+      manager.playMatch({ multiplier: 3, id: 'stackOverflow' });
 
       expect(played.mock.calls.map(([name]) => name)).toEqual(['match', 'combo-3']);
     });
@@ -126,7 +126,7 @@ describe('AudioManager', () => {
     it('reuses the loudest sample for combos past the last one available', () => {
       const { manager, played } = trackedManager();
 
-      manager.playMatch({ multiplier: 9, text: 'KERNEL PANIC!!' });
+      manager.playMatch({ multiplier: 9, id: 'kernelPanic' });
 
       expect(played.mock.calls.map(([name]) => name)).toEqual(['match', 'combo-4']);
     });

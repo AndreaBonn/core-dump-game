@@ -92,14 +92,14 @@ describe('useGameStore', () => {
     it('mirrors score, level, combo, power-up and next packet', () => {
       state().setScore(120);
       state().setLevel(3);
-      state().setCombo({ multiplier: 2, text: 'SEGFAULT!' });
-      state().setPowerUp('sleep()');
+      state().setCombo({ multiplier: 2, id: 'segfault' });
+      state().setPowerUp('SLEEP');
       state().setNextPacket('INFO');
 
       expect(state().score).toBe(120);
       expect(state().level).toBe(3);
-      expect(state().combo).toEqual({ multiplier: 2, text: 'SEGFAULT!' });
-      expect(state().powerUp).toBe('sleep()');
+      expect(state().combo).toEqual({ multiplier: 2, id: 'segfault' });
+      expect(state().powerUp).toBe('SLEEP');
       expect(state().nextPacket).toBe('INFO');
     });
   });

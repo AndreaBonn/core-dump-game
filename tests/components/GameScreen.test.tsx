@@ -62,6 +62,8 @@ describe('GameScreen', () => {
     useGameStore.setState({ ...useGameStore.getInitialState(), screen: 'game' });
     useProgressStore.getState().clearProfile();
     useSettingsStore.getState().resetSettings();
+    // Erasing settings restores the Italian default; these assertions read English.
+    useSettingsStore.getState().setLanguage('en');
     (isLeaderboardAvailable as Mock).mockReturnValue(true);
     (ensureSignedIn as Mock).mockResolvedValue('uid1');
     (saveScore as Mock).mockResolvedValue('saved');
@@ -160,15 +162,15 @@ describe('GameScreen', () => {
     it('records a combo in the profile as well as flashing it on the HUD', () => {
       render(<GameScreen />);
 
-      act(() => engineEvents.onComboChange({ text: 'CHAIN', multiplier: 4 }));
+      act(() => engineEvents.onComboChange({ id: 'kernelPanic', multiplier: 4 }));
 
-      expect(useGameStore.getState().combo).toEqual({ text: 'CHAIN', multiplier: 4 });
+      expect(useGameStore.getState().combo).toEqual({ id: 'kernelPanic', multiplier: 4 });
       expect(useProgressStore.getState().stats.bestCombo).toBe(4);
     });
 
     it('does not record a combo when the engine clears the label', () => {
       render(<GameScreen />);
-      act(() => engineEvents.onComboChange({ text: 'CHAIN', multiplier: 4 }));
+      act(() => engineEvents.onComboChange({ id: 'kernelPanic', multiplier: 4 }));
 
       act(() => engineEvents.onComboChange(null));
 
@@ -181,7 +183,7 @@ describe('GameScreen', () => {
 
       act(() => engineEvents.onPowerUp('SLEEP'));
 
-      expect(useGameStore.getState().powerUp).toBe('sleep()');
+      expect(useGameStore.getState().powerUp).toBe('SLEEP');
       expect(useProgressStore.getState().stats.powerUpsTriggered).toBe(1);
     });
 

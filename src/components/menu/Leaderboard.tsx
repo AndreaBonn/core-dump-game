@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/shared/Button';
 import { isScoredMode, type ScoreMode } from '@/engine/core/runController';
 import { useGameStore } from '@/store/useGameStore';
@@ -6,17 +7,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import type { ScoreEntry } from '@/types/leaderboard.types';
 
-const STATUS_MESSAGE: Record<string, string> = {
-  loading: 'Loading scores...',
-  error: 'Could not load the leaderboard.',
-  unavailable: 'The online leaderboard is not configured in this build.',
-};
-
-const MODES: readonly { mode: ScoreMode; label: string }[] = [
-  { mode: 'campaign', label: 'Campaign' },
-  { mode: 'endless', label: 'Endless' },
-  { mode: 'daily', label: 'Daily' },
-];
+const MODES: readonly ScoreMode[] = ['campaign', 'endless', 'daily'];
 
 export function Leaderboard() {
   const setScreen = useGameStore((state) => state.setScreen);
@@ -28,21 +19,22 @@ export function Leaderboard() {
     return isScoredMode(played) ? played : 'campaign';
   });
   const { status, top, personalBest } = useLeaderboard(mode);
+  const { t } = useTranslation();
 
   return (
     <main className="mx-auto flex h-full w-full max-w-md flex-col gap-5 p-6">
-      <h1 className="mt-4 text-3xl font-bold text-terminal-accent">Leaderboard</h1>
+      <h1 className="mt-4 text-3xl font-bold text-terminal-accent">{t('leaderboard.title')}</h1>
 
-      <div className="flex gap-2" role="group" aria-label="Leaderboard mode">
+      <div className="flex gap-2" role="group" aria-label={t('leaderboard.modeGroup')}>
         {MODES.map((entry) => (
           <Button
-            key={entry.mode}
-            variant={entry.mode === mode ? 'primary' : 'ghost'}
+            key={entry}
+            variant={entry === mode ? 'primary' : 'ghost'}
             className="flex-1"
-            aria-pressed={entry.mode === mode}
-            onClick={() => setMode(entry.mode)}
+            aria-pressed={entry === mode}
+            onClick={() => setMode(entry)}
           >
-            {entry.label}
+            {t(`leaderboard.${entry}`)}
           </Button>
         ))}
       </div>
@@ -51,7 +43,7 @@ export function Leaderboard() {
         <ol className="flex flex-col divide-y divide-terminal-border rounded border border-terminal-border">
           {top.length === 0 && (
             <li className="p-4 text-center font-mono text-sm text-terminal-muted">
-              No scores yet. Be the first.
+              {t('leaderboard.empty')}
             </li>
           )}
           {top.map((entry, index) => (
@@ -59,25 +51,24 @@ export function Leaderboard() {
           ))}
         </ol>
       ) : (
-        <p className="font-mono text-sm text-terminal-muted">{STATUS_MESSAGE[status]}</p>
+        <p className="font-mono text-sm text-terminal-muted">{t(`leaderboard.${status}`)}</p>
       )}
 
       {personalBest && (
         <div className="rounded border border-terminal-trace bg-terminal-panel p-3">
-          <p className="mb-1 font-mono text-xs uppercase text-terminal-muted">your best</p>
+          <p className="mb-1 font-mono text-xs uppercase text-terminal-muted">
+            {t('leaderboard.yourBest')}
+          </p>
           <Row rank={0} entry={personalBest} highlight />
         </div>
       )}
 
       {status !== 'unavailable' && (
-        <p className="font-mono text-xs text-terminal-muted">
-          Scores are reported by each player&apos;s browser and are not verified. Treat the board as
-          a friendly ranking, not a record book.
-        </p>
+        <p className="font-mono text-xs text-terminal-muted">{t('leaderboard.disclaimer')}</p>
       )}
 
       <Button variant="ghost" className="w-full" onClick={() => setScreen('menu')}>
-        Back
+        {t('common.back')}
       </Button>
     </main>
   );
@@ -90,6 +81,7 @@ interface RowProps {
 }
 
 function Row({ rank, entry, highlight }: RowProps) {
+  const { t } = useTranslation();
   return (
     <li
       className={`flex items-center justify-between gap-3 p-3 font-mono text-sm ${
@@ -101,7 +93,9 @@ function Row({ rank, entry, highlight }: RowProps) {
         <span className="truncate">{entry.displayName}</span>
       </span>
       <span className="flex items-center gap-3">
-        <span className="text-xs text-terminal-muted">lvl {entry.levelReached}</span>
+        <span className="text-xs text-terminal-muted">
+          {t('leaderboard.levelShort', { level: entry.levelReached })}
+        </span>
         <span className="tabular-nums">{entry.score}</span>
       </span>
     </li>

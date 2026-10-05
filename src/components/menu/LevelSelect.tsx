@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/shared/Button';
 import { TOTAL_LEVELS } from '@/config/levels';
 import { isLevelUnlocked, starsOf } from '@/engine/core/progress';
@@ -20,13 +21,12 @@ export function LevelSelect() {
   const setScreen = useGameStore((state) => state.setScreen);
   const startGame = useGameStore((state) => state.startGame);
   const progress = useProgressStore((state) => state.progress);
+  const { t } = useTranslation();
 
   return (
     <main className="mx-auto flex h-full w-full max-w-md flex-col gap-5 overflow-y-auto p-6">
-      <h1 className="mt-4 text-3xl font-bold text-terminal-accent">Campaign</h1>
-      <p className="font-mono text-sm text-terminal-muted">
-        Clear a level to unlock the next one. Replaying can only improve its rating.
-      </p>
+      <h1 className="mt-4 text-3xl font-bold text-terminal-accent">{t('levelSelect.title')}</h1>
+      <p className="font-mono text-sm text-terminal-muted">{t('levelSelect.hint')}</p>
 
       <ol className="grid grid-cols-2 gap-3">
         {LEVELS.map((level) => {
@@ -40,12 +40,16 @@ export function LevelSelect() {
                 disabled={!unlocked}
                 aria-label={
                   unlocked
-                    ? `Level ${level}, ${stars} of 3 stars`
-                    : `Level ${level}, locked. Clear level ${level - 1} first.`
+                    ? t('levelSelect.levelAria', { level, count: stars })
+                    : t('levelSelect.levelLockedAria', { level, previous: level - 1 })
                 }
                 onClick={() => startGame('campaign', level)}
               >
-                <span>{unlocked ? `Level ${level}` : `Level ${level} [locked]`}</span>
+                <span>
+                  {unlocked
+                    ? t('levelSelect.level', { level })
+                    : t('levelSelect.levelLocked', { level })}
+                </span>
                 {unlocked && <Stars earned={stars} />}
               </Button>
             </li>
@@ -54,7 +58,7 @@ export function LevelSelect() {
       </ol>
 
       <Button variant="ghost" className="w-full" onClick={() => setScreen('menu')}>
-        Back
+        {t('common.back')}
       </Button>
     </main>
   );

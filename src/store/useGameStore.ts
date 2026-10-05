@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { RunMode } from '@/engine/core/runController';
-import type { ComboLabel, PacketType, RunResult } from '@/types/game.types';
+import type { ComboLabel, PacketType, PowerUpType, RunResult } from '@/types/game.types';
 
 export type Screen =
   'menu' | 'game' | 'levels' | 'leaderboard' | 'settings' | 'profile' | 'achievements' | 'privacy';
@@ -26,7 +26,7 @@ interface GameUIState {
   score: number;
   level: number;
   combo: ComboLabel | null;
-  powerUp: string | null;
+  powerUp: PowerUpType | null;
   nextPacket: PacketType | null;
   levelResult: LevelResult | null;
   gameResult: GameResult | null;
@@ -36,7 +36,7 @@ interface GameUIState {
   setScore: (score: number) => void;
   setLevel: (level: number) => void;
   setCombo: (combo: ComboLabel | null) => void;
-  setPowerUp: (powerUp: string | null) => void;
+  setPowerUp: (powerUp: PowerUpType | null) => void;
   setNextPacket: (nextPacket: PacketType | null) => void;
   reportLevelComplete: (levelScore: number, bonus: number) => void;
   advanceLevel: () => void;

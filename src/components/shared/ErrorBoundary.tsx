@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Button } from '@/components/shared/Button';
+import { i18n } from '@/i18n';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -38,12 +39,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         role="alert"
         className="flex h-full w-full flex-col items-center justify-center gap-4 bg-terminal-bg p-6 text-center font-mono"
       >
-        <h1 className="text-2xl font-bold text-packet-error">Something went wrong</h1>
-        <p className="max-w-sm text-sm text-terminal-muted">
-          The game hit an unexpected error and stopped. Reloading starts a fresh session; your
-          settings and saved scores are not affected.
-        </p>
-        <Button onClick={() => window.location.reload()}>Reload the game</Button>
+        {/* A class component cannot use the hook; a crash screen need not follow a live switch. */}
+        <h1 className="text-2xl font-bold text-packet-error">{i18n.t('error.title')}</h1>
+        <p className="max-w-sm text-sm text-terminal-muted">{i18n.t('error.body')}</p>
+        <Button onClick={() => window.location.reload()}>{i18n.t('error.reload')}</Button>
       </div>
     );
   }
