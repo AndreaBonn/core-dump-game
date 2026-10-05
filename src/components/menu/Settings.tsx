@@ -16,7 +16,7 @@ export function Settings() {
     <main className="mx-auto flex h-full w-full max-w-md flex-col justify-center gap-6 p-6">
       <h1 className="text-3xl font-bold text-terminal-accent">{t('settings.title')}</h1>
 
-      <div className="flex items-center justify-between rounded border border-terminal-border bg-terminal-panel p-4">
+      <div className="flex items-center justify-between rounded-sm border border-terminal-border bg-terminal-panel p-4">
         <div>
           <p className="font-mono text-sm text-terminal-text">{t('settings.audio')}</p>
           <p className="font-mono text-xs text-terminal-muted">{t('settings.audioHint')}</p>
@@ -26,7 +26,7 @@ export function Settings() {
         </Button>
       </div>
 
-      <div className="rounded border border-terminal-border bg-terminal-panel p-4">
+      <div className="rounded-sm border border-terminal-border bg-terminal-panel p-4">
         <div className="mb-2 flex items-center justify-between gap-3">
           <label htmlFor="settings-nickname" className="font-mono text-sm text-terminal-text">
             {t('settings.nickname')}
@@ -39,7 +39,7 @@ export function Settings() {
           maxLength={24}
           onChange={(event) => setNickname(event.target.value)}
           placeholder={t('common.nicknamePlaceholder')}
-          className="w-full rounded border border-terminal-border bg-terminal-bg px-3 py-2 font-mono text-terminal-text focus-visible:border-terminal-trace focus-visible:outline-none"
+          className="w-full rounded-sm border border-terminal-border bg-terminal-bg px-3 py-2 font-mono text-terminal-text focus-visible:border-terminal-trace focus-visible:outline-hidden"
         />
       </div>
 

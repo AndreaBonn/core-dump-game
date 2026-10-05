@@ -25,7 +25,7 @@ export function Achievements() {
           return (
             <li
               key={achievement.id}
-              className={`rounded border p-3 font-mono ${
+              className={`rounded-sm border p-3 font-mono ${
                 isUnlocked
                   ? 'border-terminal-trace bg-terminal-panel'
                   : 'border-terminal-border bg-transparent'

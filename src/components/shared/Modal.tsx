@@ -63,12 +63,12 @@ export function Modal({ title, children, onClose }: ModalProps) {
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      className="absolute inset-0 z-[400] flex items-center justify-center bg-terminal-bg/85 p-4"
+      className="absolute inset-0 z-400 flex items-center justify-center bg-terminal-bg/85 p-4"
     >
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="w-full max-w-sm rounded-lg border border-terminal-border bg-terminal-panel p-6 shadow-2xl focus:outline-none"
+        className="w-full max-w-sm rounded-lg border border-terminal-border bg-terminal-panel p-6 shadow-2xl focus:outline-hidden"
       >
         <h2 className="mb-4 text-center font-mono text-xl font-bold text-terminal-accent">
           {title}

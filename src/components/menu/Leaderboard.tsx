@@ -40,7 +40,7 @@ export function Leaderboard() {
       </div>
 
       {status === 'ready' ? (
-        <ol className="flex flex-col divide-y divide-terminal-border rounded border border-terminal-border">
+        <ol className="flex flex-col divide-y divide-terminal-border rounded-sm border border-terminal-border">
           {top.length === 0 && (
             <li className="p-4 text-center font-mono text-sm text-terminal-muted">
               {t('leaderboard.empty')}
@@ -55,7 +55,7 @@ export function Leaderboard() {
       )}
 
       {personalBest && (
-        <div className="rounded border border-terminal-trace bg-terminal-panel p-3">
+        <div className="rounded-sm border border-terminal-trace bg-terminal-panel p-3">
           <p className="mb-1 font-mono text-xs uppercase text-terminal-muted">
             {t('leaderboard.yourBest')}
           </p>

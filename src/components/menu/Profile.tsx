@@ -29,7 +29,7 @@ export function Profile() {
 
       {played ? (
         <>
-          <dl className="rounded border border-terminal-border bg-terminal-panel px-4 py-2">
+          <dl className="rounded-sm border border-terminal-border bg-terminal-panel px-4 py-2">
             <Row label={t('profile.runsPlayed')} value={stats.runsPlayed} />
             <Row label={t('profile.campaignsCompleted')} value={stats.runsWon} />
             <Row label={t('profile.levelsCleared')} value={stats.levelsCleared} />
@@ -44,7 +44,7 @@ export function Profile() {
             <Row label={t('profile.powerUpsTriggered')} value={stats.powerUpsTriggered} />
           </dl>
 
-          <dl className="rounded border border-terminal-border bg-terminal-panel px-4 py-2">
+          <dl className="rounded-sm border border-terminal-border bg-terminal-panel px-4 py-2">
             <Row label={t('profile.bestCampaign')} value={stats.bestScore.campaign} />
             <Row label={t('profile.bestEndless')} value={stats.bestScore.endless} />
             <Row label={t('profile.bestDaily')} value={stats.bestScore.daily} />
@@ -64,7 +64,7 @@ export function Profile() {
           </Button>
         </>
       ) : (
-        <div className="rounded border border-terminal-border bg-terminal-panel p-6 text-center">
+        <div className="rounded-sm border border-terminal-border bg-terminal-panel p-6 text-center">
           <p className="mb-2 font-mono text-terminal-text">{t('profile.emptyTitle')}</p>
           <p className="mb-4 font-mono text-sm text-terminal-muted">{t('profile.emptyBody')}</p>
           <Button onClick={() => useGameStore.getState().startGame('campaign')}>

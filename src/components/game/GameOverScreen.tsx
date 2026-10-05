@@ -65,7 +65,7 @@ export function GameOverScreen({
             maxLength={24}
             disabled={!canSave}
             onChange={(event) => setNickname(event.target.value)}
-            className="w-full rounded border border-terminal-border bg-terminal-bg px-3 py-2 font-mono text-terminal-text focus-visible:border-terminal-trace focus-visible:outline-none disabled:opacity-60"
+            className="w-full rounded-sm border border-terminal-border bg-terminal-bg px-3 py-2 font-mono text-terminal-text focus-visible:border-terminal-trace focus-visible:outline-hidden disabled:opacity-60"
             placeholder={t('common.nicknamePlaceholder')}
           />
         </div>

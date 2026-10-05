@@ -50,9 +50,9 @@ export function TutorialOverlay() {
     <div
       role="region"
       aria-label={t('tutorial.label')}
-      className="pointer-events-none absolute inset-x-0 bottom-0 z-[300] flex justify-center p-4"
+      className="pointer-events-none absolute inset-x-0 bottom-0 z-300 flex justify-center p-4"
     >
-      <div className="pointer-events-auto w-full max-w-md rounded border border-terminal-trace bg-terminal-panel/95 p-4 font-mono shadow-lg">
+      <div className="pointer-events-auto w-full max-w-md rounded-sm border border-terminal-trace bg-terminal-panel/95 p-4 font-mono shadow-lg">
         <p className="text-xs uppercase tracking-widest text-terminal-muted">
           {t('tutorial.step', { current: index + 1, total: STEPS.length })}
         </p>

@@ -49,7 +49,7 @@ export function LanguageSwitch() {
             aria-label={t(`language.${option}`)}
             title={t(`language.${option}`)}
             onClick={() => setLanguage(option)}
-            className={`inline-flex h-11 w-11 items-center justify-center rounded border-2 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terminal-accent focus-visible:ring-offset-2 focus-visible:ring-offset-terminal-panel ${
+            className={`inline-flex h-11 w-11 items-center justify-center rounded-sm border-2 transition-opacity focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-terminal-accent focus-visible:ring-offset-2 focus-visible:ring-offset-terminal-panel ${
               selected
                 ? 'border-terminal-trace opacity-100'
                 : 'border-transparent opacity-50 hover:opacity-100'

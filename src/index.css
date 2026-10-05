@@ -1,6 +1,53 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@theme {
+  --color-terminal-bg: #0a0e14;
+  --color-terminal-panel: #111823;
+  --color-terminal-border: #1e2a38;
+  --color-terminal-trace: #2fb344;
+  --color-terminal-text: #c8d3e0;
+  --color-terminal-muted: #8593a8;
+  --color-terminal-accent: #39ff14;
+
+  --color-packet-error: #ff5555;
+  --color-packet-success: #50fa7b;
+  --color-packet-info: #8be9fd;
+  --color-packet-warning: #f1fa8c;
+  --color-packet-debug: #bd93f9;
+  --color-packet-trace: #ffb86c;
+  --color-packet-fatal: #ff79c9;
+
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+
+  /* v4 dims placeholders to 50% currentColor and drops the pointer cursor on buttons. */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
 
 @font-face {
   font-family: 'JetBrains Mono';

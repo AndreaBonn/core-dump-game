@@ -22,7 +22,7 @@ export function UpdatePrompt() {
   return (
     <div
       role="status"
-      className="absolute inset-x-3 bottom-3 z-[500] mx-auto flex max-w-sm flex-col gap-3 rounded border border-terminal-trace bg-terminal-panel p-4 font-mono shadow-lg"
+      className="absolute inset-x-3 bottom-3 z-500 mx-auto flex max-w-sm flex-col gap-3 rounded-sm border border-terminal-trace bg-terminal-panel p-4 font-mono shadow-lg"
     >
       <p className="text-sm text-terminal-text">{t('update.message')}</p>
       <div className="flex gap-2">

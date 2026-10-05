@@ -21,7 +21,7 @@ const ERASE_MESSAGE_KEY = {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded border border-terminal-border bg-terminal-panel p-4">
+    <section className="rounded-sm border border-terminal-border bg-terminal-panel p-4">
       <h2 className="mb-2 font-mono text-sm uppercase tracking-widest text-terminal-accent">
         {title}
       </h2>
