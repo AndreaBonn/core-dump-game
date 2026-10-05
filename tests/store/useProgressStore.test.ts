@@ -186,4 +186,87 @@ describe('useProgressStore', () => {
     expect(store.getState().stats.runsPlayed).toBe(0);
     expect(store.getState().earned).toEqual([]);
   });
+
+  describe('hydrateFromFile', () => {
+    const fileSave = JSON.stringify({
+      progress: { stars: { 1: 3, 2: 2 }, unlockedThrough: 3 },
+      stats: { runsPlayed: 8, bestScore: { campaign: 5000 } },
+      earned: ['hello-world'],
+    });
+
+    it('brings levels saved in the file into a fresh browser', async () => {
+      const store = await loadStore();
+
+      store.getState().hydrateFromFile(fileSave);
+
+      expect(store.getState().progress.unlockedThrough).toBe(3);
+      expect(store.getState().progress.stars).toEqual({ 1: 3, 2: 2 });
+      expect(store.getState().stats.bestScore.campaign).toBe(5000);
+    });
+
+    it('keeps the merged profile in the browser for the next load', async () => {
+      const store = await loadStore();
+      store.getState().hydrateFromFile(fileSave);
+
+      const reopened = await loadStore();
+
+      expect(reopened.getState().progress.unlockedThrough).toBe(3);
+    });
+
+    it('keeps browser progress the file does not have', async () => {
+      const store = await loadStore();
+      const [, , three] = getLevel(4).starThresholds;
+      store.getState().recordLevelResult(4, three);
+
+      store.getState().hydrateFromFile(fileSave);
+
+      expect(store.getState().progress.stars[4]).toBe(3);
+      expect(store.getState().progress.unlockedThrough).toBe(5);
+    });
+
+    it('keeps the browser profile when there is no file yet', async () => {
+      const store = await loadStore();
+      store.getState().recordRunEnd(run({ score: 777 }));
+
+      store.getState().hydrateFromFile(null);
+
+      expect(store.getState().stats.bestScore.campaign).toBe(777);
+    });
+
+    it('ignores a corrupted file without losing the browser profile', async () => {
+      const store = await loadStore();
+      store.getState().recordRunEnd(run({ score: 777 }));
+
+      store.getState().hydrateFromFile('{broken');
+
+      expect(store.getState().stats.bestScore.campaign).toBe(777);
+    });
+
+    it('keeps a reset made before the file arrived instead of resurrecting the old profile', async () => {
+      const store = await loadStore();
+      store.getState().recordRunEnd(run({ score: 777 }));
+
+      store.getState().clearProfile();
+      store.getState().hydrateFromFile(fileSave);
+
+      expect(store.getState().progress.unlockedThrough).toBe(1);
+      expect(store.getState().stats.bestScore.campaign).toBe(0);
+    });
+
+    it('adopts a reset saved in the file over older browser progress', async () => {
+      const store = await loadStore();
+      store.getState().hydrateFromFile(fileSave);
+      const resetFile = JSON.stringify({
+        progress: { stars: {}, unlockedThrough: 1 },
+        stats: {},
+        earned: [],
+        resetAt: Date.now() + 1000,
+      });
+
+      store.getState().hydrateFromFile(resetFile);
+
+      expect(store.getState().progress.unlockedThrough).toBe(1);
+      expect(store.getState().progress.stars).toEqual({});
+    });
+  });
 });

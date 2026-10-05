@@ -35,3 +35,6 @@ test-results.xml
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Local save written by the launcher (play.cmd / play.sh)
+save/

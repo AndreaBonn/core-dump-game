@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { getLevel, TOTAL_LEVELS } from '@/config/levels';
 import { newlyEarned, type AchievementState } from '@/engine/core/achievements';
-import { EMPTY_PROGRESS, recordLevel, type CampaignProgress } from '@/engine/core/progress';
+import { mergeProfiles, type SavedProfile } from '@/engine/core/profileMerge';
+import { EMPTY_PROGRESS, recordLevel } from '@/engine/core/progress';
 import { starsFor, type Stars } from '@/engine/core/stars';
 import type { ScoreMode } from '@/engine/core/runController';
 import {
@@ -10,18 +11,14 @@ import {
   recordLevelCleared,
   recordPowerUp,
   recordRun,
-  type PlayerStats,
 } from '@/engine/core/stats';
+import { writeSaveFile } from '@/services/saveFileService';
 import { readStored, writeStored } from '@/store/persistence';
 import type { RunResult } from '@/types/game.types';
 
 const STORAGE_KEY = 'coredump.progress';
 
-interface StoredProfile {
-  progress: CampaignProgress;
-  stats: PlayerStats;
-  earned: string[];
-}
+type StoredProfile = SavedProfile;
 
 interface ProgressState extends StoredProfile {
   /** Achievements unlocked but not yet shown to the player. */
@@ -32,12 +29,15 @@ interface ProgressState extends StoredProfile {
   notePowerUp: () => void;
   dismissPending: (id: string) => void;
   clearProfile: () => void;
+  /** Merge in the save file read at startup, then write the result to both stores. */
+  hydrateFromFile: (raw: string | null) => void;
 }
 
 const EMPTY_PROFILE: StoredProfile = {
   progress: EMPTY_PROGRESS,
   stats: EMPTY_STATS,
   earned: [],
+  resetAt: 0,
 };
 
 const SCORED_MODES: readonly ScoreMode[] = ['campaign', 'endless', 'daily'];
@@ -80,14 +80,13 @@ function safeStars(stored: unknown): Readonly<Record<number, Stars>> {
 }
 
 /**
- * Read the saved profile, falling back to an empty one on anything unexpected.
+ * Parse a saved profile, falling back to an empty one on anything unexpected.
  * The stored shape changes as the game grows and the file is on the player's
  * machine: a parse error, a missing field or a hand-edited value must cost the
  * player their history at worst, never the ability to start the game, and must
  * never leave a number that poisons every later update.
  */
-function readProfile(): StoredProfile {
-  const raw = readStored(STORAGE_KEY);
+function parseProfile(raw: string | null): StoredProfile {
   if (!raw) {
     return EMPTY_PROFILE;
   }
@@ -112,6 +111,7 @@ function readProfile(): StoredProfile {
       earned: Array.isArray(parsed.earned)
         ? parsed.earned.filter((id) => typeof id === 'string')
         : [],
+      resetAt: safeNumber(parsed.resetAt, 0),
     };
   } catch {
     return EMPTY_PROFILE;
@@ -119,21 +119,30 @@ function readProfile(): StoredProfile {
 }
 
 function writeProfile(profile: StoredProfile): void {
-  writeStored(STORAGE_KEY, JSON.stringify(profile));
+  const text = JSON.stringify(profile);
+  writeStored(STORAGE_KEY, text);
+  writeSaveFile(text);
 }
 
 export const useProgressStore = create<ProgressState>((set, get) => {
-  /** Save, then unlock whatever the new state earns, keeping it for a toast. */
-  const commit = (profile: StoredProfile): void => {
+  /**
+   * Save, then unlock whatever the new state earns, keeping it for a toast.
+   * Gameplay updates leave `resetAt` out and keep the current one.
+   */
+  const commit = (profile: Omit<StoredProfile, 'resetAt'> & { resetAt?: number }): void => {
     const state: AchievementState = { stats: profile.stats, progress: profile.progress };
     const fresh = newlyEarned(state, profile.earned);
-    const saved = { ...profile, earned: [...profile.earned, ...fresh] };
+    const saved: StoredProfile = {
+      ...profile,
+      earned: [...profile.earned, ...fresh],
+      resetAt: profile.resetAt ?? get().resetAt,
+    };
     writeProfile(saved);
     set({ ...saved, pending: [...get().pending, ...fresh] });
   };
 
   return {
-    ...readProfile(),
+    ...parseProfile(readStored(STORAGE_KEY)),
     pending: [],
 
     recordRunEnd: (result) => {
@@ -170,8 +179,14 @@ export const useProgressStore = create<ProgressState>((set, get) => {
     dismissPending: (id) => set({ pending: get().pending.filter((entry) => entry !== id) }),
 
     clearProfile: () => {
-      writeProfile(EMPTY_PROFILE);
-      set({ ...EMPTY_PROFILE, pending: [] });
+      const cleared = { ...EMPTY_PROFILE, resetAt: Date.now() };
+      writeProfile(cleared);
+      set({ ...cleared, pending: [] });
+    },
+
+    hydrateFromFile: (raw) => {
+      const { progress, stats, earned, resetAt } = get();
+      commit(mergeProfiles({ progress, stats, earned, resetAt }, parseProfile(raw)));
     },
   };
 });
