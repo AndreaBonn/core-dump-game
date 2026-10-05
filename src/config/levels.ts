@@ -1,3 +1,4 @@
+import { CHAPTERS, type LevelSpec } from '@/config/campaign';
 import { buildTrack, type PathKind } from '@/config/paths';
 import type { StarThresholds } from '@/engine/core/stars';
 import type { Vec2 } from '@/engine/math/vec2';
@@ -34,9 +35,12 @@ export interface LevelConfig {
   readonly starThresholds: StarThresholds;
 }
 
-export const TOTAL_LEVELS = 10;
-
 const POWER_UP_CHANCE = 0.05;
+const TRACK_START_RADIUS = 250;
+const TRACK_RADIUS_STEP = 20;
+const TRACK_RADIUS_VARIANTS = 2;
+const TRACK_WAYPOINT_COUNT = 64;
+const MIN_TRACK_SWEEPS = 2;
 
 /**
  * Hazards start appearing once the player knows the rules, and are capped well
@@ -100,7 +104,24 @@ interface LevelTuning {
   colorCount: number;
   chainSpeed: number;
   turns: number;
-  startRadius: number;
+}
+
+export interface CampaignPosition {
+  readonly level: number;
+  readonly chapter: number;
+  readonly index: number;
+  readonly chapterLength: number;
+}
+
+function buildLevelTrack(level: number, turns: number): readonly Vec2[] {
+  const kind = pathKindFor(level);
+  const step = level - 1;
+  return buildTrack({
+    kind,
+    reach: TRACK_START_RADIUS + (step % TRACK_RADIUS_VARIANTS) * TRACK_RADIUS_STEP,
+    sweeps: kind === 'spiral' ? turns : Math.max(MIN_TRACK_SWEEPS, Math.round(turns)),
+    waypoints: TRACK_WAYPOINT_COUNT,
+  });
 }
 
 function tuningForLevel(level: number): LevelTuning {
@@ -110,25 +131,19 @@ function tuningForLevel(level: number): LevelTuning {
     colorCount: Math.min(4 + Math.floor(step / 2), MAX_COLOR_COUNT),
     chainSpeed: Math.min(26 + step * 5, MAX_CHAIN_SPEED),
     turns: Math.min(2.6 + step * 0.12, MAX_TURNS),
-    startRadius: 250 + (step % 2) * 20,
   };
 }
 
 /**
  * Build a level config for any 1-based `level`, seeding chain generation from
- * `seedBase`. The campaign uses CAMPAIGN_SEED_BASE (stable layouts); endless and
- * daily runs pass their own base to vary or reproduce the sequence. Works past
+ * `seedBase`. Endless and daily runs pass their own base to vary or reproduce
+ * the sequence; authored campaign levels use buildCampaignLevel. Works past
  * TOTAL_LEVELS: tuning extrapolates and is capped so it stays playable.
  */
 export function buildLevelConfig(level: number, seedBase: number): LevelConfig {
   const tuning = tuningForLevel(level);
   const pathKind = pathKindFor(level);
-  const waypoints: readonly Vec2[] = buildTrack({
-    kind: pathKind,
-    reach: tuning.startRadius,
-    sweeps: pathKind === 'spiral' ? tuning.turns : Math.max(2, Math.round(tuning.turns)),
-    waypoints: 64,
-  });
+  const waypoints = buildLevelTrack(level, tuning.turns);
   return {
     level,
     chapter: null,
@@ -148,9 +163,43 @@ export function buildLevelConfig(level: number, seedBase: number): LevelConfig {
   };
 }
 
-export const LEVELS: readonly LevelConfig[] = Array.from({ length: TOTAL_LEVELS }, (_, index) =>
-  buildLevelConfig(index + 1, CAMPAIGN_SEED_BASE),
+/**
+ * Build an authored campaign level with a stable seed; the last level of each
+ * chapter is its boss.
+ */
+export function buildCampaignLevel(spec: LevelSpec, position: CampaignPosition): LevelConfig {
+  const { level, chapter, index, chapterLength } = position;
+  return {
+    level,
+    chapter,
+    isBoss: index === chapterLength - 1,
+    armorChance: spec.armorChance,
+    reversal: spec.reversal,
+    waves: spec.waves,
+    waypoints: buildLevelTrack(level, spec.turns),
+    chainLength: spec.chainLength,
+    colorCount: spec.colorCount,
+    chainSpeed: spec.chainSpeed,
+    powerUpChance: POWER_UP_CHANCE,
+    hazardChance: spec.hazardChance,
+    pathKind: pathKindFor(level),
+    seed: CAMPAIGN_SEED_BASE + level * SEED_STEP,
+    starThresholds: starThresholdsFor(spec.chainLength),
+  };
+}
+
+export const LEVELS: readonly LevelConfig[] = CHAPTERS.flatMap((chapter) =>
+  chapter.levels.map((spec, index) => ({
+    spec,
+    chapter: chapter.id,
+    index,
+    chapterLength: chapter.levels.length,
+  })),
+).map(({ spec, ...position }, index) =>
+  buildCampaignLevel(spec, { ...position, level: index + 1 }),
 );
+
+export const TOTAL_LEVELS = LEVELS.length;
 
 /** Level config for a 1-based level number, clamped to the available range. */
 export function getLevel(level: number): LevelConfig {

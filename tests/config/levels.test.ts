@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { CHAPTERS } from '@/config/campaign';
 import { buildLevelConfig, getLevel, LEVELS, TOTAL_LEVELS } from '@/config/levels';
 
 describe('level configuration', () => {
@@ -14,7 +15,7 @@ describe('level configuration', () => {
 
   it('provides exactly TOTAL_LEVELS levels', () => {
     expect(LEVELS).toHaveLength(TOTAL_LEVELS);
-    expect(TOTAL_LEVELS).toBe(10);
+    expect(TOTAL_LEVELS).toBe(12);
   });
 
   it('clamps requested level to the valid range', () => {
@@ -23,16 +24,27 @@ describe('level configuration', () => {
     expect(getLevel(3).level).toBe(3);
   });
 
-  it('increases chain speed monotonically across levels', () => {
-    for (let i = 1; i < LEVELS.length; i += 1) {
-      expect(LEVELS[i]!.chainSpeed).toBeGreaterThan(LEVELS[i - 1]!.chainSpeed);
+  it.each(CHAPTERS)('increases chain speed monotonically within chapter $id', ({ id }) => {
+    const levels = LEVELS.filter(({ chapter }) => chapter === id);
+    expect(levels).toHaveLength(CHAPTERS.find((chapter) => chapter.id === id)!.levels.length);
+    for (let i = 1; i < levels.length; i += 1) {
+      expect(levels[i]!.chainSpeed).toBeGreaterThan(levels[i - 1]!.chainSpeed);
     }
   });
 
-  it('increases chain length monotonically across levels', () => {
-    for (let i = 1; i < LEVELS.length; i += 1) {
-      expect(LEVELS[i]!.chainLength).toBeGreaterThan(LEVELS[i - 1]!.chainLength);
+  it.each(CHAPTERS)('increases chain length monotonically within chapter $id', ({ id }) => {
+    const levels = LEVELS.filter(({ chapter }) => chapter === id);
+    expect(levels).toHaveLength(CHAPTERS.find((chapter) => chapter.id === id)!.levels.length);
+    for (let i = 1; i < levels.length; i += 1) {
+      expect(levels[i]!.chainLength).toBeGreaterThan(levels[i - 1]!.chainLength);
     }
+  });
+
+  it('starts the hazard chapter below the previous boss at the previous fifth level tuning', () => {
+    expect(getLevel(6)).toMatchObject({ chainLength: 48, chainSpeed: 57 });
+    expect(getLevel(7)).toMatchObject({ chainLength: 36, chainSpeed: 46 });
+    expect(getLevel(7).chainLength).toBe(getLevel(5).chainLength);
+    expect(getLevel(7).chainSpeed).toBe(getLevel(5).chainSpeed);
   });
 
   it('starts at 4 colours and grows to at most 7', () => {
