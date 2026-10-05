@@ -28,25 +28,26 @@ function chapterFor(id: number): ChapterSpec {
 }
 
 describe('campaign chapters', () => {
-  it('defines only the base and hazard chapters in order', () => {
+  it('defines the base, hazard and armor chapters in order', () => {
     expect(CHAPTERS.map(({ id, mechanic }) => ({ id, mechanic }))).toEqual([
       { id: 1, mechanic: 'base' },
       { id: 2, mechanic: 'hazard' },
+      { id: 3, mechanic: 'armor' },
     ]);
   });
 
-  it.each([1, 2])('gives chapter %i six levels', (id) => {
+  it.each([1, 2, 3])('gives chapter %i six levels', (id) => {
     expect(chapterFor(id).levels).toHaveLength(LEVELS_PER_CHAPTER);
   });
 
-  it.each([1, 2])('increases difficulty through the first five levels of chapter %i', (id) => {
+  it.each([1, 2, 3])('increases difficulty through the first five levels of chapter %i', (id) => {
     const indices = chapterFor(id).levels.map(indexFor);
     for (let index = 1; index < BOSS_INDEX; index += 1) {
       expect(indices[index]).toBeGreaterThanOrEqual(indices[index - 1]!);
     }
   });
 
-  it.each([1, 2])('puts the unique difficulty maximum last in chapter %i', (id) => {
+  it.each([1, 2, 3])('puts the unique difficulty maximum last in chapter %i', (id) => {
     const indices = chapterFor(id).levels.map(indexFor);
     const maximum = Math.max(...indices);
     expect(indices.filter((index) => index === maximum)).toHaveLength(1);
@@ -54,17 +55,29 @@ describe('campaign chapters', () => {
     expect(indices[BOSS_INDEX]).toBeGreaterThanOrEqual(indices[BOSS_INDEX - 1]! * MIN_BOSS_RATIO);
   });
 
-  it.each([1, 2])('keeps the chapter %i boss within a quarter of the fifth level speed', (id) => {
-    const levels = chapterFor(id).levels;
-    expect(levels[BOSS_INDEX]!.chainSpeed).toBeLessThanOrEqual(
-      levels[BOSS_INDEX - 1]!.chainSpeed * MAX_BOSS_SPEED_RATIO,
-    );
-  });
+  it.each([1, 2, 3])(
+    'keeps the chapter %i boss within a quarter of the fifth level speed',
+    (id) => {
+      const levels = chapterFor(id).levels;
+      expect(levels[BOSS_INDEX]!.chainSpeed).toBeLessThanOrEqual(
+        levels[BOSS_INDEX - 1]!.chainSpeed * MAX_BOSS_SPEED_RATIO,
+      );
+    },
+  );
 
   it('starts chapter two below the previous boss and at least at the previous fifth level', () => {
     const first = indexFor(chapterFor(2).levels[0]!);
     expect(first).toBeLessThan(indexFor(chapterFor(1).levels[BOSS_INDEX]!));
     expect(first).toBeGreaterThanOrEqual(indexFor(chapterFor(1).levels[BOSS_INDEX - 1]!));
+  });
+
+  it('starts chapter three below the previous boss and at least at the previous fifth level', () => {
+    const first = chapterFor(3).levels[0]!;
+    const previous = chapterFor(2).levels;
+    expect(indexFor(first)).toBeLessThan(indexFor(previous[BOSS_INDEX]!));
+    expect(indexFor(first)).toBeGreaterThanOrEqual(indexFor(previous[BOSS_INDEX - 1]!));
+    expect(first.chainLength).toBe(previous[BOSS_INDEX - 1]!.chainLength);
+    expect(first.chainSpeed).toBe(previous[BOSS_INDEX - 1]!.chainSpeed);
   });
 
   it('preserves the original base progression before the first boss', () => {
@@ -78,7 +91,7 @@ describe('campaign chapters', () => {
       });
   });
 
-  it('introduces hazards only in chapter two, increasing from 0.02 to 0.12', () => {
+  it('introduces hazards in chapter two, increasing from 0.02 to 0.12', () => {
     expect(chapterFor(1).levels.map(({ hazardChance }) => hazardChance)).toEqual([
       0, 0, 0, 0, 0, 0,
     ]);
@@ -91,13 +104,37 @@ describe('campaign chapters', () => {
     }
   });
 
-  it.each([1, 2])('keeps later mechanics disabled in chapter %i', (id) => {
+  it.each([1, 2])('keeps armor disabled before chapter three in chapter %i', (id) => {
     for (const level of chapterFor(id).levels) {
-      expect(level).toMatchObject({ armorChance: 0, reversal: null, waves: 1 });
+      expect(level.armorChance).toBe(0);
     }
   });
 
-  it.each([1, 2])('keeps chapter %i within the existing tuning caps', (id) => {
+  it.each([1, 2, 3])('keeps later mechanics disabled in chapter %i', (id) => {
+    for (const level of chapterFor(id).levels) {
+      expect(level).toMatchObject({ reversal: null, waves: 1 });
+    }
+  });
+
+  it('increases armor from 0.08 to 0.25 with a 0.3 boss in chapter three', () => {
+    const armor = chapterFor(3).levels.map(({ armorChance }) => armorChance);
+    expect(armor[0]).toBeCloseTo(0.08);
+    expect(armor[BOSS_INDEX - 1]).toBeCloseTo(0.25);
+    expect(armor[BOSS_INDEX]).toBeCloseTo(0.3);
+    for (let index = 1; index < armor.length; index += 1) {
+      expect(armor[index]).toBeGreaterThan(armor[index - 1]!);
+    }
+  });
+
+  it('keeps seven colors and reduced hazard density throughout chapter three', () => {
+    for (const level of chapterFor(3).levels) {
+      expect(level.colorCount).toBe(7);
+      expect(level.hazardChance).toBeGreaterThanOrEqual(0.04);
+      expect(level.hazardChance).toBeLessThanOrEqual(0.06);
+    }
+  });
+
+  it.each([1, 2, 3])('keeps chapter %i within the existing tuning caps', (id) => {
     for (const level of chapterFor(id).levels) {
       expect(level.chainLength).toBeLessThanOrEqual(MAX_CHAIN_LENGTH);
       expect(level.chainSpeed).toBeLessThanOrEqual(MAX_CHAIN_SPEED);

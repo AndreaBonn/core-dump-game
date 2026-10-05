@@ -22,7 +22,7 @@ describe('level configuration', () => {
 
   it('provides exactly TOTAL_LEVELS levels', () => {
     expect(LEVELS).toHaveLength(TOTAL_LEVELS);
-    expect(TOTAL_LEVELS).toBe(12);
+    expect(TOTAL_LEVELS).toBe(18);
   });
 
   it('clamps requested level to the valid range', () => {

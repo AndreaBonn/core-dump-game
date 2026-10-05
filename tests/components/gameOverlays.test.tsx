@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { LevelCompleteScreen } from '@/components/game/LevelCompleteScreen';
 import { PauseOverlay } from '@/components/game/PauseOverlay';
 import { Button } from '@/components/shared/Button';
+import { TOTAL_LEVELS } from '@/config/levels';
 
 describe('PauseOverlay', () => {
   function renderOverlay() {
@@ -121,31 +122,28 @@ describe('LevelCompleteScreen', () => {
     expect(screen.queryByText(/Chapter/)).not.toBeInTheDocument();
   });
 
-  it('announces the next chapter after a campaign boss is cleared', () => {
+  it.each([
+    { level: 6, title: 'Chapter 2 · Hazards' },
+    { level: 12, title: 'Chapter 3 · Armored packets' },
+  ])('announces the next chapter after campaign boss $level is cleared', ({ level, title }) => {
     render(
       <LevelCompleteScreen
         result={result}
         totalScore={3050}
-        level={6}
+        level={level}
         mode="campaign"
         onContinue={vi.fn()}
       />,
     );
 
-    expect(screen.getByText(/Chapter 2 . Hazards/)).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(title))).toBeInTheDocument();
   });
 
   it('says nothing after the final boss, where there is no next chapter', () => {
-    render(
-      <LevelCompleteScreen
-        result={result}
-        totalScore={3050}
-        level={12}
-        mode="campaign"
-        onContinue={vi.fn()}
-      />,
-    );
-
+    const props = { result, totalScore: 3050, mode: 'campaign' as const, onContinue: vi.fn() };
+    const { rerender } = render(<LevelCompleteScreen {...props} level={6} />);
+    expect(screen.getByText(/Chapter 2 . Hazards/)).toBeInTheDocument();
+    rerender(<LevelCompleteScreen {...props} level={TOTAL_LEVELS} />);
     expect(screen.queryByText(/Chapter/)).not.toBeInTheDocument();
   });
 

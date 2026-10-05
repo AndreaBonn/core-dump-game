@@ -59,17 +59,25 @@ describe('playable campaign chapters', () => {
   });
 
   it('keeps chapters ordered and contiguous', () => {
-    expect(LEVELS.map(({ chapter }) => chapter)).toEqual([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2]);
+    expect(LEVELS.map(({ chapter }) => chapter)).toEqual(
+      CHAPTERS.flatMap(({ id, levels }) => levels.map(() => id)),
+    );
   });
 
   it('numbers every campaign level consecutively from one', () => {
-    expect(LEVELS.map(({ level }) => level)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    const count = CHAPTERS.reduce((total, { levels }) => total + levels.length, 0);
+    expect(LEVELS.map(({ level }) => level)).toEqual(
+      Array.from({ length: count }, (_, index) => index + 1),
+    );
   });
 
   it('takes every hazard chance from the chapter table, none before chapter two', () => {
-    expect(LEVELS.map(({ hazardChance }) => hazardChance)).toEqual([
-      0, 0, 0, 0, 0, 0, 0.02, 0.04, 0.06, 0.08, 0.1, 0.12,
-    ]);
+    expect(LEVELS.map(({ hazardChance }) => hazardChance)).toEqual(
+      CHAPTERS.flatMap(({ levels }) => levels.map(({ hazardChance }) => hazardChance)),
+    );
+    expect(
+      LEVELS.filter(({ chapter }) => chapter === 1).map(({ hazardChance }) => hazardChance),
+    ).toEqual([0, 0, 0, 0, 0, 0]);
   });
 
   it.each(CHAPTERS)('uses the authored tuning of chapter $id', (chapter) => {

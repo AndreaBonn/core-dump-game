@@ -32,8 +32,8 @@ I18N parità dizionari, WAV ondate.
 - [x] T021 | T020 | ARM, DET | `applyArmor` trasformazione pura post-generazione con sub-RNG `createRng(hash(seed,'armor'))`; T005 verde; `armorChance: 0.3` → stessi tipi e stessi pacchetti del cursore a parità di seed, armatura solo su matchable senza power-up
 - [x] T022 | T021 | ARM | test `MatchSystem`: crack (nessuna rimozione, armor 0, `CRACK_SCORE`), secondo colpo esplode i 4, cascata si ferma sulla run corazzata (30 min)
 - [x] T023 | T022 | ARM | `ShotOutcome.cracked` propagato; kill -9/regex/garbage collect rimuovono corazzati (test `PowerUpSystem`)
-- [ ] T024 | T020 | ARM, LIM | `MechanicRenderer.ts` in exclude coverage; geometria anelli testata; `RenderSystem.ts` ≤ 300 righe
-- [ ] T025 | T022, T013 | CAMP, I18N | capitolo 3 in tabella; `TOTAL_LEVELS === 18`; test curva e content box verdi; parità i18n
+- [x] T024 | T020 | ARM, LIM | `MechanicRenderer.ts` in exclude coverage; geometria anelli testata; `RenderSystem.ts` ≤ 300 righe
+- [x] T025 | T022, T013 | CAMP, I18N | capitolo 3 in tabella; `TOTAL_LEVELS === 18`; test curva e content box verdi; parità i18n
 - [ ] T026 | T023-T025 | tutti | gate di fase come T019 + playtest livelli 13-18 annotato qui
 
 ## Fase 3 — Inversione di direzione (24 livelli)

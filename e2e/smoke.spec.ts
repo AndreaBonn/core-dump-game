@@ -140,6 +140,7 @@ test('the level select groups the campaign into chapters with a boss each', asyn
 
   await expect(page.getByRole('heading', { name: 'Chapter 1 · Basics' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Chapter 2 · Hazards' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Chapter 3 · Armored packets' })).toBeVisible();
   await expect(page.getByRole('button', { name: /Level 6, boss, locked/ })).toBeDisabled();
   await expect(page.getByRole('button', { name: /^Level 1,/ })).toBeEnabled();
 });

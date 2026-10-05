@@ -60,6 +60,9 @@ describe('LevelSelect', () => {
 
     expect(screen.getByRole('heading', { name: 'Chapter 1 · Basics' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Chapter 2 · Hazards' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Chapter 3 · Armored packets' }),
+    ).toBeInTheDocument();
   });
 
   it('shows the stars earned in a chapter against the stars available in it', () => {
@@ -68,7 +71,10 @@ describe('LevelSelect', () => {
 
     const chapterOneLength = CHAPTERS[0]!.levels.length;
     expect(screen.getByText(`3/${chapterOneLength * 3} stars`)).toBeInTheDocument();
-    expect(screen.getByText(`0/${CHAPTERS[1]!.levels.length * 3} stars`)).toBeInTheDocument();
+    for (const chapter of CHAPTERS.slice(1)) {
+      const region = screen.getByRole('region', { name: new RegExp(`^Chapter ${chapter.id} ·`) });
+      expect(within(region).getByText(`0/${chapter.levels.length * 3} stars`)).toBeInTheDocument();
+    }
   });
 
   it('marks the last level of a chapter as the boss in text, not only in colour', () => {
