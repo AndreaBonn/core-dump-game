@@ -18,7 +18,7 @@ function maxByMode(
 ): Record<ScoreMode, number> {
   const result = { ...a };
   for (const mode of Object.keys(b) as ScoreMode[]) {
-    result[mode] = Math.max(a[mode] ?? 0, b[mode]);
+    result[mode] = Math.max(a[mode], b[mode]);
   }
   return result;
 }

@@ -98,8 +98,9 @@ export function pointAtDistance(curve: SampledCurve, distance: number): Vec2 {
   const after = curve.points[index]!;
   const startLength = curve.cumulativeLength[index - 1]!;
   const endLength = curve.cumulativeLength[index]!;
-  const span = endLength - startLength;
-  const t = span === 0 ? 0 : (clamped - startLength) / span;
+  // The lower-bound search only returns an index whose previous sample lies
+  // strictly before `clamped`, so the span is never zero.
+  const t = (clamped - startLength) / (endLength - startLength);
   return {
     x: before.x + (after.x - before.x) * t,
     y: before.y + (after.y - before.y) * t,

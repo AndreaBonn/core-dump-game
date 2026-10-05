@@ -1,4 +1,4 @@
-import type { DocumentData, DocumentSnapshot, QueryDocumentSnapshot } from 'firebase/firestore';
+import type { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
 import type { ScoreMode } from '@/engine/core/runController';
 import { getFirebase, isFirebaseConfigured } from '@/services/firebase';
 import { normalizeScore } from '@/services/scoreValidation';
@@ -15,8 +15,8 @@ export function isLeaderboardAvailable(): boolean {
   return isFirebaseConfigured();
 }
 
-function mapDoc(snapshot: QueryDocumentSnapshot<DocumentData> | DocumentSnapshot<DocumentData>) {
-  const data = snapshot.data() ?? {};
+function mapDoc(snapshot: QueryDocumentSnapshot<DocumentData>) {
+  const data = snapshot.data();
   const timestamp = data.timestamp as { toMillis?: () => number } | undefined;
   return {
     id: snapshot.id,
