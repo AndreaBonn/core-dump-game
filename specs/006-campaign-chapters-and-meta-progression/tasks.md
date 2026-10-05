@@ -34,7 +34,8 @@ I18N parità dizionari, WAV ondate.
 - [x] T023 | T022 | ARM | `ShotOutcome.cracked` propagato; kill -9/regex/garbage collect rimuovono corazzati (test `PowerUpSystem`)
 - [x] T024 | T020 | ARM, LIM | `MechanicRenderer.ts` in exclude coverage; geometria anelli testata; `RenderSystem.ts` ≤ 300 righe
 - [x] T025 | T022, T013 | CAMP, I18N | capitolo 3 in tabella; `TOTAL_LEVELS === 18`; test curva e content box verdi; parità i18n
-- [ ] T026 | T023-T025 | tutti | gate di fase come T019 + playtest livelli 13-18 annotato qui
+- [x] T026 | T023-T025 | tutti | gate di fase come T019 + playtest livelli 13-18 annotato qui
+  - 2026-10-06 gate: vitest 999/999, e2e 16/16, a11y-gate 5/5 sulla level select a 3 capitoli, render 375 (level select + livello 18) e 1280 (livello 18): nessun overflow, armatura leggibile, console senza errori. **Playtest livelli 13-18 NON eseguito**: richiede gioco manuale, difficoltà da validare a mano.
 
 ## Fase 3 — Inversione di direzione (24 livelli)
 
