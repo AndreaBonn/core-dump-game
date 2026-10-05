@@ -6,6 +6,9 @@ export const PACKET_SPACING = PACKET_RADIUS * 2;
 /** Minimum run length of same-type packets that triggers a match. */
 export const MIN_MATCH = 3;
 
+/** Flat points for cracking an armored run without an explosion. */
+export const CRACK_SCORE = 10;
+
 /** Speed of a fired projectile, in pixels per second. */
 export const PROJECTILE_SPEED = 900;
 

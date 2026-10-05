@@ -288,7 +288,7 @@ export class GameEngine {
       return false;
     }
     this.fx.reactToShot(outcome, projectile.position, colorForType(projectile.type));
-    if (outcome.explosions > 0) {
+    if (outcome.explosions > 0 || outcome.cracked > 0) {
       this.score += outcome.score;
       this.events.onScoreChange(this.score);
       audioManager.playMatch(outcome.combo);

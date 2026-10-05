@@ -21,6 +21,33 @@ function packet(
 }
 
 describe('applyShot', () => {
+  it('reports a crack-only shot without removing packets or producing bursts', () => {
+    const packets = [
+      createPacket({ type: 'ERROR', distance: 200, armor: 1 }),
+      packet('ERROR', 216, 'SLEEP'),
+    ];
+    const ids = packets.map((p) => p.id);
+
+    const outcome = applyShot(packets, straightPath, { position: vec2(208, 0), type: 'ERROR' });
+
+    expect(outcome).toEqual({
+      hit: true,
+      insertedId: 3,
+      score: 10,
+      explosions: 0,
+      combo: null,
+      powerUps: [],
+      bursts: [],
+      clearedChain: false,
+      cracked: 3,
+    });
+    expect(packets).toHaveLength(3);
+    expect(packets.map((p) => p.type)).toEqual(['ERROR', 'ERROR', 'ERROR']);
+    expect(packets.map((p) => p.id)).toEqual(expect.arrayContaining([...ids, outcome.insertedId]));
+    expect(packets.map((p) => p.armor)).toEqual([0, 0, 0]);
+    expect(packets.find((p) => p.id === ids[1])!.powerUpType).toBe('SLEEP');
+  });
+
   it('reports a miss and leaves the chain untouched when nothing is hit', () => {
     const packets = [packet('INFO', 100)];
     const outcome = applyShot(packets, straightPath, { position: vec2(500, 0), type: 'ERROR' });

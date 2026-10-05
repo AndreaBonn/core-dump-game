@@ -1,6 +1,7 @@
 import { type LevelConfig } from '@/config/levels';
 import { typesForCount } from '@/config/packetTypes';
 import { BOARD_CENTER } from '@/config/paths';
+import { applyArmor, armorSeed } from '@/engine/core/armor';
 import { generateChainPackets } from '@/engine/core/chainOps';
 import { Chain } from '@/engine/entities/Chain';
 import { CpuCursor } from '@/engine/entities/CpuCursor';
@@ -36,16 +37,17 @@ export function buildLevelState(config: LevelConfig): LevelState {
   const path = new Path(config.waypoints);
   const rng = createRng(config.seed);
   const types = typesForCount(config.colorCount);
-  const chain = new Chain(
-    generateChainPackets({
-      count: config.chainLength,
-      types,
-      rng,
-      powerUpChance: config.powerUpChance,
-      hazardChance: config.hazardChance,
-    }),
-    config.chainSpeed,
-  );
+  let packets = generateChainPackets({
+    count: config.chainLength,
+    types,
+    rng,
+    powerUpChance: config.powerUpChance,
+    hazardChance: config.hazardChance,
+  });
+  if (config.armorChance > 0) {
+    packets = applyArmor(packets, config.armorChance, createRng(armorSeed(config.seed)));
+  }
+  const chain = new Chain(packets, config.chainSpeed);
   return {
     path,
     voidHole: new VoidHole(path.voidPosition, path.length),

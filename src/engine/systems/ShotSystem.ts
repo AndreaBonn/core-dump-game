@@ -57,6 +57,8 @@ export interface ShotOutcome {
   bursts: Burst[];
   /** True when the shot emptied the chain. */
   clearedChain: boolean;
+  /** Packets of an armored run the shot cracked instead of exploding; a crack scores with no explosion. */
+  cracked: number;
 }
 
 function miss(): ShotOutcome {
@@ -69,6 +71,7 @@ function miss(): ShotOutcome {
     powerUps: [],
     bursts: [],
     clearedChain: false,
+    cracked: 0,
   };
 }
 
@@ -99,6 +102,7 @@ export function applyShot(packets: DataPacket[], path: PathQuery, shot: Shot): S
       powerUps: [],
       bursts: [],
       clearedChain: false,
+      cracked: 0,
     };
   }
   const powerUps = resolution.removed
@@ -117,5 +121,6 @@ export function applyShot(packets: DataPacket[], path: PathQuery, shot: Shot): S
     powerUps,
     bursts,
     clearedChain: packets.length === 0,
+    cracked: resolution.cracked,
   };
 }

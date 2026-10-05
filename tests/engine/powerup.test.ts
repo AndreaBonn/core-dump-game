@@ -189,3 +189,30 @@ describe('the newer power-ups', () => {
     expect(() => resolvePowerUp('REGEX', context(packets))).not.toThrow();
   });
 });
+
+describe('destructive power-ups against armored packets', () => {
+  it('garbage collect removes armored packets of the chosen type like any other', () => {
+    const packets = [
+      createPacket({ type: 'INFO', distance: 0, armor: 1 }),
+      createPacket({ type: 'ERROR', distance: PACKET_SPACING }),
+      createPacket({ type: 'INFO', distance: PACKET_SPACING * 2 }),
+    ];
+
+    const removed = removeAllOfType(packets, 'INFO');
+
+    expect(removed.map((packet) => packet.armor)).toEqual([1, 0]);
+    expect(packets.map((packet) => packet.type)).toEqual(['ERROR']);
+  });
+
+  it('kill -9 terminates armored packets at the front without cracking them first', () => {
+    const packets = [
+      createPacket({ type: 'INFO', distance: 0 }),
+      createPacket({ type: 'ERROR', distance: PACKET_SPACING, armor: 1 }),
+    ];
+
+    const removed = killRange(packets, 1);
+
+    expect(removed.map((packet) => packet.type)).toEqual(['ERROR']);
+    expect(packets.map((packet) => packet.type)).toEqual(['INFO']);
+  });
+});

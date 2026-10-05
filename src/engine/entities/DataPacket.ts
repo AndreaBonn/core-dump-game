@@ -13,6 +13,7 @@ export interface CreatePacketOptions {
   powerUpType?: PowerUpType | null;
   /** Pass false for a hazard packet: it can never take part in a match. */
   matchable?: boolean;
+  armor?: number;
 }
 
 export function createPacket({
@@ -20,6 +21,7 @@ export function createPacket({
   distance,
   powerUpType = null,
   matchable = true,
+  armor = 0,
 }: CreatePacketOptions): DataPacket {
   // A hazard carrying a power-up would be a reward for an obstacle, and the
   // player could never collect it anyway since it cannot be matched away. The
@@ -32,5 +34,6 @@ export function createPacket({
     isPowerUp: carried !== null,
     powerUpType: carried,
     matchable,
+    armor: matchable ? armor : 0,
   };
 }

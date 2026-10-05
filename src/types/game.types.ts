@@ -17,6 +17,8 @@ export interface DataPacket {
    * one, so it has to be worked around rather than matched away.
    */
   matchable: boolean;
+  /** Cracks the run must sustain before exploding; 0 means no armor. */
+  armor: number;
 }
 
 export type GamePhase = 'idle' | 'playing' | 'paused' | 'levelComplete' | 'gameOver' | 'gameWon';

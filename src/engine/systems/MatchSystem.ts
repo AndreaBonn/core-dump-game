@@ -1,4 +1,4 @@
-import { MIN_MATCH } from '@/config/constants';
+import { CRACK_SCORE, MIN_MATCH } from '@/config/constants';
 import { compactBehind } from '@/engine/core/chainOps';
 import type { DataPacket } from '@/types/game.types';
 
@@ -15,6 +15,8 @@ export interface MatchResolution {
   score: number;
   /** Number of consecutive explosions; 1 is a plain match, 2+ is a combo. */
   explosions: number;
+  /** Number of packets in the cracked run, including those without armor. */
+  cracked: number;
 }
 
 /**
@@ -67,7 +69,8 @@ export function findRun(packets: readonly DataPacket[], index: number): MatchRun
  * Resolve matches triggered by the packet at `insertedIndex`: remove the run,
  * pull the trailing packets forward, and repeat at the new junction so a
  * compaction that lines up matching packets chains into a combo. Mutates the
- * chain in place. Returns null when the insertion produces no match.
+ * chain in place. An armored run cracks without removal and stops the cascade.
+ * Returns null when the insertion produces neither an explosion nor a crack.
  */
 export function resolveMatches(
   packets: DataPacket[],
@@ -75,12 +78,22 @@ export function resolveMatches(
 ): MatchResolution | null {
   let junction = insertedIndex;
   let explosions = 0;
+  let cracked = 0;
   let score = 0;
   const removed: DataPacket[] = [];
 
   while (junction >= 0 && junction < packets.length) {
     const run = findRun(packets, junction);
     if (run.length < MIN_MATCH) {
+      break;
+    }
+    const matched = packets.slice(run.start, run.start + run.length);
+    if (matched.some((packet) => packet.armor > 0)) {
+      for (const packet of matched) {
+        packet.armor = Math.max(0, packet.armor - 1);
+      }
+      score += CRACK_SCORE;
+      cracked += run.length;
       break;
     }
     explosions += 1;
@@ -93,8 +106,8 @@ export function resolveMatches(
     compactBehind(packets, junction);
   }
 
-  if (explosions === 0) {
+  if (explosions === 0 && cracked === 0) {
     return null;
   }
-  return { removed, score, explosions };
+  return { removed, score, explosions, cracked };
 }
