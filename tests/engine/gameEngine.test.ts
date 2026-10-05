@@ -478,6 +478,24 @@ describe('GameEngine', () => {
   });
 
   describe('projectile lifetime', () => {
+    it('leaves no projectile behind when a shot completes the level mid-frame', () => {
+      const { engine, internals } = makeEngine(spyEvents());
+      engine.startLevel(1);
+      applyStraightBoard(internals, [
+        createPacket({ type: 'ERROR', distance: 200 }),
+        createPacket({ type: 'ERROR', distance: 216 }),
+      ]);
+      internals.projectiles = [
+        new Projectile(vec2(208, 0), 0, 'ERROR'),
+        new Projectile(vec2(100, 300), 0, 'INFO'),
+      ];
+
+      internals.updateProjectiles(FIXED_TIMESTEP);
+
+      expect(internals.phase).toBe('levelComplete');
+      expect(internals.projectiles).toHaveLength(0);
+    });
+
     it('drops projectiles that leave the board and keeps those still inside', () => {
       const { internals } = makeEngine(spyEvents());
       applyStraightBoard(internals, []);

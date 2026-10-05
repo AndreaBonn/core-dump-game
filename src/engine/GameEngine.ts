@@ -268,6 +268,11 @@ export class GameEngine {
     for (const projectile of this.projectiles) {
       projectile.advance(dt);
       if (this.tryInsert(projectile)) {
+        if (this.phase !== 'playing') {
+          // The shot ended the level, which already cleared the projectiles:
+          // returning keeps the rest of this frame's shots from coming back.
+          return;
+        }
         continue;
       }
       if (isInsideBoard(projectile.position, PROJECTILE_MARGIN)) {
