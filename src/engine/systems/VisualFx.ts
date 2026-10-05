@@ -36,6 +36,7 @@ const MAX_SHAKE = 22;
 /** Shake for a plain match, and the extra each chained explosion adds. */
 const SHAKE_BASE = 4;
 const SHAKE_PER_EXPLOSION = 4;
+const CRACK_SHAKE = 2;
 /** Positions kept behind each projectile for its tracer. */
 const TRACER_LENGTH = 8;
 
@@ -172,6 +173,9 @@ export class VisualFx {
     this.spawnImpact(impact, color);
     this.popPacket(outcome.insertedId);
     if (outcome.explosions === 0) {
+      if (outcome.cracked > 0) {
+        this.addShake(CRACK_SHAKE);
+      }
       return;
     }
     for (const burst of outcome.bursts) {

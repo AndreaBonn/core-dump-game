@@ -7,6 +7,7 @@ import type { Projectile } from '@/engine/entities/Projectile';
 import type { Vec2 } from '@/engine/math/vec2';
 import { FxRenderer } from '@/engine/systems/FxRenderer';
 import { GuideRenderer } from '@/engine/systems/GuideRenderer';
+import { drawArmor } from '@/engine/systems/MechanicRenderer';
 import type { Landing } from '@/engine/systems/trajectory';
 import type { VisualFx } from '@/engine/systems/VisualFx';
 import type { DataPacket } from '@/types/game.types';
@@ -155,7 +156,6 @@ export class RenderSystem {
     }
     const color = colorForType(packet.type);
     this.roundedSquare(ctx, position, radius, color, true);
-
     if (packet.isPowerUp && packet.powerUpType) {
       ctx.strokeStyle = INK;
       ctx.lineWidth = 2;
@@ -163,7 +163,6 @@ export class RenderSystem {
       ctx.arc(position.x, position.y, radius * 0.62, 0, Math.PI * 2);
       ctx.stroke();
     }
-
     const glyph =
       packet.isPowerUp && packet.powerUpType
         ? POWER_UPS[packet.powerUpType].glyph
@@ -173,6 +172,9 @@ export class RenderSystem {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(glyph, position.x, position.y + 1);
+    if (packet.armor > 0) {
+      drawArmor(ctx, position, packet.armor, radius);
+    }
   }
 
   /**
