@@ -1,9 +1,9 @@
 import { create } from 'zustand';
-import { getLevel } from '@/config/levels';
 import { newlyEarned, type AchievementState } from '@/engine/core/achievements';
+import { recordCampaignLevel } from '@/engine/core/levelProgress';
 import { mergeProfiles, type SavedProfile } from '@/engine/core/profileMerge';
-import { EMPTY_PROGRESS, recordLevel } from '@/engine/core/progress';
-import { starsFor, type Stars } from '@/engine/core/stars';
+import { EMPTY_PROGRESS } from '@/engine/core/progress';
+import type { Stars } from '@/engine/core/stars';
 import type { RunMode, ScoreMode } from '@/engine/core/runController';
 import {
   EMPTY_STATS,
@@ -147,7 +147,14 @@ export const useProgressStore = create<ProgressState>((set, get) => {
 
     recordRunEnd: (result) => {
       const { progress, stats, earned } = get();
-      commit({ progress, stats: recordRun(stats, result), earned });
+      const recorded = { progress, stats: recordRun(stats, result) };
+      // A win ends the run on the final level without a level-complete event,
+      // so the final level's rating is recorded here, in the same commit.
+      const completed =
+        result.mode === 'campaign' && result.won
+          ? recordCampaignLevel(progress, recorded.stats, result.levelReached, result.levelScore)
+          : recorded;
+      commit({ ...completed, earned });
     },
 
     /**
@@ -156,13 +163,11 @@ export const useProgressStore = create<ProgressState>((set, get) => {
      */
     recordLevelResult: (level, levelScore, mode) => {
       const { progress, stats, earned } = get();
-      const cleared = recordLevelCleared(stats);
       if (mode !== 'campaign') {
-        commit({ progress, stats: cleared, earned });
+        commit({ progress, stats: recordLevelCleared(stats), earned });
         return;
       }
-      const stars = starsFor(levelScore, getLevel(level).starThresholds);
-      commit({ progress: recordLevel(progress, level, stars), stats: cleared, earned });
+      commit({ ...recordCampaignLevel(progress, stats, level, levelScore), earned });
     },
 
     noteCombo: (multiplier) => {
