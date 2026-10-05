@@ -1,5 +1,5 @@
 import { CURSOR_RADIUS, PACKET_RADIUS, VOID_RADIUS } from '@/config/constants';
-import { colorForType, labelForType } from '@/config/packetTypes';
+import { colorForType, HAZARD_COLOR, labelForType } from '@/config/packetTypes';
 import { POWER_UPS } from '@/config/powerUps';
 import type { CpuCursor } from '@/engine/entities/CpuCursor';
 import type { Path } from '@/engine/entities/Path';
@@ -19,8 +19,6 @@ const VOID_RING = '#ff5555';
 const CURSOR_BODY = '#1e2a38';
 const CURSOR_PIN = '#2fb344';
 const INK = '#0a0e14';
-/** Hazard packets are drawn dead, outside the packet palette. */
-const HAZARD_BODY = '#33404f';
 const HAZARD_MARK = '#0a0e14';
 
 export interface RenderScene {
@@ -182,7 +180,7 @@ export class RenderSystem {
    * match" by shape as well as by colour, on a greyscale screen too.
    */
   private drawHazard(ctx: CanvasRenderingContext2D, position: Vec2, radius: number): void {
-    this.roundedSquare(ctx, position, radius, HAZARD_BODY, false);
+    this.roundedSquare(ctx, position, radius, HAZARD_COLOR, false);
     ctx.strokeStyle = HAZARD_MARK;
     ctx.lineWidth = Math.max(2, radius * 0.18);
     ctx.lineCap = 'round';

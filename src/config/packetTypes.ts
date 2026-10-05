@@ -21,6 +21,9 @@ export const PACKET_TYPES: readonly PacketTypeDefinition[] = [
   { type: 'FATAL', color: '#ff79c9', label: 'F' },
 ];
 
+/** Body colour of a hazard packet, drawn dead outside the packet palette. */
+export const HAZARD_COLOR = '#33404f';
+
 const COLOR_BY_TYPE: Record<PacketType, string> = Object.fromEntries(
   PACKET_TYPES.map((definition) => [definition.type, definition.color]),
 ) as Record<PacketType, string>;

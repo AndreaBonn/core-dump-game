@@ -17,6 +17,19 @@ export interface MatchResolution {
   explosions: number;
 }
 
+/**
+ * Remove the hazards once nothing else is left in the chain. A hazard never
+ * matches, so a chain of hazards alone could never be cleared and the level
+ * would end in the void however well it was played. Mutates the chain in
+ * place; returns the removed hazards, empty while anything matchable remains.
+ */
+export function removeStrandedHazards(packets: DataPacket[]): DataPacket[] {
+  if (packets.some((packet) => packet.matchable)) {
+    return [];
+  }
+  return packets.splice(0, packets.length);
+}
+
 /** Points for a single explosion of `length` same-type packets (spec 6). */
 export function scoreForMatch(length: number): number {
   if (length < MIN_MATCH) {

@@ -9,7 +9,7 @@ import {
   VOID_RADIUS,
 } from '@/config/constants';
 import { type LevelConfig } from '@/config/levels';
-import { colorForType } from '@/config/packetTypes';
+import { colorForType, HAZARD_COLOR } from '@/config/packetTypes';
 import { SHIELD_ROLLBACK } from '@/config/powerUps';
 import { audioManager } from '@/engine/audio/AudioManager';
 import { isInsideBoard } from '@/engine/core/bounds';
@@ -22,6 +22,7 @@ import type { Projectile } from '@/engine/entities/Projectile';
 import type { VoidHole } from '@/engine/entities/VoidHole';
 import { createRng, type Rng } from '@/engine/math/rng';
 import { type Vec2 } from '@/engine/math/vec2';
+import { removeStrandedHazards } from '@/engine/systems/MatchSystem';
 import { resolvePowerUp, rollbackChain } from '@/engine/systems/PowerUpSystem';
 import { applyShot, spawnProjectiles } from '@/engine/systems/ShotSystem';
 import { InputSystem } from '@/engine/systems/InputSystem';
@@ -294,10 +295,19 @@ export class GameEngine {
         this.applyPowerUp(powerUp);
       }
     }
-    if (outcome.clearedChain) {
+    // Checked after the power-ups, not from the shot outcome: a released
+    // kill -9 or regex can be what empties the chain.
+    this.detonateStrandedHazards();
+    if (this.chain.isEmpty) {
       this.completeLevel();
     }
     return true;
+  }
+
+  private detonateStrandedHazards(): void {
+    for (const hazard of removeStrandedHazards(this.chain.packets)) {
+      this.fx.spawnExplosion(this.path.pointAt(hazard.distance), HAZARD_COLOR);
+    }
   }
 
   private completeLevel(): void {

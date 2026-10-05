@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { findRun, resolveMatches } from '@/engine/systems/MatchSystem';
+import { findRun, removeStrandedHazards, resolveMatches } from '@/engine/systems/MatchSystem';
 import { generateChainPackets } from '@/engine/core/chainOps';
 import { createPacket, resetPacketIds } from '@/engine/entities/DataPacket';
 import { createRng } from '@/engine/math/rng';
@@ -71,6 +71,37 @@ describe('a hazard in the chain', () => {
 
     expect(resolveMatches(packets, 1)?.explosions).toBe(1);
     expect(packets.map((packet) => packet.type)).toEqual(['DEBUG', 'INFO']);
+  });
+});
+
+describe('hazards left alone in the chain', () => {
+  it('are all removed once nothing matchable is left', () => {
+    const packets = chain([
+      ['INFO', false],
+      ['ERROR', false],
+    ]);
+
+    const removed = removeStrandedHazards(packets);
+
+    expect(removed.map((packet) => packet.type)).toEqual(['INFO', 'ERROR']);
+    expect(packets).toHaveLength(0);
+  });
+
+  it('stay in place while a matchable packet remains', () => {
+    const packets = chain([
+      ['INFO', false],
+      ['ERROR', true],
+    ]);
+
+    expect(removeStrandedHazards(packets)).toEqual([]);
+    expect(packets).toHaveLength(2);
+  });
+
+  it('leave an empty chain untouched', () => {
+    const packets: DataPacket[] = [];
+
+    expect(removeStrandedHazards(packets)).toEqual([]);
+    expect(packets).toHaveLength(0);
   });
 });
 

@@ -421,6 +421,62 @@ describe('GameEngine', () => {
     });
   });
 
+  describe('level completion around hazards and power-ups', () => {
+    it('detonates the hazards and completes the level when only hazards are left', () => {
+      const events = spyEvents();
+      const { engine, internals } = makeEngine(events);
+      engine.startLevel(1);
+      applyStraightBoard(internals, [
+        createPacket({ type: 'ERROR', distance: 200 }),
+        createPacket({ type: 'ERROR', distance: 216 }),
+        createPacket({ type: 'INFO', distance: 300, matchable: false }),
+      ]);
+      internals.score = 0;
+      internals.levelStartScore = 0;
+
+      internals.tryInsert(new Projectile(vec2(208, 0), 0, 'ERROR'));
+
+      expect(internals.chain.isEmpty).toBe(true);
+      expect(internals.phase).toBe('levelComplete');
+      expect(events.onLevelComplete).toHaveBeenCalledWith(30, LEVEL_CLEAR_BONUS);
+    });
+
+    it('keeps playing when a hazard is left next to a matchable packet', () => {
+      const events = spyEvents();
+      const { engine, internals } = makeEngine(events);
+      engine.startLevel(1);
+      applyStraightBoard(internals, [
+        createPacket({ type: 'ERROR', distance: 200 }),
+        createPacket({ type: 'ERROR', distance: 216 }),
+        createPacket({ type: 'INFO', distance: 300, matchable: false }),
+        createPacket({ type: 'SUCCESS', distance: 316 }),
+      ]);
+
+      internals.tryInsert(new Projectile(vec2(208, 0), 0, 'ERROR'));
+
+      expect(internals.chain.packets.map((packet) => packet.matchable)).toEqual([false, true]);
+      expect(internals.phase).toBe('playing');
+      expect(events.onLevelComplete).not.toHaveBeenCalled();
+    });
+
+    it('completes the level when a released power-up empties the chain', () => {
+      const events = spyEvents();
+      const { engine, internals } = makeEngine(events);
+      engine.startLevel(1);
+      applyStraightBoard(internals, [
+        createPacket({ type: 'ERROR', distance: 200, powerUpType: 'KILL_9' }),
+        createPacket({ type: 'ERROR', distance: 216 }),
+        createPacket({ type: 'INFO', distance: 300 }),
+        createPacket({ type: 'SUCCESS', distance: 316 }),
+      ]);
+
+      internals.tryInsert(new Projectile(vec2(208, 0), 0, 'ERROR'));
+
+      expect(internals.chain.isEmpty).toBe(true);
+      expect(internals.phase).toBe('levelComplete');
+    });
+  });
+
   describe('projectile lifetime', () => {
     it('drops projectiles that leave the board and keeps those still inside', () => {
       const { internals } = makeEngine(spyEvents());
