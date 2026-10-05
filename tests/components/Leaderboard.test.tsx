@@ -130,7 +130,21 @@ describe('Leaderboard', () => {
     const best = await screen.findByText('your best');
     const row = best.parentElement!.querySelector('li')!;
     expect(row.textContent).toMatch(/^me.*40$/);
-    expect(screen.getByRole('list')).not.toContainElement(row);
+    const [ranked] = screen.getAllByRole('list');
+    expect(ranked).not.toContainElement(row);
+  });
+
+  it('marks the personal best as a list item of its own list, so screen readers announce it', async () => {
+    (fetchPersonalBest as Mock).mockResolvedValue(
+      entry({ id: 'me', userId: 'me', displayName: 'me', score: 40 }),
+    );
+
+    render(<Leaderboard />);
+
+    const best = await screen.findByText('your best');
+    const lists = screen.getAllByRole('list');
+    expect(lists).toHaveLength(2);
+    expect(lists[1]).toContainElement(best.parentElement!.querySelector('li'));
   });
 
   it('goes back to the menu', async () => {

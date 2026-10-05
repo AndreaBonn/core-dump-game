@@ -59,7 +59,9 @@ export function Leaderboard() {
           <p className="mb-1 font-mono text-xs uppercase text-terminal-muted">
             {t('leaderboard.yourBest')}
           </p>
-          <Row rank={0} entry={personalBest} highlight />
+          <ul>
+            <Row rank={0} entry={personalBest} highlight />
+          </ul>
         </div>
       )}
 
