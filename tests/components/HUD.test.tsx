@@ -66,7 +66,7 @@ describe('HUD', () => {
     });
 
     expect(useGameStore.getState().combo).toBeNull();
-    expect(screen.queryByText(/CHAIN/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/KERNEL PANIC/)).not.toBeInTheDocument();
   });
 
   it('flashes the power-up name, then clears it', () => {
@@ -81,6 +81,7 @@ describe('HUD', () => {
     });
 
     expect(useGameStore.getState().powerUp).toBeNull();
+    expect(screen.queryByText('sleep()')).not.toBeInTheDocument();
   });
 
   it('leaves the combo alone before its time is up', () => {
@@ -93,6 +94,7 @@ describe('HUD', () => {
     });
 
     expect(useGameStore.getState().combo).not.toBeNull();
+    expect(screen.getByText(/KERNEL PANIC/)).toBeInTheDocument();
   });
 
   it('does not clear a combo that arrives after the HUD is gone', () => {

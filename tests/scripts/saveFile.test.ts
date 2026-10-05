@@ -1,13 +1,16 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { EventEmitter } from 'node:events';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   createFileStore,
   handleSaveRequest,
   isSameOrigin,
   isSaveRoute,
   MAX_SAVE_BYTES,
+  SAVE_ROUTE,
+  saveFilePlugin,
 } from '../../scripts/lib/saveFile.mjs';
 
 const HOST = 'localhost:4173';
@@ -147,5 +150,116 @@ describe('createFileStore', () => {
     createFileStore(path).write('{"new":true}');
 
     expect(readFileSync(path, 'utf8')).toBe('{"new":true}');
+  });
+});
+
+type Middleware = (req: FakeRequest, res: FakeResponse, next: () => void) => Promise<void>;
+
+class FakeRequest extends EventEmitter {
+  destroyed = false;
+  headers = { host: HOST };
+  constructor(
+    readonly method: string,
+    readonly url: string,
+  ) {
+    super();
+  }
+  destroy() {
+    this.destroyed = true;
+  }
+}
+
+class FakeResponse {
+  status = 0;
+  body: string | undefined;
+  readonly done: Promise<void>;
+  private finish: () => void = () => {};
+  constructor() {
+    this.done = new Promise((resolve) => {
+      this.finish = resolve;
+    });
+  }
+  writeHead(status: number) {
+    this.status = status;
+  }
+  end(body?: string) {
+    this.body = body;
+    this.finish();
+  }
+}
+
+function mountPlugin(filePath: string): Middleware {
+  let middleware: Middleware | undefined;
+  saveFilePlugin(filePath).configurePreviewServer({
+    middlewares: { use: (handler: Middleware) => (middleware = handler) },
+  });
+  return middleware!;
+}
+
+async function send(middleware: Middleware, req: FakeRequest, chunks: string[] = []) {
+  const res = new FakeResponse();
+  const handled = middleware(req, res, () => {});
+  for (const chunk of chunks) {
+    req.emit('data', Buffer.from(chunk));
+  }
+  req.emit('end');
+  await handled;
+  return res;
+}
+
+describe('saveFilePlugin', () => {
+  let dir: string;
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+    vi.restoreAllMocks();
+  });
+
+  it('passes requests for other paths on to the next handler', async () => {
+    dir = mkdtempSync(join(tmpdir(), 'save-'));
+    const middleware = mountPlugin(join(dir, 'progress.json'));
+    const next = vi.fn();
+
+    await middleware(new FakeRequest('GET', '/index.html'), new FakeResponse(), next);
+
+    expect(next).toHaveBeenCalledOnce();
+  });
+
+  it('stores a PUT body on disk and serves it back on the next GET', async () => {
+    dir = mkdtempSync(join(tmpdir(), 'save-'));
+    const middleware = mountPlugin(join(dir, 'progress.json'));
+
+    const put = await send(middleware, new FakeRequest('PUT', SAVE_ROUTE), ['{"earned":', '[]}']);
+    const get = await send(middleware, new FakeRequest('GET', SAVE_ROUTE));
+
+    expect(put.status).toBe(204);
+    expect(get).toMatchObject({ status: 200, body: '{"earned":[]}' });
+  });
+
+  it('answers 413 and stops reading a streamed body that passes the cap', async () => {
+    dir = mkdtempSync(join(tmpdir(), 'save-'));
+    const path = join(dir, 'progress.json');
+    const middleware = mountPlugin(path);
+    const req = new FakeRequest('PUT', SAVE_ROUTE);
+    const half = 'x'.repeat(MAX_SAVE_BYTES / 2 + 1);
+
+    const res = await send(middleware, req, [half, half]);
+
+    expect(res.status).toBe(413);
+    expect(req.destroyed).toBe(true);
+    expect(existsSync(path)).toBe(false);
+  });
+
+  it('answers 500 and logs when the save file cannot be read', async () => {
+    dir = mkdtempSync(join(tmpdir(), 'save-'));
+    const path = join(dir, 'progress.json');
+    mkdirSync(path);
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const middleware = mountPlugin(path);
+
+    const res = await send(middleware, new FakeRequest('GET', SAVE_ROUTE));
+
+    expect(res.status).toBe(500);
+    expect(logged).toHaveBeenCalledOnce();
   });
 });

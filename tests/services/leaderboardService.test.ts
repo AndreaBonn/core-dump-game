@@ -97,7 +97,10 @@ describe('leaderboardService', () => {
       );
 
       expect(outcome).toBe('saved');
-      expect(setDoc).toHaveBeenCalled();
+      expect(setDoc).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'leaderboards/campaign/scores/uid123' }),
+        expect.objectContaining({ score: 300, levelReached: 4 }),
+      );
     });
 
     it('writes nothing when the run does not beat the stored best', async () => {
@@ -139,7 +142,10 @@ describe('leaderboardService', () => {
       );
 
       expect(outcome).toBe('saved');
-      expect(setDoc).toHaveBeenCalled();
+      expect(setDoc).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'leaderboards/campaign/scores/uid123' }),
+        expect.objectContaining({ score: 10 }),
+      );
     });
   });
 

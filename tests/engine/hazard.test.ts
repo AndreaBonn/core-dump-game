@@ -120,6 +120,17 @@ describe('hazard generation', () => {
     expect(packets.every((packet) => !packet.matchable)).toBe(true);
   });
 
+  it('puts a power-up on every matchable packet when the level asks for certainty', () => {
+    const packets = generateChainPackets({
+      ...options,
+      rng: createRng(7),
+      hazardChance: 0,
+      powerUpChance: 1,
+    });
+
+    expect(packets.every((packet) => packet.isPowerUp)).toBe(true);
+  });
+
   it('never puts a power-up on a hazard, which could not be collected', () => {
     const packets = generateChainPackets({
       ...options,

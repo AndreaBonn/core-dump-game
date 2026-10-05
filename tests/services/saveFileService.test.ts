@@ -22,6 +22,7 @@ describe('saveFileService', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it('returns the saved text and enables writes', async () => {
@@ -71,6 +72,21 @@ describe('saveFileService', () => {
     const puts = fetchMock.mock.calls.slice(1);
     expect(puts.map(([, init]) => init.method)).toEqual(['PUT', 'PUT']);
     expect(puts.map(([, init]) => init.body)).toEqual(['{"n":1}', '{"n":2}']);
+  });
+
+  it('warns with the status when the launcher refuses a write, then keeps writing', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    fetchMock.mockResolvedValueOnce(reply(204, null));
+    await loadSaveFile();
+    fetchMock.mockResolvedValueOnce(reply(413, null));
+    fetchMock.mockResolvedValueOnce(reply(204, null));
+
+    writeSaveFile('{"n":1}');
+    writeSaveFile('{"n":2}');
+    await flushSaveFile();
+
+    expect(warn).toHaveBeenCalledWith('Save file write refused with status 413');
+    expect(fetchMock.mock.calls[2]?.[1].body).toBe('{"n":2}');
   });
 
   it('keeps writing after a failed write', async () => {

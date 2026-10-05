@@ -130,7 +130,7 @@ describe('useProgressStore', () => {
 
     expect(store.getState().stats.bestScore.endless).toBe(100);
     expect(store.getState().stats.bestScore.campaign).toBe(500);
-    expect(Number.isNaN(store.getState().stats.bestScore.daily)).toBe(false);
+    expect(store.getState().stats.bestScore.daily).toBe(0);
   });
 
   it('drops values a hand-edited profile could not have produced, keeping the valid ones', async () => {

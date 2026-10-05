@@ -201,6 +201,23 @@ describe('GameEngine', () => {
       expect(internals.cursor.angle).toBe(aimedAngle);
     });
 
+    it('aims the cursor at the board point under a mouse moved over the canvas', () => {
+      const listeners = new Map<string, (event: Partial<PointerEvent>) => void>();
+      const canvas = createCanvasMock();
+      canvas.addEventListener = ((type: string, listener: (event: Partial<PointerEvent>) => void) =>
+        listeners.set(type, listener)) as HTMLCanvasElement['addEventListener'];
+      const engine = new GameEngine(canvas, spyEvents());
+      engines.push(engine);
+      engine.resize(960, 600, 1);
+      engine.startLevel(1);
+      const internals = engine as unknown as EngineInternals;
+      const { x, y } = internals.cursor.position;
+
+      listeners.get('pointermove')!({ pointerType: 'mouse', clientX: x + 100, clientY: y });
+
+      expect(internals.cursor.angle).toBeCloseTo(0, 5);
+    });
+
     it('firing through the Space key launches one projectile and previews the next packet', () => {
       const events = spyEvents();
       const { engine, internals } = makeEngine(events);
@@ -507,20 +524,21 @@ describe('GameEngine', () => {
       expect(internals.projectiles).toEqual([inside]);
     });
 
-    it('consumes a projectile once it inserts into the chain', () => {
+    it('consumes a shot that lodges in the chain while the other shots keep flying', () => {
       const { internals } = makeEngine(spyEvents());
       applyStraightBoard(internals, [
+        createPacket({ type: 'SUCCESS', distance: 100 }),
         createPacket({ type: 'ERROR', distance: 200 }),
         createPacket({ type: 'ERROR', distance: 216 }),
       ]);
-      internals.score = 0;
-      internals.levelStartScore = 0;
-      internals.projectiles = [new Projectile(vec2(200, 0), 0, 'ERROR')];
+      const stillFlying = new Projectile(vec2(100, 300), 0, 'INFO');
+      internals.projectiles = [new Projectile(vec2(200, 0), 0, 'ERROR'), stillFlying];
 
       internals.updateProjectiles(FIXED_TIMESTEP);
 
-      expect(internals.projectiles).toHaveLength(0);
-      expect(internals.chain.isEmpty).toBe(true);
+      expect(internals.phase).toBe('playing');
+      expect(internals.chain.packets.map((p) => p.type)).toEqual(['SUCCESS']);
+      expect(internals.projectiles).toEqual([stillFlying]);
     });
   });
 

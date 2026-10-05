@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 
 vi.mock('@/services/leaderboardService', () => ({
   fetchTopScores: vi.fn(),
@@ -91,5 +91,45 @@ describe('useLeaderboard', () => {
 
     await waitFor(() => expect(result.current.top[0]?.id).toBe('b'));
     expect(fetchTopScores).toHaveBeenLastCalledWith('daily');
+  });
+
+  it('ignores a slow answer for the previous mode that lands after the switch', async () => {
+    let answerCampaign: (rows: ScoreEntry[]) => void = () => {};
+    (fetchTopScores as Mock).mockReturnValueOnce(
+      new Promise<ScoreEntry[]>((resolve) => {
+        answerCampaign = resolve;
+      }),
+    );
+    (fetchTopScores as Mock).mockResolvedValueOnce([entry('daily-row', 999)]);
+    (fetchPersonalBest as Mock).mockResolvedValue(null);
+    const { result, rerender } = renderHook(({ mode }) => useLeaderboard(mode), {
+      initialProps: { mode: 'campaign' as ScoreMode },
+    });
+    rerender({ mode: 'daily' as ScoreMode });
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+
+    await act(async () => answerCampaign([entry('campaign-row', 1)]));
+
+    expect(result.current.top.map((row) => row.id)).toEqual(['daily-row']);
+  });
+
+  it('ignores a failure for the previous mode that lands after the switch', async () => {
+    let failCampaign: (error: Error) => void = () => {};
+    (fetchTopScores as Mock).mockReturnValueOnce(
+      new Promise<ScoreEntry[]>((_resolve, reject) => {
+        failCampaign = reject;
+      }),
+    );
+    (fetchTopScores as Mock).mockResolvedValueOnce([entry('daily-row', 999)]);
+    (fetchPersonalBest as Mock).mockResolvedValue(null);
+    const { result, rerender } = renderHook(({ mode }) => useLeaderboard(mode), {
+      initialProps: { mode: 'campaign' as ScoreMode },
+    });
+    rerender({ mode: 'daily' as ScoreMode });
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+
+    await act(async () => failCampaign(new Error('timeout')));
+
+    expect(result.current.status).toBe('ready');
   });
 });

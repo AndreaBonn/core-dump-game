@@ -48,11 +48,13 @@ describe.each(KINDS)('the %s track', (kind) => {
     let previous = path.pointAt(0);
     for (let d = 10; d <= path.length; d += 10) {
       const point = path.pointAt(d);
-      expect(Number.isFinite(point.x)).toBe(true);
-      expect(Number.isFinite(point.y)).toBe(true);
+      // Ten units further along the arc lands somewhere new, and no further
+      // than ten units away: a chord is never longer than its arc.
+      const chord = Math.hypot(point.x - previous.x, point.y - previous.y);
+      expect(chord).toBeGreaterThan(0);
+      expect(chord).toBeLessThanOrEqual(10 + 1e-6);
       previous = point;
     }
-    expect(previous).toBeDefined();
   });
 });
 

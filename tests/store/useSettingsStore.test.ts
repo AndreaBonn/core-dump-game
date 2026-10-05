@@ -88,6 +88,17 @@ describe('useSettingsStore', () => {
     expect(reopened.getState().language).toBe('en');
   });
 
+  it('puts sound, nickname and tutorial back to their defaults when the device is erased', async () => {
+    const store = await loadStore();
+    store.getState().toggleMuted();
+    store.getState().setNickname('trinity');
+    store.getState().markTutorialSeen();
+
+    store.getState().resetSettings();
+
+    expect(store.getState()).toMatchObject({ muted: false, nickname: '', tutorialSeen: false });
+  });
+
   it('puts the language back to Italian when the device is erased', async () => {
     const store = await loadStore();
     const { i18n } = await import('@/i18n');

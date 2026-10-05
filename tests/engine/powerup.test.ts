@@ -37,6 +37,13 @@ describe('removeAllOfType (garbage collect)', () => {
     expect(packets[1]!.distance - packets[0]!.distance).toBeCloseTo(PACKET_SPACING);
   });
 
+  it('empties the chain and returns every packet when all share the type', () => {
+    const packets = chain(['INFO', 'INFO', 'INFO']);
+    const removed = removeAllOfType(packets, 'INFO');
+    expect(removed.map((p) => p.type)).toEqual(['INFO', 'INFO', 'INFO']);
+    expect(packets).toEqual([]);
+  });
+
   it('leaves the chain untouched when no packet matches', () => {
     const packets = chain(['ERROR', 'SUCCESS']);
     expect(removeAllOfType(packets, 'INFO')).toHaveLength(0);

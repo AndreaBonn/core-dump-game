@@ -100,6 +100,25 @@ describe('Privacy', () => {
     expect(localStorage.getItem('coredump.nickname')).toBeNull();
   });
 
+  it('keeps the profile and the nickname when the player cancels the erase', async () => {
+    useProgressStore.getState().recordRunEnd({
+      mode: 'campaign',
+      score: 10,
+      levelReached: 1,
+      levelScore: 10,
+      won: false,
+    });
+    const runsBefore = useProgressStore.getState().stats.runsPlayed;
+    useSettingsStore.getState().setNickname('neo');
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    render(<Privacy />);
+
+    await userEvent.click(screen.getByRole('button', { name: /erase this device/i }));
+
+    expect(useProgressStore.getState().stats.runsPlayed).toBe(runsBefore);
+    expect(useSettingsStore.getState().nickname).toBe('neo');
+  });
+
   it('erases the local profile on confirmation', async () => {
     useProgressStore.getState().recordRunEnd({
       mode: 'campaign',
