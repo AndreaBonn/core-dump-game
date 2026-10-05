@@ -8,12 +8,16 @@ import {
   type CampaignProgress,
 } from '@/engine/core/progress';
 
-/** Three slots, filled or hollow, so the rating reads without colour alone. */
+/**
+ * Three slots, filled or hollow, so the rating reads without colour alone. They
+ * take the tile's text colour: the accent green on a cleared, green tile was
+ * barely visible.
+ */
 function Stars({ earned }: { earned: number }) {
   return (
-    <span aria-hidden className="text-xs tracking-widest text-terminal-accent">
+    <span aria-hidden className="text-xs tracking-widest">
       {'*'.repeat(earned)}
-      <span className="text-terminal-border">{'.'.repeat(3 - earned)}</span>
+      <span className="opacity-40">{'.'.repeat(3 - earned)}</span>
     </span>
   );
 }
