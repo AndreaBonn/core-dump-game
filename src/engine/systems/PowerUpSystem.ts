@@ -1,10 +1,5 @@
 import { compactBehind } from '@/engine/core/chainOps';
-import {
-  KILL_RANGE,
-  ROLLBACK_DISTANCE,
-  SLEEP_DURATION,
-  SLEEP_FACTOR,
-} from '@/config/powerUps';
+import { KILL_RANGE, ROLLBACK_DISTANCE, SLEEP_DURATION, SLEEP_FACTOR } from '@/config/powerUps';
 import type { Rng } from '@/engine/math/rng';
 import type { DataPacket, PacketType, PowerUpType } from '@/types/game.types';
 

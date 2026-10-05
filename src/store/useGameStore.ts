@@ -3,14 +3,7 @@ import type { RunMode } from '@/engine/core/runController';
 import type { ComboLabel, PacketType, RunResult } from '@/types/game.types';
 
 export type Screen =
-  | 'menu'
-  | 'game'
-  | 'levels'
-  | 'leaderboard'
-  | 'settings'
-  | 'profile'
-  | 'achievements'
-  | 'privacy';
+  'menu' | 'game' | 'levels' | 'leaderboard' | 'settings' | 'profile' | 'achievements' | 'privacy';
 export type GameStatus = 'playing' | 'paused' | 'levelComplete' | 'gameOver' | 'gameWon';
 
 export interface LevelResult {

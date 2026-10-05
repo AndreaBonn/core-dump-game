@@ -78,7 +78,10 @@ export async function fetchTopScores(mode: ScoreMode, max = TOP_LIMIT): Promise<
  * read, no scan, and no way for the answer to depend on how many runs they
  * have played.
  */
-export async function fetchPersonalBest(userId: string, mode: ScoreMode): Promise<ScoreEntry | null> {
+export async function fetchPersonalBest(
+  userId: string,
+  mode: ScoreMode,
+): Promise<ScoreEntry | null> {
   const firebase = await getFirebase();
   if (!firebase) {
     return null;

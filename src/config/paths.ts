@@ -59,9 +59,7 @@ export function buildSerpentine(spec: TrackSpec): Vec2[] {
     const y = -reach + (2 * reach * (row + withinRow)) / rows;
     // Ease the last stretch into the centre, where the void sits.
     const pull = Math.max(0, (t - 0.85) / 0.15);
-    points.push(
-      vec2(CENTER.x + x * (1 - pull), CENTER.y + y * (1 - pull)),
-    );
+    points.push(vec2(CENTER.x + x * (1 - pull), CENTER.y + y * (1 - pull)));
   }
   return points;
 }

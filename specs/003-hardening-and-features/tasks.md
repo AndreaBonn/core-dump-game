@@ -35,23 +35,23 @@ Il dettaglio (verify per step, motivazioni, rischi) è in `plan.md`.
 - [~] 2.5 | 2.4 | **Non necessario**: osservato a 375x700, il board centrato non finisce mai sotto l'HUD.
   Spostare l'HUD sarebbe stata complessità senza guadagno
 - [x] 2.6 | 2.4 | Verifica runtime: a 375 px il lato del gioco passa da 234 a 375, il packet da ~6 a ~21 px;
-  a 1280x800 nessuna differenza visibile rispetto alla baseline
+      a 1280x800 nessuna differenza visibile rispetto alla baseline
 
 ## Blocco 3 — Test UI React ed E2E [F3] — CHIUSO
 
 - [x] 3.1 | - | Testing Library installata, `tests/setup.ts` con jest-dom e cleanup
 - [x] 3.2 | 3.1 | Test `useGameStore`: 8 casi (reset run, modalità preservata, esiti, eventi engine)
 - [x] 3.3 | 3.1 | Test `useSettingsStore`: 6 casi. Ha scoperto un difetto reale: `localStorage` che lancia
-  impediva l'avvio dell'app. Corretto con `src/store/persistence.ts`
+      impediva l'avvio dell'app. Corretto con `src/store/persistence.ts`
 - [x] 3.4 | 3.1 | Test `useLeaderboard`: unavailable, loading→ready, errore, cambio modalità
 - [x] 3.5 | 3.1 | Test `MainMenu`: i 5 pulsanti
 - [x] 3.6 | 3.1 | Test `GameOverScreen`: 9 casi, tutti gli stati di `SaveStatus`
 - [x] 3.7 | 3.2,3.3,3.4 | `coverage.include` esteso a store e hooks. Baseline misurata: **99,4% righe**
-  su 325 test (era 99,31% su 190 con store e hooks esclusi)
+      su 325 test (era 99,31% su 190 con store e hooks esclusi)
 - [x] 3.8 | - | Playwright con webServer sulla build di produzione, due profili (desktop 1280x800, mobile 375x700)
 - [x] 3.9 | 3.8 | 4 spec, 8 esecuzioni verdi in ~11s: run che segna, pausa da mouse e da Escape, le tre
-  modalità raggiungibili, la leaderboard senza Firebase. Screenshot allegati al report, non su disco.
-  Rosso verificato azzerando il punteggio dei match: il test fallisce col proprio messaggio
+      modalità raggiungibili, la leaderboard senza Firebase. Screenshot allegati al report, non su disco.
+      Rosso verificato azzerando il punteggio dei match: il test fallisce col proprio messaggio
 
 ## Blocco 4 — Error boundary e prompt di aggiornamento [F5, F6] — CHIUSO
 
@@ -59,22 +59,22 @@ Il dettaglio (verify per step, motivazioni, rischi) è in `plan.md`.
 - [x] 4.2 | 4.1 | Montato in `main.tsx` attorno ad `App`
 - [x] 4.3 | 3.1 | `registerType: 'prompt'` + `UpdatePrompt` (z-index 500, `role="status"` per non rubare il focus); 4 test
 - [x] 4.4 | 4.3 | Verificato a runtime con due build successive: il prompt compare solo con una versione
-  in attesa, e il click ricarica sulla nuova versione. Il primo tentativo non provava nulla:
-  la pagina non era controllata dal service worker (`controller: null`), quindi il nuovo si
-  attivava da solo e non c'era niente da promuovere
+      in attesa, e il click ricarica sulla nuova versione. Il primo tentativo non provava nulla:
+      la pagina non era controllata dal service worker (`controller: null`), quindi il nuovo si
+      attivava da solo e non c'era niente da promuovere
 - [~] Monitoring esterno: **fuori scope per decisione DEC3**, non rimandato
 
 ## Blocco 5 — CI e manutenzione dipendenze [F7] — CHIUSO salvo il deploy
 
 - [x] 5.1 | - | Trigger su `main` e `master`: prima puntavano solo a `main`, che in questo repo non esiste
 - [x] 5.2 | 3.7 | Soglie in `vite.config.ts` (95% righe e statement, 92% funzioni e rami) contro una
-  baseline misurata di 99,4 / 98,2 / 99. Verificato che mordano: alzandole a 100 il comando esce 1
-  con `ERROR: Coverage for lines (99.4%) does not meet global threshold (100%)`
+      baseline misurata di 99,4 / 98,2 / 99. Verificato che mordano: alzandole a 100 il comando esce 1
+      con `ERROR: Coverage for lines (99.4%) does not meet global threshold (100%)`
 - [x] 5.3 | 3.9 | Job `e2e` con installazione del browser e report caricato come artefatto (7 giorni)
 - [x] 5.4 | - | `.github/dependabot.yml`: npm e github-actions settimanali, aggiornamenti raggruppati
-  per famiglia (toolchain, testing) invece di una PR per pacchetto
+      per famiglia (toolchain, testing) invece di una PR per pacchetto
 - [x] extra | - | Job `rules`: l'emulatore Firestore con la JVM, altrimenti le rules tornerebbero a
-  non essere mai eseguite
+      non essere mai eseguite
 - [~] 5.5 | - | **Deploy non scritto.** DEC1 colloca la pubblicazione dopo B/C/D e non esiste un
   progetto Firebase reale (solo `.firebaserc.example`): un workflow di deploy non eseguibile darebbe
   una falsa sicurezza. Si scrive nel Blocco 6/7, quando ci sarà un progetto contro cui verificarlo
@@ -137,7 +137,7 @@ Il dettaglio (verify per step, motivazioni, rischi) è in `plan.md`.
 ## Blocco E — Boss entity [piano 002, Incremento E] — FUORI SEQUENZA (DEC4)
 
 - [ ] E0 | C10 | Design doc regole boss (HP, fasi, danno, attacchi), time-box mezza giornata, poi
-  ri-pianificazione. Da riaprire ora che B, C e D sono chiusi
+      ri-pianificazione. Da riaprire ora che B, C e D sono chiusi
 
 ## Requisiti → blocco
 

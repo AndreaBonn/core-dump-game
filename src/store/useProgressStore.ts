@@ -109,7 +109,9 @@ function readProfile(): StoredProfile {
         bestScore: safeByMode(parsed.stats?.bestScore, EMPTY_STATS.bestScore),
         bestLevel: safeByMode(parsed.stats?.bestLevel, EMPTY_STATS.bestLevel),
       },
-      earned: Array.isArray(parsed.earned) ? parsed.earned.filter((id) => typeof id === 'string') : [],
+      earned: Array.isArray(parsed.earned)
+        ? parsed.earned.filter((id) => typeof id === 'string')
+        : [],
     };
   } catch {
     return EMPTY_PROFILE;

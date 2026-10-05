@@ -3,6 +3,7 @@
 Formato: `id | dipendenze | requisito tracciato`. Stima 10-30 min per task.
 
 ## Incremento A — Fondamenta (refactor engine/mode + Endless + Daily)
+
 - A1 | - | Test regressione campagna deterministica end-to-end (core seed→outcome)
 - A2 | A1 | Estrai applyPowerUp → PowerUpSystem.applyPowerUp + test
 - A3 | A2 | Oggetto-dato RunState (score/level/phase/sleepTimer/pendingFork)
@@ -15,6 +16,7 @@ Formato: `id | dipendenze | requisito tracciato`. Stima 10-30 min per task.
 - A10 | A7 | Verifica GameEngine.ts < 300 righe; estrai residui se serve
 
 ## Incremento B — Retention meta (progressi+stelle + stats + achievements)
+
 - B1 | A | stars.ts puro: starsFor(levelScore, thresholds) + test [feature 9]
 - B2 | B1 | starThresholds in LevelConfig per i 10 livelli
 - B3 | A | stats.ts puro: riduttori statistiche da eventi + test [feature 10]
@@ -27,6 +29,7 @@ Formato: `id | dipendenze | requisito tracciato`. Stima 10-30 min per task.
 - B10 | B6 | Toast sblocco achievement (z-index toast:500)
 
 ## Incremento C — Varieta gameplay (power-up + hazard + path)
+
 - C1 | A | Regressione-first su MatchSystem.findRun e chainOps (blinda invarianti)
 - C2 | C1 | matchable:boolean su DataPacket + guardia findRun + test hazard [feature 5]
 - C3 | C2 | Generazione hazard in generateChainPackets (chance da LevelConfig) + test
@@ -39,6 +42,7 @@ Formato: `id | dipendenze | requisito tracciato`. Stima 10-30 min per task.
 - C10 | C3,C7,C9 | Bilanciamento + verifica runtime (no soft-lock)
 
 ## Incremento D — Onboarding + rifiniture (tutorial + hit-stop/tracer)
+
 - D1 | A | Hit-stop: contatore frame-freeze in GameEngine.loop + test [feature 3]
 - D2 | D1 | Trigger hit-stop da outcome.combo (soglie costante)
 - D3 | A | Tracer proiettile in VisualFx + render RenderSystem [feature 3]
@@ -49,6 +53,7 @@ Formato: `id | dipendenze | requisito tracciato`. Stima 10-30 min per task.
 - D8 | D7 | Verifica runtime tutorial
 
 ## Incremento E — Boss entity (feature 6, ALTO RISCHIO, conferma a parte)
+
 - E1 | A,C | Design doc regole boss (HP/fasi/danno/attacchi) — CONFERMA UTENTE
 - E2 | E1 | Boss.ts (stato HP/fasi) + test puro
 - E3 | E2 | BossSystem.ts (update/attacchi/danno) + test
@@ -58,6 +63,7 @@ Formato: `id | dipendenze | requisito tracciato`. Stima 10-30 min per task.
 - E7 | E6 | Bilanciamento + verifica runtime
 
 ## Requisiti → incremento
+
 - feature 1 Endless → A5,A7,A9
 - feature 2 Daily → A6,A7,A9
 - feature 3 Juice (hit-stop/tracer) → D1-D4

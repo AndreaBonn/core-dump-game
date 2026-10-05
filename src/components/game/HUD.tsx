@@ -51,7 +51,10 @@ export function HUD({ onPause }: HUDProps) {
         <div className="flex items-center gap-3">
           <div className="rounded border border-terminal-border bg-terminal-panel/80 px-3 py-2 text-center">
             <p className="text-xs uppercase text-terminal-muted">level</p>
-            <p data-testid="hud-level" className="text-lg font-bold text-terminal-text tabular-nums">
+            <p
+              data-testid="hud-level"
+              className="text-lg font-bold text-terminal-text tabular-nums"
+            >
               {level}/{TOTAL_LEVELS}
             </p>
           </div>

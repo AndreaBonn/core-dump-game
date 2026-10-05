@@ -9,12 +9,7 @@ import {
   rollbackChain,
 } from '@/engine/systems/PowerUpSystem';
 import { PACKET_SPACING } from '@/config/constants';
-import {
-  KILL_RANGE,
-  ROLLBACK_DISTANCE,
-  SLEEP_DURATION,
-  SLEEP_FACTOR,
-} from '@/config/powerUps';
+import { KILL_RANGE, ROLLBACK_DISTANCE, SLEEP_DURATION, SLEEP_FACTOR } from '@/config/powerUps';
 import { createRng } from '@/engine/math/rng';
 import type { DataPacket, PacketType } from '@/types/game.types';
 

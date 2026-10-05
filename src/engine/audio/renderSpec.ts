@@ -33,7 +33,10 @@ export function renderSpec(target: AudioRenderTarget, spec: SoundSpec, masterGai
 
     const peak = tone.gain * masterGain;
     gain.gain.setValueAtTime(0, t0);
-    gain.gain.linearRampToValueAtTime(peak, t0 + Math.min(MAX_ATTACK, tone.duration * ATTACK_FRACTION));
+    gain.gain.linearRampToValueAtTime(
+      peak,
+      t0 + Math.min(MAX_ATTACK, tone.duration * ATTACK_FRACTION),
+    );
     gain.gain.exponentialRampToValueAtTime(SILENCE, end);
 
     osc.connect(gain);

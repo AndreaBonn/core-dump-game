@@ -3,13 +3,7 @@ import type { RunMode } from '@/engine/core/runController';
 export type PacketType = 'ERROR' | 'SUCCESS' | 'INFO' | 'WARNING' | 'DEBUG' | 'TRACE' | 'FATAL';
 
 export type PowerUpType =
-  | 'SLEEP'
-  | 'FORK'
-  | 'GARBAGE_COLLECT'
-  | 'ROLLBACK'
-  | 'KILL_9'
-  | 'TRY_CATCH'
-  | 'REGEX';
+  'SLEEP' | 'FORK' | 'GARBAGE_COLLECT' | 'ROLLBACK' | 'KILL_9' | 'TRY_CATCH' | 'REGEX';
 
 export interface DataPacket {
   readonly id: number;
