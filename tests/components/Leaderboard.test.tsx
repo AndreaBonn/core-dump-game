@@ -128,7 +128,9 @@ describe('Leaderboard', () => {
     render(<Leaderboard />);
 
     const best = await screen.findByText('your best');
-    expect(best.parentElement).toHaveTextContent('40');
+    const row = best.parentElement!.querySelector('li')!;
+    expect(row.textContent).toMatch(/^me.*40$/);
+    expect(screen.getByRole('list')).not.toContainElement(row);
   });
 
   it('goes back to the menu', async () => {

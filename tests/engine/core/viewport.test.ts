@@ -32,9 +32,14 @@ describe('fitViewport', () => {
   it('letterboxes a wider-than-board viewport by centring horizontally', () => {
     const viewport = fitViewport(FULL_BOARD, 1000, 500);
 
-    expect(viewport.scale).toBeCloseTo(500 / 600);
-    expect(viewport.offsetX).toBeCloseTo((1000 - BOARD_WIDTH * (500 / 600)) / 2);
-    expect(viewport.offsetY).toBeCloseTo(0);
+    const topLeft = boardToScreen(vec2(0, 0), viewport);
+    const bottomRight = boardToScreen(vec2(BOARD_WIDTH, BOARD_HEIGHT), viewport);
+
+    // The board spans the full height and leaves equal bars left and right.
+    expect(topLeft.y).toBeCloseTo(0);
+    expect(bottomRight.y).toBeCloseTo(500);
+    expect(topLeft.x).toBeGreaterThan(0);
+    expect(topLeft.x).toBeCloseTo(1000 - bottomRight.x);
   });
 
   it('makes the game far bigger in portrait than fitting the whole board would', () => {

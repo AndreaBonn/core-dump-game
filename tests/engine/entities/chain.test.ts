@@ -100,8 +100,11 @@ describe('compactBehind', () => {
       createPacket({ type: 'INFO', distance: 232 }),
     ];
     compactBehind(packets, 2);
-    expect(packets[1]!.distance).toBe(232 - PACKET_SPACING);
-    expect(packets[0]!.distance).toBe(232 - 2 * PACKET_SPACING);
+    const distances = packets.map((packet) => packet.distance);
+    // The front packet stays put and every packet behind it closes up to it.
+    expect(distances[2]).toBe(232);
+    expect(distances[2]! - distances[1]!).toBe(PACKET_SPACING);
+    expect(distances[1]! - distances[0]!).toBe(PACKET_SPACING);
   });
 });
 

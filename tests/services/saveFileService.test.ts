@@ -39,6 +39,13 @@ describe('saveFileService', () => {
     expect(isSaveFileAvailable()).toBe(true);
   });
 
+  it('treats an answer with no Content-Type as no launcher', async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 200 }));
+
+    expect(await loadSaveFile()).toBeNull();
+    expect(isSaveFileAvailable()).toBe(false);
+  });
+
   it('treats an HTML answer from a static host as no launcher', async () => {
     fetchMock.mockResolvedValueOnce(reply(200, '<!doctype html>', 'text/html'));
 

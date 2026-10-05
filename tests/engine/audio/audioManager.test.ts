@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { AudioManager } from '@/engine/audio/AudioManager';
+import { SOUND_SPECS, type SoundName } from '@/engine/audio/soundSpecs';
 
 interface FakeContext {
   state: 'running' | 'suspended';
@@ -102,33 +103,41 @@ describe('AudioManager', () => {
 
   describe('playMatch', () => {
     function trackedManager() {
-      const manager = new AudioManager(() => createFakeContext() as unknown as AudioContext);
-      const played = vi.spyOn(manager, 'play');
-      return { manager, played };
+      const ctx = createFakeContext();
+      const manager = new AudioManager(() => ctx as unknown as AudioContext);
+      // The start frequency of every oscillator scheduled on the context, in order.
+      const scheduledFrequencies = () =>
+        ctx.createOscillator.mock.results.map(
+          (result) => result.value.frequency.setValueAtTime.mock.calls[0][0] as number,
+        );
+      return { manager, scheduledFrequencies };
     }
 
+    const frequenciesOf = (...names: SoundName[]) =>
+      names.flatMap((name) => SOUND_SPECS[name].map((tone) => tone.freq));
+
     it('plays only the match sound when there is no combo', () => {
-      const { manager, played } = trackedManager();
+      const { manager, scheduledFrequencies } = trackedManager();
 
       manager.playMatch(null);
 
-      expect(played.mock.calls.map(([name]) => name)).toEqual(['match']);
+      expect(scheduledFrequencies()).toEqual(frequenciesOf('match'));
     });
 
     it('adds the combo sound for the combo size', () => {
-      const { manager, played } = trackedManager();
+      const { manager, scheduledFrequencies } = trackedManager();
 
       manager.playMatch({ multiplier: 3, id: 'stackOverflow' });
 
-      expect(played.mock.calls.map(([name]) => name)).toEqual(['match', 'combo-3']);
+      expect(scheduledFrequencies()).toEqual(frequenciesOf('match', 'combo-3'));
     });
 
     it('reuses the loudest sample for combos past the last one available', () => {
-      const { manager, played } = trackedManager();
+      const { manager, scheduledFrequencies } = trackedManager();
 
       manager.playMatch({ multiplier: 9, id: 'kernelPanic' });
 
-      expect(played.mock.calls.map(([name]) => name)).toEqual(['match', 'combo-4']);
+      expect(scheduledFrequencies()).toEqual(frequenciesOf('match', 'combo-4'));
     });
   });
 });

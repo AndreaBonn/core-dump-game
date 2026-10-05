@@ -52,12 +52,22 @@ describe('buildLevelState', () => {
     const config = getLevel(2);
 
     const state = buildLevelState(config);
-    const continued = drawPacketType(state.rng, state.types);
-    const restarted = drawPacketType(createRng(config.seed), state.types);
+    const fresh = createRng(config.seed);
+    const draws = (rng: typeof fresh) =>
+      Array.from({ length: 12 }, () => drawPacketType(rng, state.types));
 
-    // A fresh rng on the same seed replays the first draw, the level rng does not.
-    expect(state.types).toContain(continued);
-    expect(state.types).toContain(restarted);
+    // A fresh rng on the same seed replays the chain's draws; the level rng
+    // has moved past them, so the two streams differ.
+    expect(draws(state.rng)).not.toEqual(draws(fresh));
+  });
+
+  it('builds the same chain every time a level is started', () => {
+    const config = getLevel(2);
+
+    const first = buildLevelState(config).chain.packets.map((packet) => packet.type);
+    const second = buildLevelState(config).chain.packets.map((packet) => packet.type);
+
+    expect(first).toEqual(second);
   });
 });
 

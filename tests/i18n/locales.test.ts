@@ -80,9 +80,12 @@ describe('dictionaries', () => {
   });
 
   it('cover a name and a description for every achievement', () => {
-    for (const { id } of ACHIEVEMENTS) {
-      expect(enLeaves.get(`achievements.items.${id}.description`), id).toBeTruthy();
-    }
+    const missing = ACHIEVEMENTS.flatMap(({ id }) =>
+      ['name', 'description']
+        .map((field) => `achievements.items.${id}.${field}`)
+        .filter((path) => !enLeaves.has(path)),
+    );
+    expect(missing).toEqual([]);
     expect(Object.keys(en.achievements.items)).toHaveLength(ACHIEVEMENTS.length);
   });
 });

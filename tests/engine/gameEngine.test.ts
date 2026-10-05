@@ -675,6 +675,15 @@ describe('GameEngine', () => {
       expect(internals.chain.speed).toBe(100);
     });
 
+    it('keeps the chain slowed while SLEEP still has time left', () => {
+      const { internals } = powerUpEngine([createPacket({ type: 'INFO', distance: 0 })]);
+      internals.applyPowerUp('SLEEP');
+
+      internals.updateSleep(SLEEP_DURATION / 2);
+
+      expect(internals.chain.speed).toBeCloseTo(100 * SLEEP_FACTOR);
+    });
+
     it('GARBAGE_COLLECT removes every packet of one present type', () => {
       const { internals, events } = powerUpEngine([
         createPacket({ type: 'INFO', distance: 0 }),

@@ -49,7 +49,7 @@ describe('Modal', () => {
       </Modal>,
     );
 
-    expect(document.activeElement).not.toBe(document.body);
+    expect(screen.getByRole('heading', { name: 'WAIT' }).parentElement).toHaveFocus();
   });
 
   it('leaves Tab alone when there is nothing in the dialog to trap it on', async () => {
@@ -58,11 +58,10 @@ describe('Modal', () => {
         <p>Loading</p>
       </Modal>,
     );
-    const panel = document.activeElement;
-
     await userEvent.tab();
 
-    expect(document.activeElement).not.toBe(panel);
+    // The browser's own Tab order applies: focus leaves the panel for the page.
+    expect(document.body).toHaveFocus();
   });
 
   it('skips a disabled control when placing the initial focus', () => {

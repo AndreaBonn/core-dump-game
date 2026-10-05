@@ -21,8 +21,9 @@ describe('dailySeed', () => {
     expect(seed).toBeLessThanOrEqual(0xffffffff);
   });
 
-  it('is stable across calls (pure)', () => {
-    const date = new Date(2026, 11, 31);
-    expect(dailySeed(date)).toBe(dailySeed(date));
+  it('keeps the seed a given date has always had, so every player gets the same layout', () => {
+    // Known answer: changing it reshuffles the daily board for everyone and
+    // splits the day's leaderboard between two layouts.
+    expect(dailySeed(new Date(2026, 11, 31))).toBe(3785533686);
   });
 });

@@ -75,10 +75,4 @@ describe('track assignment', () => {
 
     expect(kinds).toEqual(new Set(['spiral', 'serpentine', 'loop']));
   });
-
-  it('is deterministic: the same level always has the same shape', () => {
-    expect(buildLevelConfig(17, CAMPAIGN_SEED_BASE).pathKind).toBe(
-      buildLevelConfig(17, CAMPAIGN_SEED_BASE).pathKind,
-    );
-  });
 });

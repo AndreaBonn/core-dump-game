@@ -164,7 +164,7 @@ describe('GameScreen', () => {
 
       act(() => engineEvents.onComboChange({ id: 'kernelPanic', multiplier: 4 }));
 
-      expect(useGameStore.getState().combo).toEqual({ id: 'kernelPanic', multiplier: 4 });
+      expect(screen.getByText(/kernel panic/i)).toBeInTheDocument();
       expect(useProgressStore.getState().stats.bestCombo).toBe(4);
     });
 
@@ -183,7 +183,7 @@ describe('GameScreen', () => {
 
       act(() => engineEvents.onPowerUp('SLEEP'));
 
-      expect(useGameStore.getState().powerUp).toBe('SLEEP');
+      expect(screen.getByText('sleep()')).toBeInTheDocument();
       expect(useProgressStore.getState().stats.powerUpsTriggered).toBe(1);
     });
 

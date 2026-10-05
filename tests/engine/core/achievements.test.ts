@@ -85,12 +85,6 @@ describe('evaluate', () => {
 
     expect(earned).toContain('five-figures');
   });
-
-  it('is stable: the same state always earns the same set', () => {
-    const state = withStats({ runsPlayed: 12, bestCombo: 3 });
-
-    expect(evaluate(state)).toEqual(evaluate(state));
-  });
 });
 
 describe('newlyEarned', () => {
