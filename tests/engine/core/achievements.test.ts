@@ -41,6 +41,29 @@ describe('the catalogue', () => {
 });
 
 describe('evaluate', () => {
+  it('earns boss-down from a starred boss but not from ordinary levels or zero stars', () => {
+    const isEarned = achievementById('boss-down')!.isEarned;
+    expect(isEarned({ ...NOTHING, progress: { stars: { 6: 1 }, unlockedThrough: 7 } })).toBe(true);
+    expect(
+      isEarned({ ...NOTHING, progress: { stars: { 1: 3, 5: 2, 6: 0 }, unlockedThrough: 6 } }),
+    ).toBe(false);
+    expect(isEarned(NOTHING)).toBe(false);
+  });
+
+  it('earns all-bosses only when both campaign bosses have at least one star', () => {
+    const isEarned = achievementById('all-bosses')!.isEarned;
+    expect(
+      isEarned({ ...NOTHING, progress: { stars: { 6: 1, 12: 2 }, unlockedThrough: 12 } }),
+    ).toBe(true);
+    expect(
+      isEarned({ ...NOTHING, progress: { stars: { 6: 3, 12: 0 }, unlockedThrough: 12 } }),
+    ).toBe(false);
+    expect(isEarned({ ...NOTHING, progress: { stars: { 12: 3 }, unlockedThrough: 12 } })).toBe(
+      false,
+    );
+    expect(isEarned(NOTHING)).toBe(false);
+  });
+
   it('earns nothing on a fresh profile', () => {
     expect(evaluate(NOTHING)).toEqual([]);
   });

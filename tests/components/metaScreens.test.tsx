@@ -158,6 +158,8 @@ describe('Achievements', () => {
 
     expect(screen.getAllByRole('listitem')).toHaveLength(ACHIEVEMENTS.length);
     expect(screen.getByText(`0/${ACHIEVEMENTS.length}`)).toBeInTheDocument();
+    expect(screen.getByText('kill -TERM')).toBeInTheDocument();
+    expect(screen.getByText('killall')).toBeInTheDocument();
   });
 
   it('marks unlocked entries in words, not only in colour', () => {

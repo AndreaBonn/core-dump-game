@@ -1,4 +1,4 @@
-import { TOTAL_LEVELS } from '@/config/levels';
+import { LEVELS, TOTAL_LEVELS } from '@/config/levels';
 import { isCampaignPerfect, totalStars, type CampaignProgress } from '@/engine/core/progress';
 import type { PlayerStats } from '@/engine/core/stats';
 
@@ -17,6 +17,8 @@ export type AchievementId =
   | 'sudo'
   | 'garbage-collector'
   | 'halfway'
+  | 'boss-down'
+  | 'all-bosses'
   | 'root-access'
   | 'three-stars'
   | 'twenty-stars'
@@ -30,6 +32,9 @@ export type AchievementId =
 
 /** Campaign level the "halfway" achievement asks for. */
 export const HALFWAY_LEVEL = Math.ceil(TOTAL_LEVELS / 2);
+
+const CAMPAIGN_BOSSES = LEVELS.filter(({ isBoss }) => isBoss);
+const BOSS_CLEAR_STARS = 1;
 
 /**
  * Name and description are not here: they are display text and live in the
@@ -81,6 +86,16 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
   {
     id: 'root-access',
     isEarned: ({ stats }) => stats.runsWon >= 1,
+  },
+  {
+    id: 'boss-down',
+    isEarned: ({ progress }) =>
+      CAMPAIGN_BOSSES.some(({ level }) => (progress.stars[level] ?? 0) >= BOSS_CLEAR_STARS),
+  },
+  {
+    id: 'all-bosses',
+    isEarned: ({ progress }) =>
+      CAMPAIGN_BOSSES.every(({ level }) => (progress.stars[level] ?? 0) >= BOSS_CLEAR_STARS),
   },
   {
     id: 'three-stars',

@@ -90,6 +90,14 @@ export const meta: Pick<Messages, 'profile' | 'leaderboard' | 'levelSelect' | 'a
         name: en.achievements.items['three-stars'].name,
         description: 'Ottieni tre stelle in un livello qualsiasi.',
       },
+      'boss-down': {
+        name: en.achievements.items['boss-down'].name,
+        description: 'Termina il processo di un boss della campagna.',
+      },
+      'all-bosses': {
+        name: en.achievements.items['all-bosses'].name,
+        description: 'Termina i processi di tutti i boss della campagna.',
+      },
       'twenty-stars': {
         name: en.achievements.items['twenty-stars'].name,
         description: 'Raccogli 20 stelle.',

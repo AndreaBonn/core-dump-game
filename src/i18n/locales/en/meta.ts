@@ -63,6 +63,8 @@ export const meta = {
         description: 'Reach level {{level}} of the campaign.',
       },
       'root-access': { name: 'root access', description: 'Complete the campaign.' },
+      'boss-down': { name: 'kill -TERM', description: 'Shut down a campaign boss.' },
+      'all-bosses': { name: 'killall', description: 'Shut down every campaign boss.' },
       'three-stars': { name: 'clean build', description: 'Earn three stars on any level.' },
       'twenty-stars': { name: 'code quality', description: 'Collect 20 stars.' },
       'all-stars': {

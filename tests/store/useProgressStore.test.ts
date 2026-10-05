@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getLevel, TOTAL_LEVELS } from '@/config/levels';
+import { HALFWAY_LEVEL, newlyEarned } from '@/engine/core/achievements';
 import type { RunResult } from '@/types/game.types';
 
 const STORAGE_KEY = 'coredump.progress';
@@ -74,6 +75,25 @@ describe('useProgressStore', () => {
 
     store.getState().recordRunEnd(run());
     expect(store.getState().earned.filter((id) => id === 'hello-world')).toHaveLength(1);
+  });
+
+  it('preserves legacy halfway after the campaign grows to twelve levels', async () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ stats: { bestLevel: { campaign: 5 } }, earned: ['halfway'] }),
+    );
+    const store = await loadStore();
+    expect(HALFWAY_LEVEL).toBe(6);
+    expect(HALFWAY_LEVEL).toBe(Math.ceil(TOTAL_LEVELS / 2));
+    expect(newlyEarned(store.getState(), [])).toEqual([]);
+
+    store.getState().notePowerUp();
+
+    expect(store.getState().earned).toEqual(['halfway', 'sudo']);
+    expect(store.getState().pending).toEqual(['sudo']);
+    expect(newlyEarned(store.getState(), ['halfway'])).toEqual(['sudo']);
+    const reopened = await loadStore();
+    expect(reopened.getState().earned).toEqual(['halfway', 'sudo']);
   });
 
   it('keeps a pending achievement until it is dismissed', async () => {
