@@ -176,6 +176,20 @@ describe('AchievementToast', () => {
     }
   });
 
+  it('sits at the bottom during a run, out of the HUD row, and at the top in menus', () => {
+    useProgressStore.setState({ pending: [ACHIEVEMENTS[0]!.id] });
+    useGameStore.setState({ screen: 'game' });
+    const { unmount } = render(<AchievementToast />);
+
+    expect(screen.getByRole('status')).toHaveAttribute('data-placement', 'bottom');
+    unmount();
+
+    useGameStore.setState({ screen: 'menu' });
+    render(<AchievementToast />);
+
+    expect(screen.getByRole('status')).toHaveAttribute('data-placement', 'top');
+  });
+
   it('shows one unlock at a time when several land together', () => {
     useProgressStore.getState().noteCombo(4);
 
