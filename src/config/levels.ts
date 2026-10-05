@@ -2,8 +2,19 @@ import { buildTrack, type PathKind } from '@/config/paths';
 import type { StarThresholds } from '@/engine/core/stars';
 import type { Vec2 } from '@/engine/math/vec2';
 
+export interface ReversalSchedule {
+  readonly period: number;
+  readonly duration: number;
+  readonly factor: number;
+}
+
 export interface LevelConfig {
   readonly level: number;
+  readonly chapter: number | null;
+  readonly isBoss: boolean;
+  readonly armorChance: number;
+  readonly reversal: ReversalSchedule | null;
+  readonly waves: number;
   readonly waypoints: readonly Vec2[];
   /** Total number of packets in the chain for this level. */
   readonly chainLength: number;
@@ -34,7 +45,7 @@ const POWER_UP_CHANCE = 0.05;
  */
 const HAZARD_FROM_LEVEL = 4;
 const HAZARD_STEP = 0.015;
-const MAX_HAZARD_CHANCE = 0.12;
+export const MAX_HAZARD_CHANCE = 0.12;
 
 function hazardChanceFor(level: number): number {
   if (level < HAZARD_FROM_LEVEL) {
@@ -79,9 +90,10 @@ const SEED_STEP = 7919;
 
 // Difficulty caps so endless levels past the campaign stay playable rather than
 // scaling without bound. Set high enough not to affect the first TOTAL_LEVELS.
-const MAX_CHAIN_LENGTH = 160;
-const MAX_CHAIN_SPEED = 220;
-const MAX_TURNS = 6;
+export const MAX_CHAIN_LENGTH = 160;
+export const MAX_CHAIN_SPEED = 220;
+export const MAX_TURNS = 6;
+export const MAX_COLOR_COUNT = 7;
 
 interface LevelTuning {
   chainLength: number;
@@ -95,7 +107,7 @@ function tuningForLevel(level: number): LevelTuning {
   const step = level - 1;
   return {
     chainLength: Math.min(20 + step * 4, MAX_CHAIN_LENGTH),
-    colorCount: Math.min(4 + Math.floor(step / 2), 7),
+    colorCount: Math.min(4 + Math.floor(step / 2), MAX_COLOR_COUNT),
     chainSpeed: Math.min(26 + step * 5, MAX_CHAIN_SPEED),
     turns: Math.min(2.6 + step * 0.12, MAX_TURNS),
     startRadius: 250 + (step % 2) * 20,
@@ -119,6 +131,11 @@ export function buildLevelConfig(level: number, seedBase: number): LevelConfig {
   });
   return {
     level,
+    chapter: null,
+    isBoss: false,
+    armorChance: 0,
+    reversal: null,
+    waves: 1,
     waypoints,
     chainLength: tuning.chainLength,
     colorCount: tuning.colorCount,

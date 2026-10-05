@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { getLevel, LEVELS, TOTAL_LEVELS } from '@/config/levels';
+import { buildLevelConfig, getLevel, LEVELS, TOTAL_LEVELS } from '@/config/levels';
 
 describe('level configuration', () => {
+  it('keeps endless levels outside chapters with no new mechanics', () => {
+    expect(buildLevelConfig(25, 12345)).toMatchObject({
+      chapter: null,
+      isBoss: false,
+      armorChance: 0,
+      reversal: null,
+      waves: 1,
+    });
+  });
+
   it('provides exactly TOTAL_LEVELS levels', () => {
     expect(LEVELS).toHaveLength(TOTAL_LEVELS);
     expect(TOTAL_LEVELS).toBe(10);

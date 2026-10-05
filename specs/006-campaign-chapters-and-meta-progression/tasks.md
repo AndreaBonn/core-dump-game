@@ -15,10 +15,10 @@ I18N parità dizionari, WAV ondate.
 
 ## Fase 1 — Capitoli 1-2 (12 livelli)
 
-- [ ] T010 | - | I18N, LIM | dizionari divisi per sezione, `locales.test.ts` verde, ogni file < 300 righe, nessuna chiave rinominata (`git diff` senza righe `-` su chiavi)
-- [ ] T011 | T005 | CAMP, DET | `LevelConfig` con `chapter/isBoss/armorChance/reversal`; T005 verde; typecheck verde
-- [ ] T012 | T011 | CAMP | `difficulty.test.ts`: aumentare un parametro alla volta alza `difficultyIndex`
-- [ ] T013 | T012 | CAMP | `campaign.test.ts`: curva (ramp 1-5 non decrescente, boss max e ≥ +15% sul 5, capitolo 2 parte sotto il boss 1), un `isBoss` per capitolo
+- [x] T010 | - | I18N, LIM | dizionari divisi per sezione, `locales.test.ts` verde, ogni file < 300 righe, nessuna chiave rinominata (`git diff` senza righe `-` su chiavi)
+- [x] T011 | T005 | CAMP, DET | `LevelConfig` con `chapter/isBoss/armorChance/reversal`; T005 verde; typecheck verde
+- [x] T012 | T011 | CAMP | `difficulty.test.ts`: aumentare un parametro alla volta alza `difficultyIndex`
+- [x] T013 | T012 | CAMP | `campaign.test.ts`: curva (ramp 1-5 non decrescente, boss max e ≥ +15% sul 5, capitolo 2 parte sotto il boss 1), un `isBoss` per capitolo
 - [ ] T014 | T013 | CAMP | `TOTAL_LEVELS === 12` derivato; `contentBox.test.ts` copre `LEVELS`; T005 verde; suite intera verde (30-45 min)
 - [ ] T015 | T014, T010 | CAMP, I18N | `boss-down`/`all-bosses` testati; profilo con `halfway` già in `earned` lo conserva; parità i18n verde
 - [ ] T016 | T014, T010 | UI | `metaScreens.test.tsx`: 2 intestazioni capitolo, tile boss con testo; render 320/375 senza overflow orizzontale (30 min)
