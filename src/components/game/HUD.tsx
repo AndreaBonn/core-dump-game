@@ -14,12 +14,15 @@ interface HUDProps {
 export function HUD({ onPause }: HUDProps) {
   const score = useGameStore((state) => state.score);
   const level = useGameStore((state) => state.level);
+  const mode = useGameStore((state) => state.mode);
   const nextPacket = useGameStore((state) => state.nextPacket);
   const combo = useGameStore((state) => state.combo);
   const setCombo = useGameStore((state) => state.setCombo);
   const powerUp = useGameStore((state) => state.powerUp);
   const setPowerUp = useGameStore((state) => state.setPowerUp);
   const { t } = useTranslation();
+  // Endless and daily run past the campaign: its total means nothing there.
+  const inCampaign = mode === 'campaign';
 
   useEffect(() => {
     if (!combo) {
@@ -57,7 +60,7 @@ export function HUD({ onPause }: HUDProps) {
               data-testid="hud-level"
               className="text-lg font-bold text-terminal-text tabular-nums"
             >
-              {level}/{TOTAL_LEVELS}
+              {inCampaign ? `${level}/${TOTAL_LEVELS}` : level}
             </p>
           </div>
           {nextPacket && (

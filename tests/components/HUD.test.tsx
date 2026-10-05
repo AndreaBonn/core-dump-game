@@ -19,12 +19,30 @@ describe('HUD', () => {
   });
 
   it('shows the running score and the level out of the campaign total', () => {
-    useGameStore.setState({ score: 2400, level: 3 });
+    useGameStore.setState({ score: 2400, level: 3, mode: 'campaign' });
 
     render(<HUD onPause={vi.fn()} />);
 
     expect(screen.getByTestId('hud-score')).toHaveTextContent('2400');
     expect(screen.getByTestId('hud-level')).toHaveTextContent(`3/${TOTAL_LEVELS}`);
+  });
+
+  it('shows only the level reached in endless, where the campaign total means nothing', () => {
+    useGameStore.setState({ level: 15, mode: 'endless' });
+
+    render(<HUD onPause={vi.fn()} />);
+
+    expect(screen.getByTestId('hud-level')).toHaveTextContent('15');
+    expect(screen.getByTestId('hud-level')).not.toHaveTextContent(`/${TOTAL_LEVELS}`);
+  });
+
+  it('shows only the level reached in a daily run', () => {
+    useGameStore.setState({ level: 7, mode: 'daily' });
+
+    render(<HUD onPause={vi.fn()} />);
+
+    expect(screen.getByTestId('hud-level')).toHaveTextContent('7');
+    expect(screen.getByTestId('hud-level')).not.toHaveTextContent(`/${TOTAL_LEVELS}`);
   });
 
   it('previews the packet that will be fired next', () => {
