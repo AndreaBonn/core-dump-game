@@ -48,7 +48,11 @@ export function GameScreen() {
       onNextPacketChange: store.setNextPacket,
       onLevelComplete: (levelScore, bonus) => {
         store.reportLevelComplete(levelScore, bonus);
-        profile().recordLevelResult(useGameStore.getState().level, levelScore);
+        profile().recordLevelResult(
+          useGameStore.getState().level,
+          levelScore,
+          useGameStore.getState().mode,
+        );
       },
       onRunEnd: (result) => {
         store.reportRunEnd(result);

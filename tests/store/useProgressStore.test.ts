@@ -49,7 +49,7 @@ describe('useProgressStore', () => {
     const store = await loadStore();
     const [, , three] = getLevel(1).starThresholds;
 
-    store.getState().recordLevelResult(1, three);
+    store.getState().recordLevelResult(1, three, 'campaign');
 
     expect(store.getState().progress.stars[1]).toBe(3);
     expect(store.getState().progress.unlockedThrough).toBe(2);
@@ -58,7 +58,7 @@ describe('useProgressStore', () => {
   it('counts a cleared endless level without inventing a campaign rating', async () => {
     const store = await loadStore();
 
-    store.getState().recordLevelResult(TOTAL_LEVELS + 4, 9999);
+    store.getState().recordLevelResult(TOTAL_LEVELS + 4, 9999, 'endless');
 
     expect(store.getState().stats.levelsCleared).toBe(1);
     expect(store.getState().progress.stars).toEqual({});
@@ -216,7 +216,7 @@ describe('useProgressStore', () => {
     it('keeps browser progress the file does not have', async () => {
       const store = await loadStore();
       const [, , three] = getLevel(4).starThresholds;
-      store.getState().recordLevelResult(4, three);
+      store.getState().recordLevelResult(4, three, 'campaign');
 
       store.getState().hydrateFromFile(fileSave);
 

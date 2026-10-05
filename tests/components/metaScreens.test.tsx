@@ -27,7 +27,7 @@ describe('LevelSelect', () => {
   });
 
   it('starts the campaign from the chosen level', async () => {
-    useProgressStore.getState().recordLevelResult(1, getLevel(1).starThresholds[0]);
+    useProgressStore.getState().recordLevelResult(1, getLevel(1).starThresholds[0], 'campaign');
     render(<LevelSelect />);
 
     await userEvent.click(screen.getByRole('button', { name: /Level 2/ }));
@@ -38,7 +38,7 @@ describe('LevelSelect', () => {
   });
 
   it('announces the rating in the accessible name, not with colour alone', () => {
-    useProgressStore.getState().recordLevelResult(1, getLevel(1).starThresholds[2]);
+    useProgressStore.getState().recordLevelResult(1, getLevel(1).starThresholds[2], 'campaign');
     render(<LevelSelect />);
 
     expect(screen.getByRole('button', { name: /Level 1, 3 of 3 stars/ })).toBeInTheDocument();

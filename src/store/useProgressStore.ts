@@ -1,10 +1,10 @@
 import { create } from 'zustand';
-import { getLevel, TOTAL_LEVELS } from '@/config/levels';
+import { getLevel } from '@/config/levels';
 import { newlyEarned, type AchievementState } from '@/engine/core/achievements';
 import { mergeProfiles, type SavedProfile } from '@/engine/core/profileMerge';
 import { EMPTY_PROGRESS, recordLevel } from '@/engine/core/progress';
 import { starsFor, type Stars } from '@/engine/core/stars';
-import type { ScoreMode } from '@/engine/core/runController';
+import type { RunMode, ScoreMode } from '@/engine/core/runController';
 import {
   EMPTY_STATS,
   recordCombo,
@@ -24,7 +24,7 @@ interface ProgressState extends StoredProfile {
   /** Achievements unlocked but not yet shown to the player. */
   pending: string[];
   recordRunEnd: (result: RunResult) => void;
-  recordLevelResult: (level: number, levelScore: number) => void;
+  recordLevelResult: (level: number, levelScore: number, mode: RunMode) => void;
   noteCombo: (multiplier: number) => void;
   notePowerUp: () => void;
   dismissPending: (id: string) => void;
@@ -152,13 +152,12 @@ export const useProgressStore = create<ProgressState>((set, get) => {
 
     /**
      * A cleared level: counts towards the statistics always, and towards the
-     * campaign stars only when it is a campaign level. Endless and daily run
-     * past the campaign and have no rating to award.
+     * campaign stars only in campaign mode, regardless of the level number.
      */
-    recordLevelResult: (level, levelScore) => {
+    recordLevelResult: (level, levelScore, mode) => {
       const { progress, stats, earned } = get();
       const cleared = recordLevelCleared(stats);
-      if (level > TOTAL_LEVELS) {
+      if (mode !== 'campaign') {
         commit({ progress, stats: cleared, earned });
         return;
       }

@@ -198,6 +198,18 @@ describe('GameScreen', () => {
       expect(useProgressStore.getState().progress.unlockedThrough).toBe(2);
     });
 
+    it('counts a cleared endless level without writing campaign stars', () => {
+      render(<GameScreen />);
+      act(() => {
+        useGameStore.setState({ mode: 'endless' });
+        engineEvents.onLevelChange(1);
+        engineEvents.onLevelComplete(getLevel(1).starThresholds[2], 250);
+      });
+
+      expect(useProgressStore.getState().stats.levelsCleared).toBe(1);
+      expect(useProgressStore.getState().progress.stars).toEqual({});
+    });
+
     it('files the finished run in the profile as well as on the end screen', () => {
       render(<GameScreen />);
 
