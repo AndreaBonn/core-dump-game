@@ -45,6 +45,30 @@ describe('HUD', () => {
     expect(screen.getByTestId('hud-level')).not.toHaveTextContent(`/${TOTAL_LEVELS}`);
   });
 
+  it('badges a campaign boss level, in text and not only in colour', () => {
+    useGameStore.setState({ level: 6, mode: 'campaign' });
+
+    render(<HUD onPause={vi.fn()} />);
+
+    expect(screen.getByText('BOSS')).toBeInTheDocument();
+  });
+
+  it('does not badge a non-boss campaign level', () => {
+    useGameStore.setState({ level: 3, mode: 'campaign' });
+
+    render(<HUD onPause={vi.fn()} />);
+
+    expect(screen.queryByText('BOSS')).not.toBeInTheDocument();
+  });
+
+  it('never badges a boss outside campaign, where chapters do not apply', () => {
+    useGameStore.setState({ level: 6, mode: 'endless' });
+
+    render(<HUD onPause={vi.fn()} />);
+
+    expect(screen.queryByText('BOSS')).not.toBeInTheDocument();
+  });
+
   it('previews the packet that will be fired next', () => {
     useGameStore.setState({ nextPacket: 'ERROR' });
 

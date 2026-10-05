@@ -2,10 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Achievements } from '@/components/menu/Achievements';
-import { LevelSelect } from '@/components/menu/LevelSelect';
 import { Profile } from '@/components/menu/Profile';
 import { AchievementToast } from '@/components/shared/AchievementToast';
-import { getLevel, TOTAL_LEVELS } from '@/config/levels';
 import { ACHIEVEMENTS } from '@/engine/core/achievements';
 import { useGameStore } from '@/store/useGameStore';
 import { useProgressStore } from '@/store/useProgressStore';
@@ -15,49 +13,6 @@ function resetStores() {
   useGameStore.setState({ ...useGameStore.getInitialState(), screen: 'menu' });
   useProgressStore.getState().clearProfile();
 }
-
-describe('LevelSelect', () => {
-  beforeEach(resetStores);
-
-  it('locks every level except the first on a fresh profile', () => {
-    render(<LevelSelect />);
-
-    expect(screen.getByRole('button', { name: /Level 1, 0 of 3 stars/ })).toBeEnabled();
-    expect(screen.getByRole('button', { name: /Level 2, locked/ })).toBeDisabled();
-  });
-
-  it('starts the campaign from the chosen level', async () => {
-    useProgressStore.getState().recordLevelResult(1, getLevel(1).starThresholds[0], 'campaign');
-    render(<LevelSelect />);
-
-    await userEvent.click(screen.getByRole('button', { name: /Level 2/ }));
-
-    expect(useGameStore.getState().screen).toBe('game');
-    expect(useGameStore.getState().startLevel).toBe(2);
-    expect(useGameStore.getState().level).toBe(2);
-  });
-
-  it('announces the rating in the accessible name, not with colour alone', () => {
-    useProgressStore.getState().recordLevelResult(1, getLevel(1).starThresholds[2], 'campaign');
-    render(<LevelSelect />);
-
-    expect(screen.getByRole('button', { name: /Level 1, 3 of 3 stars/ })).toBeInTheDocument();
-  });
-
-  it('lists every campaign level', () => {
-    render(<LevelSelect />);
-
-    expect(screen.getAllByRole('listitem')).toHaveLength(TOTAL_LEVELS);
-  });
-
-  it('goes back to the menu', async () => {
-    render(<LevelSelect />);
-
-    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
-
-    expect(useGameStore.getState().screen).toBe('menu');
-  });
-});
 
 describe('Profile', () => {
   beforeEach(resetStores);

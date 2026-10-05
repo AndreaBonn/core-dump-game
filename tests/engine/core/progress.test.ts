@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  chapterStars,
   EMPTY_PROGRESS,
   isCampaignPerfect,
   isLevelUnlocked,
@@ -7,7 +8,7 @@ import {
   starsOf,
   totalStars,
 } from '@/engine/core/progress';
-import { TOTAL_LEVELS } from '@/config/levels';
+import { campaignChapters, TOTAL_LEVELS } from '@/config/levels';
 
 describe('recordLevel', () => {
   it('stores the stars and unlocks the next level', () => {
@@ -73,5 +74,33 @@ describe('totalStars and isCampaignPerfect', () => {
     expect(isCampaignPerfect(progress)).toBe(true);
 
     expect(isCampaignPerfect(recordLevel(EMPTY_PROGRESS, 1, 3))).toBe(false);
+  });
+});
+
+describe('chapterStars', () => {
+  it('counts no stars and the full total on an untouched chapter', () => {
+    const [chapterOne] = campaignChapters();
+
+    expect(chapterStars(EMPTY_PROGRESS, chapterOne!.levels)).toEqual({
+      earned: 0,
+      total: chapterOne!.levels.length * 3,
+    });
+  });
+
+  it('adds up only the stars earned on levels inside the chapter', () => {
+    const [chapterOne] = campaignChapters();
+    const progress = recordLevel(recordLevel(EMPTY_PROGRESS, 1, 3), 2, 1);
+
+    expect(chapterStars(progress, chapterOne!.levels)).toEqual({
+      earned: 4,
+      total: chapterOne!.levels.length * 3,
+    });
+  });
+
+  it('ignores stars earned on levels of another chapter', () => {
+    const [, chapterTwo] = campaignChapters();
+    const progress = recordLevel(EMPTY_PROGRESS, 1, 3);
+
+    expect(chapterStars(progress, chapterTwo!.levels).earned).toBe(0);
   });
 });

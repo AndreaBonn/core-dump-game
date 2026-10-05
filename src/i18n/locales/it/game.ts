@@ -13,6 +13,8 @@ export const game: Pick<Messages, 'game' | 'combo' | 'powerUps' | 'tutorial'> = 
     restartLevel: 'Ricomincia il livello',
     quitToMenu: 'Esci al menu',
     levelCleared: 'LIVELLO SUPERATO',
+    boss: en.game.boss,
+    nextChapter: 'Prossimo: capitolo {{chapter}} · {{mechanic}}',
     levelScore: 'punti del livello',
     clearBonus: 'bonus completamento',
     total: 'totale',

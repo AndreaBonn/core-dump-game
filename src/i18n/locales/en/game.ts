@@ -11,6 +11,8 @@ export const game = {
     restartLevel: 'Restart level',
     quitToMenu: 'Quit to menu',
     levelCleared: 'LEVEL CLEARED',
+    boss: 'BOSS',
+    nextChapter: 'Next up: Chapter {{chapter}} · {{mechanic}}',
     levelScore: 'level score',
     clearBonus: 'clear bonus',
     total: 'total',

@@ -11,6 +11,10 @@ import { expect, test, type Page } from '@playwright/test';
 // These specs read English copy and the game defaults to Italian: every page
 // load starts as a returning English player. The language itself is covered
 // in language.spec.ts, which has no such seed.
+// Level 1 of however many levels the campaign has: the chapter table sets the
+// total, and e2e cannot import it through the app's path aliases.
+const CAMPAIGN_START = /^1\/\d+$/;
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('coredump.language', 'en'));
 });
@@ -21,7 +25,7 @@ async function startCampaign(page: Page): Promise<void> {
   await page.evaluate(() => localStorage.setItem('coredump.tutorialSeen', 'true'));
   await page.reload();
   await page.getByRole('button', { name: 'Play Campaign' }).click();
-  await expect(page.getByTestId('hud-level')).toHaveText('1/10');
+  await expect(page.getByTestId('hud-level')).toHaveText(CAMPAIGN_START);
 }
 
 /** Fire at a spread of aim points until the chain gives up some points. */
@@ -110,7 +114,7 @@ test('a first-time player is taught before being dropped into level 1', async ({
 
   // Having seen it once, the same button now starts the campaign itself.
   await page.getByRole('button', { name: 'Play Campaign' }).click();
-  await expect(page.getByTestId('hud-level')).toHaveText('1/10');
+  await expect(page.getByTestId('hud-level')).toHaveText(CAMPAIGN_START);
   await expect(page.getByRole('region', { name: 'Tutorial' })).toBeHidden();
 });
 
@@ -128,4 +132,14 @@ test('the leaderboard opens on every mode without a Firebase project', async ({ 
 
   await page.getByRole('button', { name: 'Back' }).click();
   await expect(page.getByRole('button', { name: 'Play Campaign' })).toBeVisible();
+});
+
+test('the level select groups the campaign into chapters with a boss each', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Select Level' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Chapter 1 · Basics' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Chapter 2 · Hazards' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Level 6, boss, locked/ })).toBeDisabled();
+  await expect(page.getByRole('button', { name: /^Level 1,/ })).toBeEnabled();
 });

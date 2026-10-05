@@ -1,4 +1,4 @@
-import { TOTAL_LEVELS } from '@/config/levels';
+import { TOTAL_LEVELS, type LevelConfig } from '@/config/levels';
 import type { Stars } from '@/engine/core/stars';
 
 /** Campaign progress: how far the player got and how well they did. */
@@ -46,4 +46,18 @@ export function isCampaignPerfect(progress: CampaignProgress): boolean {
 
 export function isLevelUnlocked(progress: CampaignProgress, level: number): boolean {
   return level <= progress.unlockedThrough;
+}
+
+/** Highest rating a single level can earn. */
+const MAX_STARS_PER_LEVEL = 3;
+
+/** Stars earned across a set of levels, against the most they could give. */
+export function chapterStars(
+  progress: CampaignProgress,
+  levels: readonly LevelConfig[],
+): { earned: number; total: number } {
+  return {
+    earned: levels.reduce((sum, { level }) => sum + starsOf(progress, level), 0),
+    total: levels.length * MAX_STARS_PER_LEVEL,
+  };
 }

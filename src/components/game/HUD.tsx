@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { colorForType, labelForType } from '@/config/packetTypes';
-import { TOTAL_LEVELS } from '@/config/levels';
+import { getLevel, TOTAL_LEVELS } from '@/config/levels';
 import { useGameStore } from '@/store/useGameStore';
 import { Button } from '@/components/shared/Button';
 
@@ -21,8 +21,9 @@ export function HUD({ onPause }: HUDProps) {
   const powerUp = useGameStore((state) => state.powerUp);
   const setPowerUp = useGameStore((state) => state.setPowerUp);
   const { t } = useTranslation();
-  // Endless and daily run past the campaign: its total means nothing there.
+  // Endless and daily run past the campaign: a total and a boss mean nothing there.
   const inCampaign = mode === 'campaign';
+  const isBoss = inCampaign && getLevel(level).isBoss;
 
   useEffect(() => {
     if (!combo) {
@@ -62,6 +63,11 @@ export function HUD({ onPause }: HUDProps) {
             >
               {inCampaign ? `${level}/${TOTAL_LEVELS}` : level}
             </p>
+            {isBoss && (
+              <p className="text-xs font-bold tracking-widest text-packet-error">
+                {t('game.boss')}
+              </p>
+            )}
           </div>
           {nextPacket && (
             <div className="rounded-sm border border-terminal-border bg-terminal-panel/80 px-3 py-2 text-center">

@@ -75,6 +75,8 @@ describe('dictionaries', () => {
         'settings.nickname',
         'game.nickname',
         'tutorial.label',
+        'game.boss',
+        'levelSelect.boss',
       ].sort(),
     );
   });

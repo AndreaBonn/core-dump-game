@@ -56,7 +56,15 @@ describe('LevelCompleteScreen', () => {
   const result = { levelScore: 800, bonus: 250 };
 
   it('breaks the total down into the level score and the clear bonus', () => {
-    render(<LevelCompleteScreen result={result} totalScore={3050} onContinue={vi.fn()} />);
+    render(
+      <LevelCompleteScreen
+        result={result}
+        totalScore={3050}
+        level={3}
+        mode="campaign"
+        onContinue={vi.fn()}
+      />,
+    );
 
     expect(screen.getByRole('dialog', { name: 'LEVEL CLEARED' })).toBeInTheDocument();
     expect(screen.getByText('800')).toBeInTheDocument();
@@ -66,7 +74,15 @@ describe('LevelCompleteScreen', () => {
 
   it('continues to the next level', async () => {
     const onContinue = vi.fn();
-    render(<LevelCompleteScreen result={result} totalScore={3050} onContinue={onContinue} />);
+    render(
+      <LevelCompleteScreen
+        result={result}
+        totalScore={3050}
+        level={3}
+        mode="campaign"
+        onContinue={onContinue}
+      />,
+    );
 
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
@@ -75,12 +91,76 @@ describe('LevelCompleteScreen', () => {
 
   it('cannot be dismissed with Escape: the player must acknowledge the level', async () => {
     const onContinue = vi.fn();
-    render(<LevelCompleteScreen result={result} totalScore={3050} onContinue={onContinue} />);
+    render(
+      <LevelCompleteScreen
+        result={result}
+        totalScore={3050}
+        level={3}
+        mode="campaign"
+        onContinue={onContinue}
+      />,
+    );
 
     await userEvent.keyboard('{Escape}');
 
     expect(onContinue).not.toHaveBeenCalled();
     expect(screen.getByRole('dialog', { name: 'LEVEL CLEARED' })).toBeInTheDocument();
+  });
+
+  it('says nothing about the next chapter after a plain, non-boss level', () => {
+    render(
+      <LevelCompleteScreen
+        result={result}
+        totalScore={3050}
+        level={3}
+        mode="campaign"
+        onContinue={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText(/Chapter/)).not.toBeInTheDocument();
+  });
+
+  it('announces the next chapter after a campaign boss is cleared', () => {
+    render(
+      <LevelCompleteScreen
+        result={result}
+        totalScore={3050}
+        level={6}
+        mode="campaign"
+        onContinue={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/Chapter 2 . Hazards/)).toBeInTheDocument();
+  });
+
+  it('says nothing after the final boss, where there is no next chapter', () => {
+    render(
+      <LevelCompleteScreen
+        result={result}
+        totalScore={3050}
+        level={12}
+        mode="campaign"
+        onContinue={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText(/Chapter/)).not.toBeInTheDocument();
+  });
+
+  it('never announces a chapter outside campaign, even on a boss-shaped level number', () => {
+    render(
+      <LevelCompleteScreen
+        result={result}
+        totalScore={3050}
+        level={6}
+        mode="endless"
+        onContinue={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText(/Chapter/)).not.toBeInTheDocument();
   });
 });
 

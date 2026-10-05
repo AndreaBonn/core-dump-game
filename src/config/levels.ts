@@ -1,4 +1,9 @@
-import { CHAPTERS, type LevelSpec } from '@/config/campaign';
+import {
+  CHAPTERS,
+  type ChapterMechanic,
+  type ChapterSpec,
+  type LevelSpec,
+} from '@/config/campaign';
 import { buildTrack, type PathKind } from '@/config/paths';
 import type { StarThresholds } from '@/engine/core/stars';
 import type { Vec2 } from '@/engine/math/vec2';
@@ -205,4 +210,33 @@ export const TOTAL_LEVELS = LEVELS.length;
 export function getLevel(level: number): LevelConfig {
   const clamped = Math.max(1, Math.min(level, TOTAL_LEVELS));
   return LEVELS[clamped - 1]!;
+}
+
+/** The campaign levels of one chapter, for screens that show them grouped. */
+export interface ChapterLevels {
+  readonly chapterId: number;
+  readonly mechanic: ChapterMechanic;
+  readonly levels: readonly LevelConfig[];
+}
+
+/** Every chapter with its playable levels, in campaign order. */
+export function campaignChapters(): readonly ChapterLevels[] {
+  return CHAPTERS.map(({ id, mechanic }) => ({
+    chapterId: id,
+    mechanic,
+    levels: LEVELS.filter(({ chapter }) => chapter === id),
+  }));
+}
+
+/**
+ * The chapter a cleared campaign level leads into, or null when the level is
+ * not a boss or closes the last chapter.
+ */
+export function nextChapterAfterBoss(level: number): ChapterSpec | null {
+  const config = LEVELS[level - 1];
+  if (!config?.isBoss) {
+    return null;
+  }
+  const index = CHAPTERS.findIndex(({ id }) => id === config.chapter);
+  return CHAPTERS[index + 1] ?? null;
 }

@@ -21,10 +21,10 @@ I18N parità dizionari, WAV ondate.
 - [x] T013 | T012 | CAMP | `campaign.test.ts`: curva (ramp 1-5 non decrescente, boss max e ≥ +15% sul 5, capitolo 2 parte sotto il boss 1), un `isBoss` per capitolo
 - [x] T014 | T013 | CAMP | `TOTAL_LEVELS === 12` derivato; `contentBox.test.ts` copre `LEVELS`; T005 verde; suite intera verde (30-45 min)
 - [x] T015 | T014, T010 | CAMP, I18N | `boss-down`/`all-bosses` testati; profilo con `halfway` già in `earned` lo conserva; parità i18n verde
-- [ ] T016 | T014, T010 | UI | `metaScreens.test.tsx`: 2 intestazioni capitolo, tile boss con testo; render 320/375 senza overflow orizzontale (30 min)
-- [ ] T017 | T014 | UI | `HUD.test.tsx`: badge boss solo su `isBoss`; fine capitolo mostra il testo della meccanica successiva
-- [ ] T018 | T016, T017 | UI | `npm run test:e2e` verde con totale derivato e caso level select
-- [ ] T019 | T015-T018 | tutti | typecheck, lint, test:coverage (soglie invariate), e2e, `a11y-gate` level select, render 375/1280, click-through annotato
+- [x] T016 | T014, T010 | UI | `metaScreens.test.tsx`: 2 intestazioni capitolo, tile boss con testo; render 320/375 senza overflow orizzontale (30 min)
+- [x] T017 | T014 | UI | `HUD.test.tsx`: badge boss solo su `isBoss`; fine capitolo mostra il testo della meccanica successiva
+- [x] T018 | T016, T017 | UI | `npm run test:e2e` verde con totale derivato e caso level select
+- [x] T019 | T015-T018 | tutti | typecheck, lint, test:coverage (soglie invariate), e2e, `a11y-gate` level select, render 375/1280, click-through annotato
 
 ## Fase 2 — Pacchetti corazzati (18 livelli)
 

@@ -24,6 +24,7 @@ export function GameScreen() {
   const status = useGameStore((state) => state.status);
   const mode = useGameStore((state) => state.mode);
   const score = useGameStore((state) => state.score);
+  const level = useGameStore((state) => state.level);
   const levelResult = useGameStore((state) => state.levelResult);
   const gameResult = useGameStore((state) => state.gameResult);
   const nickname = useSettingsStore((state) => state.nickname);
@@ -161,6 +162,8 @@ export function GameScreen() {
         <LevelCompleteScreen
           result={levelResult}
           totalScore={score}
+          level={level}
+          mode={mode}
           onContinue={continueToNextLevel}
         />
       )}

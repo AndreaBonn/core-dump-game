@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { CHAPTERS } from '@/config/campaign';
-import { buildLevelConfig, getLevel, LEVELS, TOTAL_LEVELS } from '@/config/levels';
+import {
+  buildLevelConfig,
+  campaignChapters,
+  getLevel,
+  LEVELS,
+  nextChapterAfterBoss,
+  TOTAL_LEVELS,
+} from '@/config/levels';
 
 describe('level configuration', () => {
   it('keeps endless levels outside chapters with no new mechanics', () => {
@@ -64,5 +71,45 @@ describe('level configuration', () => {
     for (const level of LEVELS) {
       expect(level.waypoints.length).toBeGreaterThan(2);
     }
+  });
+});
+
+describe('campaignChapters', () => {
+  it('groups every campaign level under its own chapter, in chapter order', () => {
+    const groups = campaignChapters();
+
+    expect(groups.map((group) => group.chapterId)).toEqual(CHAPTERS.map((chapter) => chapter.id));
+    for (const group of groups) {
+      const spec = CHAPTERS.find((chapter) => chapter.id === group.chapterId)!;
+      expect(group.mechanic).toBe(spec.mechanic);
+      expect(group.levels).toHaveLength(spec.levels.length);
+      expect(group.levels.every((level) => level.chapter === group.chapterId)).toBe(true);
+    }
+  });
+
+  it('marks only the last level of each group as the boss', () => {
+    for (const group of campaignChapters()) {
+      const bossCount = group.levels.filter((level) => level.isBoss).length;
+      expect(bossCount).toBe(1);
+      expect(group.levels[group.levels.length - 1]!.isBoss).toBe(true);
+    }
+  });
+});
+
+describe('nextChapterAfterBoss', () => {
+  it('returns the following chapter when a boss level is cleared', () => {
+    expect(getLevel(6).isBoss).toBe(true);
+
+    expect(nextChapterAfterBoss(6)).toEqual(CHAPTERS[1]);
+  });
+
+  it('returns null on a level that is not a boss', () => {
+    expect(nextChapterAfterBoss(5)).toBeNull();
+  });
+
+  it('returns null after the last chapter, which has no successor', () => {
+    expect(getLevel(TOTAL_LEVELS).isBoss).toBe(true);
+
+    expect(nextChapterAfterBoss(TOTAL_LEVELS)).toBeNull();
   });
 });
