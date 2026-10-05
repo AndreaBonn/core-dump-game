@@ -25,12 +25,12 @@ export function Leaderboard() {
     <main className="mx-auto flex h-full w-full max-w-md flex-col gap-5 p-6">
       <h1 className="mt-4 text-3xl font-bold text-terminal-accent">{t('leaderboard.title')}</h1>
 
-      <div className="flex gap-2" role="group" aria-label={t('leaderboard.modeGroup')}>
+      <div className="flex flex-wrap gap-2" role="group" aria-label={t('leaderboard.modeGroup')}>
         {MODES.map((entry) => (
           <Button
             key={entry}
             variant={entry === mode ? 'primary' : 'ghost'}
-            className="flex-1"
+            className="flex-1 px-2!"
             aria-pressed={entry === mode}
             onClick={() => setMode(entry)}
           >
