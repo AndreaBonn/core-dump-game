@@ -15,6 +15,9 @@ const BOSS_INDEX = LEVELS_PER_CHAPTER - 1;
 const MIN_BOSS_RATIO = 1.15;
 // A boss is a peak, not a wall: past this, speed alone decides the level.
 const MAX_BOSS_SPEED_RATIO = 1.25;
+// A reversal is a stumble, not a retreat: the chain must not give back more than it gains.
+const MIN_REVERSAL_FACTOR = -0.6;
+const MAX_REVERSAL_SECONDS = 2;
 const BASE = buildLevelConfig(1, 12345);
 
 function indexFor(spec: LevelSpec): number {
@@ -28,26 +31,30 @@ function chapterFor(id: number): ChapterSpec {
 }
 
 describe('campaign chapters', () => {
-  it('defines the base, hazard and armor chapters in order', () => {
+  it('defines the base, hazard, armor and reversal chapters in order', () => {
     expect(CHAPTERS.map(({ id, mechanic }) => ({ id, mechanic }))).toEqual([
       { id: 1, mechanic: 'base' },
       { id: 2, mechanic: 'hazard' },
       { id: 3, mechanic: 'armor' },
+      { id: 4, mechanic: 'reversal' },
     ]);
   });
 
-  it.each([1, 2, 3])('gives chapter %i six levels', (id) => {
+  it.each([1, 2, 3, 4])('gives chapter %i six levels', (id) => {
     expect(chapterFor(id).levels).toHaveLength(LEVELS_PER_CHAPTER);
   });
 
-  it.each([1, 2, 3])('increases difficulty through the first five levels of chapter %i', (id) => {
-    const indices = chapterFor(id).levels.map(indexFor);
-    for (let index = 1; index < BOSS_INDEX; index += 1) {
-      expect(indices[index]).toBeGreaterThanOrEqual(indices[index - 1]!);
-    }
-  });
+  it.each([1, 2, 3, 4])(
+    'increases difficulty through the first five levels of chapter %i',
+    (id) => {
+      const indices = chapterFor(id).levels.map(indexFor);
+      for (let index = 1; index < BOSS_INDEX; index += 1) {
+        expect(indices[index]).toBeGreaterThanOrEqual(indices[index - 1]!);
+      }
+    },
+  );
 
-  it.each([1, 2, 3])('puts the unique difficulty maximum last in chapter %i', (id) => {
+  it.each([1, 2, 3, 4])('puts the unique difficulty maximum last in chapter %i', (id) => {
     const indices = chapterFor(id).levels.map(indexFor);
     const maximum = Math.max(...indices);
     expect(indices.filter((index) => index === maximum)).toHaveLength(1);
@@ -55,13 +62,23 @@ describe('campaign chapters', () => {
     expect(indices[BOSS_INDEX]).toBeGreaterThanOrEqual(indices[BOSS_INDEX - 1]! * MIN_BOSS_RATIO);
   });
 
-  it.each([1, 2, 3])(
+  it.each([1, 2, 3, 4])(
     'keeps the chapter %i boss within a quarter of the fifth level speed',
     (id) => {
       const levels = chapterFor(id).levels;
       expect(levels[BOSS_INDEX]!.chainSpeed).toBeLessThanOrEqual(
         levels[BOSS_INDEX - 1]!.chainSpeed * MAX_BOSS_SPEED_RATIO,
       );
+    },
+  );
+
+  it.each(CHAPTERS.slice(1).map(({ id }) => id))(
+    'opens chapter %i below the previous boss and at least at its fifth level',
+    (id) => {
+      const first = indexFor(chapterFor(id).levels[0]!);
+      const previous = chapterFor(id - 1).levels;
+      expect(first).toBeLessThan(indexFor(previous[BOSS_INDEX]!));
+      expect(first).toBeGreaterThanOrEqual(indexFor(previous[BOSS_INDEX - 1]!));
     },
   );
 
@@ -110,9 +127,34 @@ describe('campaign chapters', () => {
     }
   });
 
-  it.each([1, 2, 3])('keeps later mechanics disabled in chapter %i', (id) => {
+  it.each([1, 2, 3])('keeps reversal disabled before chapter four in chapter %i', (id) => {
     for (const level of chapterFor(id).levels) {
-      expect(level).toMatchObject({ reversal: null, waves: 1 });
+      expect(level.reversal).toBeNull();
+    }
+  });
+
+  it.each([1, 2, 3, 4])('keeps waves disabled before chapter five in chapter %i', (id) => {
+    for (const level of chapterFor(id).levels) {
+      expect(level.waves).toBe(1);
+    }
+  });
+
+  it('reverses every chapter four level, more often and harder towards the boss', () => {
+    const schedules = chapterFor(4).levels.map(({ reversal }) => reversal!);
+    expect(schedules.every((schedule) => schedule !== null)).toBe(true);
+    for (let index = 1; index < schedules.length; index += 1) {
+      expect(schedules[index]!.period).toBeLessThan(schedules[index - 1]!.period);
+      expect(schedules[index]!.duration).toBeGreaterThan(schedules[index - 1]!.duration);
+      expect(schedules[index]!.factor).toBeLessThan(schedules[index - 1]!.factor);
+    }
+  });
+
+  it('keeps every reversal short and gentler than full speed backwards', () => {
+    for (const { reversal } of chapterFor(4).levels) {
+      expect(reversal!.factor).toBeGreaterThanOrEqual(MIN_REVERSAL_FACTOR);
+      expect(reversal!.factor).toBeLessThan(0);
+      expect(reversal!.duration).toBeLessThanOrEqual(MAX_REVERSAL_SECONDS);
+      expect(reversal!.duration).toBeLessThan(reversal!.period);
     }
   });
 
@@ -134,7 +176,7 @@ describe('campaign chapters', () => {
     }
   });
 
-  it.each([1, 2, 3])('keeps chapter %i within the existing tuning caps', (id) => {
+  it.each([1, 2, 3, 4])('keeps chapter %i within the existing tuning caps', (id) => {
     for (const level of chapterFor(id).levels) {
       expect(level.chainLength).toBeLessThanOrEqual(MAX_CHAIN_LENGTH);
       expect(level.chainSpeed).toBeLessThanOrEqual(MAX_CHAIN_SPEED);

@@ -43,8 +43,9 @@ I18N parità dizionari, WAV ondate.
 - [x] T031 | T011 | REV | `chainMotion.test.ts`: fattore ai bordi della finestra, periodi successivi, `null` → 1
 - [x] T032 | T030, T031 | REV | test engine: `frontDistance` cala nella finestra e cresce fuori; SLEEP compone; test esistenti invariati (30 min)
 - [x] T033 | T031, T024 | REV, UI | `telegraphPhase` testato (attivo ≥ 0,75 s prima); reduced motion → segnale statico
-- [ ] T034 | T032, T025 | CAMP, I18N | capitolo 4; `TOTAL_LEVELS === 24`; `factor ≥ -0.6`, `duration ≤ 2` validati sulla tabella
-- [ ] T035 | T033, T034 | tutti | gate di fase + playtest 19-24 annotato; nessuna inversione porta la testa sotto distanza 0 (test)
+- [x] T034 | T032, T025 | CAMP, I18N | capitolo 4; `TOTAL_LEVELS === 24`; `factor ≥ -0.6`, `duration ≤ 2` validati sulla tabella
+- [x] T035 | T033, T034 | tutti | gate di fase + playtest 19-24 annotato; nessuna inversione porta la testa sotto distanza 0 (test)
+  - 2026-10-06 gate: vitest 1065/1065, e2e 16/16, a11y-gate 5/5 sulla level select a 4 capitoli, render 375 della level select e del livello 24 (cue di inversione visibile 0,4 s prima della finestra e durante). Clamp a 0 coperto da test; margine numerico: >=602 px di avanzamento prima della prima finestra contro <=151 px di arretramento. **Render 1280 di questa fase NON osservato. Playtest livelli 19-24 NON eseguito.**
 
 ## Fase 4 — XP e gradi (dipende solo da Fase 0)
 

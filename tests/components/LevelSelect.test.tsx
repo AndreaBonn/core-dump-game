@@ -27,7 +27,7 @@ describe('LevelSelect', () => {
     useProgressStore.getState().recordLevelResult(1, getLevel(1).starThresholds[0], 'campaign');
     render(<LevelSelect />);
 
-    await userEvent.click(screen.getByRole('button', { name: /Level 2/ }));
+    await userEvent.click(screen.getByRole('button', { name: /^Level 2,/ }));
 
     expect(useGameStore.getState().screen).toBe('game');
     expect(useGameStore.getState().startLevel).toBe(2);
@@ -63,6 +63,7 @@ describe('LevelSelect', () => {
     expect(
       screen.getByRole('heading', { name: 'Chapter 3 · Armored packets' }),
     ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Chapter 4 · Reversal' })).toBeInTheDocument();
   });
 
   it('shows the stars earned in a chapter against the stars available in it', () => {

@@ -21,6 +21,12 @@ export interface ChapterSpec {
 
 const BASE_MECHANICS = { hazardChance: 0, armorChance: 0, reversal: null, waves: 1 } as const;
 
+/**
+ * Hazards and armor stay in the reversal chapter at a lower density than
+ * where they peaked: the new mechanic is the lesson, the old ones the noise.
+ */
+const LATE_MECHANICS = { ...BASE_MECHANICS, hazardChance: 0.06, armorChance: 0.2 } as const;
+
 export const CHAPTERS: readonly ChapterSpec[] = [
   {
     id: 1,
@@ -145,6 +151,60 @@ export const CHAPTERS: readonly ChapterSpec[] = [
         turns: 4.28,
         hazardChance: 0.06,
         armorChance: 0.3,
+      },
+    ],
+  },
+  {
+    id: 4,
+    mechanic: 'reversal',
+    levels: [
+      {
+        ...LATE_MECHANICS,
+        chainLength: 68,
+        colorCount: 7,
+        chainSpeed: 86,
+        turns: 4.04,
+        reversal: { period: 12, duration: 1.0, factor: -0.3 },
+      },
+      {
+        ...LATE_MECHANICS,
+        chainLength: 72,
+        colorCount: 7,
+        chainSpeed: 91,
+        turns: 4.16,
+        reversal: { period: 11, duration: 1.2, factor: -0.35 },
+      },
+      {
+        ...LATE_MECHANICS,
+        chainLength: 76,
+        colorCount: 7,
+        chainSpeed: 96,
+        turns: 4.28,
+        reversal: { period: 10, duration: 1.4, factor: -0.4 },
+      },
+      {
+        ...LATE_MECHANICS,
+        chainLength: 80,
+        colorCount: 7,
+        chainSpeed: 101,
+        turns: 4.4,
+        reversal: { period: 9, duration: 1.6, factor: -0.45 },
+      },
+      {
+        ...LATE_MECHANICS,
+        chainLength: 84,
+        colorCount: 7,
+        chainSpeed: 106,
+        turns: 4.52,
+        reversal: { period: 8, duration: 1.8, factor: -0.5 },
+      },
+      {
+        ...LATE_MECHANICS,
+        chainLength: 100,
+        colorCount: 7,
+        chainSpeed: 126,
+        turns: 4.76,
+        reversal: { period: 7, duration: 2, factor: -0.6 },
       },
     ],
   },

@@ -77,13 +77,13 @@ describe('useProgressStore', () => {
     expect(store.getState().earned.filter((id) => id === 'hello-world')).toHaveLength(1);
   });
 
-  it('preserves legacy halfway after the campaign grows to eighteen levels', async () => {
+  it('preserves legacy halfway after the campaign grows to twenty-four levels', async () => {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({ stats: { bestLevel: { campaign: 5 } }, earned: ['halfway'] }),
     );
     const store = await loadStore();
-    expect(HALFWAY_LEVEL).toBe(9);
+    expect(HALFWAY_LEVEL).toBe(12);
     expect(HALFWAY_LEVEL).toBe(Math.ceil(TOTAL_LEVELS / 2));
     expect(newlyEarned(store.getState(), [])).toEqual([]);
 

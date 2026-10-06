@@ -125,6 +125,7 @@ describe('LevelCompleteScreen', () => {
   it.each([
     { level: 6, title: 'Chapter 2 · Hazards' },
     { level: 12, title: 'Chapter 3 · Armored packets' },
+    { level: 18, title: 'Chapter 4 · Reversal' },
   ])('announces the next chapter after campaign boss $level is cleared', ({ level, title }) => {
     render(
       <LevelCompleteScreen
