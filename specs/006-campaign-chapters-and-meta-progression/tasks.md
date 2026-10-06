@@ -49,12 +49,13 @@ I18N parità dizionari, WAV ondate.
 
 ## Fase 4 — XP e gradi (dipende solo da Fase 0)
 
-- [ ] T040 | T004 | XP | `xp.test.ts`: profilo vuoto 0; esempio del plan con valore esatto; `bossesCleared` 0 senza boss
-- [ ] T041 | T040 | RANK | `ranks.test.ts`: soglia k → grado k, soglia k-1 → grado k-1, 8 gradi strettamente crescenti
-- [ ] T042 | T041 | XP, RANK | `useMetaProgress` testato: dopo `clearProfile` grado 1; dopo `hydrateFromFile` XP ≥ entrambi
-- [ ] T043 | T042, T010 | UI, I18N | `metaScreens.test.tsx`: grado e `progressbar` con `aria-valuenow`; 8 nomi en/it, parità verde
-- [ ] T044 | T042 | RANK, UI | (Should) toast di salita di grado; test che `pending` distingue achievement e grado
-- [ ] T045 | T043 | tutti | gate di fase, `a11y-gate` Profilo, render 375/1280, click-through
+- [x] T040 | T004 | XP | `xp.test.ts`: profilo vuoto 0; esempio del plan con valore esatto; `bossesCleared` 0 senza boss
+- [x] T041 | T040 | RANK | `ranks.test.ts`: soglia k → grado k, soglia k-1 → grado k-1, 8 gradi strettamente crescenti
+- [x] T042 | T041 | XP, RANK | `useMetaProgress` testato: dopo `clearProfile` grado 1; dopo `hydrateFromFile` XP ≥ entrambi
+- [x] T043 | T042, T010 | UI, I18N | `metaScreens.test.tsx`: grado e `progressbar` con `aria-valuenow`; 8 nomi en/it, parità verde
+- [x] T044 | T042 | RANK, UI | (Should) toast di salita di grado; test che `pending` distingue achievement e grado
+- [x] T045 | T043 | tutti | gate di fase, `a11y-gate` Profilo, render 375/1280, click-through
+  - 2026-10-06 gate: vitest 1144/1144, a11y-gate 5/5 sul Profilo, render 375 (osservato) e 1280 (solo overflow misurato), progressbar 3400/3000/5000, click-through Profilo -> Back, console senza errori. Toast di rank-up verificato solo da test di componente. Nota di design: root raggiungibile con 200 livelli endless, levelsCleared non ha tetto.
 
 ## Fase 5 — Cosmetici
 

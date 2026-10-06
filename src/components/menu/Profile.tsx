@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { RankPanel } from '@/components/menu/RankPanel';
 import { Button } from '@/components/shared/Button';
 import { TOTAL_LEVELS } from '@/config/levels';
 import { totalStars } from '@/engine/core/progress';
@@ -29,6 +30,8 @@ export function Profile() {
 
       {played ? (
         <>
+          <RankPanel />
+
           <dl className="rounded-sm border border-terminal-border bg-terminal-panel px-4 py-2">
             <Row label={t('profile.runsPlayed')} value={stats.runsPlayed} />
             <Row label={t('profile.campaignsCompleted')} value={stats.runsWon} />

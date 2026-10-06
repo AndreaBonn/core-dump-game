@@ -19,6 +19,15 @@ export const meta: Pick<Messages, 'profile' | 'leaderboard' | 'levelSelect' | 'a
     emptyBody:
       'Le statistiche compaiono qui dopo la prima partita. Non viene caricato nulla: il profilo resta su questo dispositivo.',
     playFirst: 'Gioca la prima partita',
+    rank: 'grado {{index}}/{{total}}',
+    xpProgress: '{{xp}} / {{next}} XP',
+    xpTotal: '{{xp}} XP',
+    topRank: 'grado massimo raggiunto',
+    xpBar: 'XP per il grado successivo',
+    ranks: {
+      ...en.profile.ranks,
+      intern: 'stagista',
+    },
   },
   leaderboard: {
     title: 'Classifica',
@@ -62,6 +71,7 @@ export const meta: Pick<Messages, 'profile' | 'leaderboard' | 'levelSelect' | 'a
     unlocked: 'sbloccato',
     locked: 'bloccato',
     toast: 'obiettivo sbloccato',
+    rankUp: 'nuovo grado',
     items: {
       'hello-world': {
         name: en.achievements.items['hello-world'].name,

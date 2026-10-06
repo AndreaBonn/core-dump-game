@@ -3,6 +3,7 @@ import { newlyEarned, type AchievementState } from '@/engine/core/achievements';
 import { recordCampaignLevel } from '@/engine/core/levelProgress';
 import { mergeProfiles, type SavedProfile } from '@/engine/core/profileMerge';
 import { EMPTY_PROGRESS } from '@/engine/core/progress';
+import { rankFor, rankPendingId } from '@/engine/core/ranks';
 import type { Stars } from '@/engine/core/stars';
 import type { RunMode, ScoreMode } from '@/engine/core/runController';
 import {
@@ -12,6 +13,7 @@ import {
   recordPowerUp,
   recordRun,
 } from '@/engine/core/stats';
+import { xpFor } from '@/engine/core/xp';
 import { writeSaveFile } from '@/services/saveFileService';
 import { readStored, writeStored } from '@/store/persistence';
 import type { RunResult } from '@/types/game.types';
@@ -118,6 +120,13 @@ function parseProfile(raw: string | null): StoredProfile {
   }
 }
 
+/** The rank-up notification a change of profile earns: one entry, or none if the rank held. */
+function rankUpEntry(before: StoredProfile, after: StoredProfile): string[] {
+  const previous = rankFor(xpFor(before));
+  const next = rankFor(xpFor(after));
+  return next.index > previous.index ? [rankPendingId(next.id)] : [];
+}
+
 function writeProfile(profile: StoredProfile): void {
   const text = JSON.stringify(profile);
   writeStored(STORAGE_KEY, text);
@@ -138,7 +147,8 @@ export const useProgressStore = create<ProgressState>((set, get) => {
       resetAt: profile.resetAt ?? get().resetAt,
     };
     writeProfile(saved);
-    set({ ...saved, pending: [...get().pending, ...fresh] });
+    const rankUp = rankUpEntry(get(), saved);
+    set({ ...saved, pending: [...get().pending, ...fresh, ...rankUp] });
   };
 
   return {

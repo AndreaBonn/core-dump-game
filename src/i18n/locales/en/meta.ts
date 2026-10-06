@@ -17,6 +17,21 @@ export const meta = {
     emptyBody:
       'Statistics appear here once you have played. Nothing is uploaded: this profile stays on this device.',
     playFirst: 'Play a first run',
+    rank: 'rank {{index}}/{{total}}',
+    xpProgress: '{{xp}} / {{next}} XP',
+    xpTotal: '{{xp}} XP',
+    topRank: 'top rank reached',
+    xpBar: 'XP to the next rank',
+    ranks: {
+      'script-kiddie': 'script kiddie',
+      intern: 'intern',
+      'junior-dev': 'junior dev',
+      sysadmin: 'sysadmin',
+      devops: 'devops',
+      sre: 'SRE',
+      'kernel-hacker': 'kernel hacker',
+      root: 'root',
+    },
   },
   leaderboard: {
     title: 'Leaderboard',
@@ -60,6 +75,7 @@ export const meta = {
     unlocked: 'unlocked',
     locked: 'locked',
     toast: 'achievement unlocked',
+    rankUp: 'rank up',
     items: {
       'hello-world': { name: 'hello, world', description: 'Finish your first run.' },
       'first-commit': { name: 'first commit', description: 'Clear your first level.' },

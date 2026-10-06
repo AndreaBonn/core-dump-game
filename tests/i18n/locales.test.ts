@@ -39,6 +39,13 @@ const SHARED_JARGON = [
   'combo.segfault',
   'combo.stackOverflow',
   'combo.kernelPanic',
+  // Job titles the Italian trade uses in English; only "intern" translates.
+  ...['script-kiddie', 'junior-dev', 'sysadmin', 'devops', 'sre', 'kernel-hacker', 'root'].map(
+    (id) => `profile.ranks.${id}`,
+  ),
+  // Same format in both languages: numbers and the XP unit.
+  'profile.xpProgress',
+  'profile.xpTotal',
 ];
 
 describe('dictionaries', () => {
