@@ -150,10 +150,12 @@ describe('GameScreen', () => {
       act(() => {
         engineEvents.onScoreChange(2400);
         engineEvents.onLevelChange(3);
+        engineEvents.onWaveChange(2, 3);
         engineEvents.onNextPacketChange('ERROR');
       });
 
       expect(useGameStore.getState().score).toBe(2400);
+      expect(useGameStore.getState()).toMatchObject({ wave: 2, waveTotal: 3 });
       expect(screen.getByTestId('hud-score')).toHaveTextContent('2400');
       expect(screen.getByTestId('hud-level')).toHaveTextContent('3/');
       expect(useGameStore.getState().nextPacket).toBe('ERROR');

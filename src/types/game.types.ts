@@ -45,6 +45,7 @@ export interface ComboLabel {
 
 /** Discrete events emitted by the engine to the React/UI layer. */
 export interface EngineEvents {
+  onWaveChange: (wave: number, total: number) => void;
   onScoreChange: (score: number) => void;
   onLevelChange: (level: number) => void;
   onComboChange: (combo: ComboLabel | null) => void;

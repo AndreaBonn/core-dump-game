@@ -30,6 +30,7 @@ function spyEvents(): EngineEvents & Record<keyof EngineEvents, ReturnType<typeo
     onLevelComplete: vi.fn(),
     onRunEnd: vi.fn(),
     onPowerUp: vi.fn(),
+    onWaveChange: vi.fn(),
   } as EngineEvents & Record<keyof EngineEvents, ReturnType<typeof vi.fn>>;
 }
 

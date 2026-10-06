@@ -30,6 +30,7 @@ export function GameCanvas({ events, onReady }: GameCanvasProps) {
     const forward: EngineEvents = {
       onScoreChange: (value) => eventsRef.current.onScoreChange(value),
       onLevelChange: (value) => eventsRef.current.onLevelChange(value),
+      onWaveChange: (wave, total) => eventsRef.current.onWaveChange(wave, total),
       onComboChange: (value) => eventsRef.current.onComboChange(value),
       onNextPacketChange: (value) => eventsRef.current.onNextPacketChange(value),
       onLevelComplete: (score, bonus) => eventsRef.current.onLevelComplete(score, bonus),

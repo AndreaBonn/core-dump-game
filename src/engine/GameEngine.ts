@@ -7,7 +7,7 @@ import {
   PACKET_RADIUS,
   VOID_RADIUS,
 } from '@/config/constants';
-import { type LevelConfig, type ReversalSchedule } from '@/config/levels';
+import { getLevel, type LevelConfig, type ReversalSchedule } from '@/config/levels';
 import { colorForType, HAZARD_COLOR } from '@/config/packetTypes';
 import { SHIELD_ROLLBACK } from '@/config/powerUps';
 import { audioManager } from '@/engine/audio/AudioManager';
@@ -15,6 +15,7 @@ import { buildRunResult, comboHitStop } from '@/engine/core/runFeedback';
 import { isInsideBoard } from '@/engine/core/bounds';
 import { directionFactor, telegraphPhase } from '@/engine/core/chainMotion';
 import { buildLevelState, drawPacketType } from '@/engine/core/levelBuilder';
+import { nextWave } from '@/engine/core/waves';
 import { campaignConfig, isRunWon, type RunConfig } from '@/engine/core/runController';
 import type { Chain } from '@/engine/entities/Chain';
 import type { CpuCursor } from '@/engine/entities/CpuCursor';
@@ -51,6 +52,8 @@ export class GameEngine {
   private readonly fx = new VisualFx();
 
   private path!: Path;
+  private levelConfig: LevelConfig = getLevel(1);
+  private currentWave = 1;
   private chain!: Chain;
   private voidHole!: VoidHole;
   private cursor!: CpuCursor;
@@ -124,6 +127,7 @@ export class GameEngine {
     this.buildLevel(config);
     this.phase = 'playing';
     this.events.onLevelChange(level);
+    this.events.onWaveChange(1, config.waves);
     this.events.onNextPacketChange(this.cursor.nextType);
   }
 
@@ -145,6 +149,8 @@ export class GameEngine {
     this.rng = state.rng;
     this.types = state.types;
     this.baseSpeed = state.baseSpeed;
+    this.levelConfig = config;
+    this.currentWave = 1;
     this.sleepTimer = 0;
     this.pendingFork = false;
     this.shielded = false;
@@ -310,18 +316,25 @@ export class GameEngine {
         this.applyPowerUp(powerUp);
       }
     }
-    // Checked after the power-ups, not from the shot outcome: a released
-    // kill -9 or regex can be what empties the chain.
-    this.detonateStrandedHazards();
-    if (this.chain.isEmpty) {
-      this.completeLevel();
-    }
+    // Power-ups can empty the chain after the shot outcome has been computed.
+    this.resolveChainEnd();
     return true;
   }
 
-  private detonateStrandedHazards(): void {
+  private resolveChainEnd(): void {
     for (const hazard of removeStrandedHazards(this.chain.packets)) {
       this.fx.spawnExplosion(this.path.pointAt(hazard.distance), HAZARD_COLOR);
+    }
+    if (!this.chain.isEmpty) {
+      return;
+    }
+    const next = nextWave(this.levelConfig, this.currentWave);
+    if (next) {
+      this.currentWave = next.wave;
+      this.chain.packets.splice(0, this.chain.packets.length, ...next.packets);
+      this.events.onWaveChange(next.wave, next.total);
+    } else {
+      this.completeLevel();
     }
   }
 

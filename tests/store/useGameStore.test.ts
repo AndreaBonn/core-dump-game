@@ -88,6 +88,24 @@ describe('useGameStore', () => {
     });
   });
 
+  describe('setWave', () => {
+    it('updates the current wave and total together', () => {
+      expect(state()).toMatchObject({ wave: 1, waveTotal: 1 });
+
+      state().setWave(2, 3);
+
+      expect(state()).toMatchObject({ wave: 2, waveTotal: 3 });
+    });
+
+    it('resets wave progress when a fresh run starts', () => {
+      state().setWave(3, 3);
+
+      state().startGame();
+
+      expect(state()).toMatchObject({ wave: 1, waveTotal: 1 });
+    });
+  });
+
   describe('engine reporting', () => {
     it('mirrors score, level, combo, power-up and next packet', () => {
       state().setScore(120);

@@ -25,6 +25,8 @@ interface GameUIState {
   startLevel: number;
   score: number;
   level: number;
+  wave: number;
+  waveTotal: number;
   combo: ComboLabel | null;
   powerUp: PowerUpType | null;
   nextPacket: PacketType | null;
@@ -35,6 +37,7 @@ interface GameUIState {
   startGame: (mode?: RunMode, startLevel?: number) => void;
   setScore: (score: number) => void;
   setLevel: (level: number) => void;
+  setWave: (wave: number, waveTotal: number) => void;
   setCombo: (combo: ComboLabel | null) => void;
   setPowerUp: (powerUp: PowerUpType | null) => void;
   setNextPacket: (nextPacket: PacketType | null) => void;
@@ -50,6 +53,8 @@ const initialRun = {
   startLevel: 1,
   score: 0,
   level: 1,
+  wave: 1,
+  waveTotal: 1,
   combo: null,
   powerUp: null,
   nextPacket: null,
@@ -66,6 +71,7 @@ export const useGameStore = create<GameUIState>((set) => ({
     set({ screen: 'game', ...initialRun, mode, level: startLevel, startLevel }),
   setScore: (score) => set({ score }),
   setLevel: (level) => set({ level }),
+  setWave: (wave, waveTotal) => set({ wave, waveTotal }),
   setCombo: (combo) => set({ combo }),
   setPowerUp: (powerUp) => set({ powerUp }),
   setNextPacket: (nextPacket) => set({ nextPacket }),

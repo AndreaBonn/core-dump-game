@@ -10,5 +10,6 @@ export function createNoopEngineEvents(): EngineEvents {
     onLevelComplete: () => {},
     onRunEnd: () => {},
     onPowerUp: () => {},
+    onWaveChange: () => {},
   };
 }

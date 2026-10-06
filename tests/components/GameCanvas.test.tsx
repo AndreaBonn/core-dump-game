@@ -52,6 +52,7 @@ function spyEvents(): EngineEvents & Record<keyof EngineEvents, ReturnType<typeo
     onLevelComplete: vi.fn(),
     onRunEnd: vi.fn(),
     onPowerUp: vi.fn(),
+    onWaveChange: vi.fn(),
   } as EngineEvents & Record<keyof EngineEvents, ReturnType<typeof vi.fn>>;
 }
 
@@ -170,6 +171,7 @@ describe('GameCanvas', () => {
     forwarded.onLevelComplete(800, 250);
     forwarded.onRunEnd({ mode: 'endless', score: 10, levelReached: 2, levelScore: 5, won: false });
     forwarded.onPowerUp('SLEEP');
+    forwarded.onWaveChange(2, 3);
 
     expect(events.onComboChange).toHaveBeenCalledWith({ id: 'kernelPanic', multiplier: 3 });
     expect(events.onLevelComplete).toHaveBeenCalledWith(800, 250);
@@ -181,6 +183,7 @@ describe('GameCanvas', () => {
       won: false,
     });
     expect(events.onPowerUp).toHaveBeenCalledWith('SLEEP');
+    expect(events.onWaveChange).toHaveBeenCalledWith(2, 3);
   });
 
   it('tears the engine and the observer down when the screen goes away', () => {

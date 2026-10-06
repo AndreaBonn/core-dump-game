@@ -40,6 +40,7 @@ export function GameScreen() {
     return {
       onScoreChange: store.setScore,
       onLevelChange: store.setLevel,
+      onWaveChange: store.setWave,
       onComboChange: (combo) => {
         store.setCombo(combo);
         if (combo) {
