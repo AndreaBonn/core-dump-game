@@ -32,6 +32,29 @@ export function isSameOrigin(origin, host) {
   }
 }
 
+const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);
+
+/**
+ * Whether the Host header names this machine. The same-origin check alone
+ * cannot stop DNS rebinding: there the attacker's domain resolves to
+ * 127.0.0.1, so Origin and Host agree on it. Vite's own host check would
+ * catch that, but this route is mounted before it and never reaches it.
+ *
+ * @param {string | undefined} host
+ * @returns {boolean}
+ */
+export function isLoopbackHost(host) {
+  // A Host never carries userinfo; parsed as a URL, `evil@localhost` would read as localhost.
+  if (!host || host.includes('@')) {
+    return false;
+  }
+  try {
+    return LOOPBACK_HOSTNAMES.has(new URL(`http://${host}`).hostname);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Whether a request URL targets the save route, ignoring any query string.
  *
@@ -54,7 +77,7 @@ export function isSaveRoute(url) {
  * @returns {{ status: number, body?: string }}
  */
 export function handleSaveRequest(request, store) {
-  if (!isSameOrigin(request.origin, request.host)) {
+  if (!isLoopbackHost(request.host) || !isSameOrigin(request.origin, request.host)) {
     return { status: 403 };
   }
   if (request.method === 'GET') {

@@ -288,7 +288,7 @@ There is no `CONTRIBUTING.md`. The gates a change has to pass are the `verify`, 
 
 ## Security
 
-Two paths accept input from outside the game's own code: the leaderboard, validated both in the client and in the Firestore rules, and the launcher's local save route, which refuses cross-origin requests and bodies over 64 KB. To report a vulnerability, see [SECURITY.md](./SECURITY.md).
+Two paths accept input from outside the game's own code: the leaderboard, validated both in the client and in the Firestore rules, and the launcher's local save route, which answers only requests addressed to this machine from the game's own page, with bodies up to 64 KB. To report a vulnerability, see [SECURITY.md](./SECURITY.md).
 
 ## License
 

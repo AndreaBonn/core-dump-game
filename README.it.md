@@ -288,7 +288,7 @@ Non esiste un `CONTRIBUTING.md`. I gate che una modifica deve superare sono i jo
 
 ## Sicurezza
 
-Due percorsi accettano input dall'esterno del codice del gioco: la classifica, validata sia nel client sia nelle regole Firestore, e la route locale di salvataggio del launcher, che rifiuta le richieste cross-origin e i body oltre 64 KB. Per segnalare una vulnerabilità, consulta [SECURITY.it.md](./SECURITY.it.md).
+Due percorsi accettano input dall'esterno del codice del gioco: la classifica, validata sia nel client sia nelle regole Firestore, e la route locale di salvataggio del launcher, che risponde solo alle richieste rivolte a questa macchina dalla pagina del gioco, con body fino a 64 KB. Per segnalare una vulnerabilità, consulta [SECURITY.it.md](./SECURITY.it.md).
 
 ## Licenza
 

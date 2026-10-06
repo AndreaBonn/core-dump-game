@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   createFileStore,
   handleSaveRequest,
+  isLoopbackHost,
   isSameOrigin,
   isSaveRoute,
   MAX_SAVE_BYTES,
@@ -45,6 +46,32 @@ describe('isSameOrigin', () => {
 
   it('refuses an unparseable origin', () => {
     expect(isSameOrigin('null', HOST)).toBe(false);
+  });
+});
+
+describe('isLoopbackHost', () => {
+  it.each(['localhost:4173', '127.0.0.1:4173', '[::1]:4173', 'localhost', 'LOCALHOST:4173'])(
+    'accepts the loopback host %s',
+    (host) => {
+      expect(isLoopbackHost(host)).toBe(true);
+    },
+  );
+
+  it.each([
+    'evil.example:4173',
+    'localhost.evil.example:4173',
+    '192.168.1.20:5173',
+    '127.0.0.2:4173',
+    'evil.example@localhost:4173',
+    'localhost.:4173',
+    '',
+    'not a host',
+  ])('refuses %s', (host) => {
+    expect(isLoopbackHost(host)).toBe(false);
+  });
+
+  it('refuses a missing Host header', () => {
+    expect(isLoopbackHost(undefined)).toBe(false);
   });
 });
 
@@ -97,6 +124,15 @@ describe('handleSaveRequest', () => {
     );
 
     expect(result.status).toBe(403);
+    expect(store.current()).toBe('{"kept":true}');
+  });
+
+  it('refuses a DNS-rebinding request, whose Origin matches a foreign Host, with 403', () => {
+    const store = memoryStore('{"kept":true}');
+    const rebound = { host: 'evil.example:4173', origin: 'http://evil.example:4173' };
+
+    expect(handleSaveRequest({ method: 'GET', ...rebound }, store).status).toBe(403);
+    expect(handleSaveRequest({ method: 'PUT', ...rebound, body: '{}' }, store).status).toBe(403);
     expect(store.current()).toBe('{"kept":true}');
   });
 
