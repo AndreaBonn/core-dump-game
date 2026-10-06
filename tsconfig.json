@@ -30,5 +30,5 @@
 
     "types": ["vite/client", "vitest/globals", "node"]
   },
-  "include": ["src", "tests", "vite.config.ts"]
+  "include": ["src", "tests", "playtest", "vite.config.ts", "vitest.playtest.config.ts"]
 }

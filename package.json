@@ -13,6 +13,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "playtest": "vitest run --config vitest.playtest.config.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:rules": "firebase emulators:exec --only firestore --project demo-core-dump \"vitest run --config vitest.rules.config.ts\"",
