@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { CosmeticPicker } from '@/components/menu/CosmeticPicker';
 import { RankPanel } from '@/components/menu/RankPanel';
 import { Button } from '@/components/shared/Button';
 import { TOTAL_LEVELS } from '@/config/levels';
@@ -75,6 +76,8 @@ export function Profile() {
           </Button>
         </div>
       )}
+
+      <CosmeticPicker />
 
       <Button variant="ghost" className="w-full" onClick={() => setScreen('menu')}>
         {t('common.back')}

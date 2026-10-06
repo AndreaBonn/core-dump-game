@@ -24,6 +24,27 @@ export const meta: Pick<Messages, 'profile' | 'leaderboard' | 'levelSelect' | 'a
     xpTotal: '{{xp}} XP',
     topRank: 'grado massimo raggiunto',
     xpBar: 'XP per il grado successivo',
+    cosmetics: {
+      title: 'Cosmetici',
+      slots: { cursor: 'Cursore', chain: 'Catena', palette: en.profile.cosmetics.slots.palette },
+      items: {
+        'cursor-default': 'Cursore standard',
+        ring: 'Anello',
+        diamond: 'Rombo',
+        'chain-default': 'Pacchetti standard',
+        circle: 'Pacchetti tondi',
+        hex: 'Pacchetti esagonali',
+        classic: 'Classica',
+        'okabe-ito': 'Okabe-Ito, per daltonici',
+        'high-contrast': 'Alto contrasto',
+        neon: en.profile.cosmetics.items.neon,
+      },
+      unlock: {
+        rank: 'raggiungi il grado {{rank}}',
+        stars: 'raccogli {{stars}} stelle',
+        bosses: 'supera {{bosses}} boss',
+      },
+    },
     ranks: {
       ...en.profile.ranks,
       intern: 'stagista',

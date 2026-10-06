@@ -46,6 +46,9 @@ const SHARED_JARGON = [
   // Same format in both languages: numbers and the XP unit.
   'profile.xpProgress',
   'profile.xpTotal',
+  // Words Italian takes as they are.
+  'profile.cosmetics.slots.palette',
+  'profile.cosmetics.items.neon',
 ];
 
 describe('dictionaries', () => {

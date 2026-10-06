@@ -59,13 +59,14 @@ I18N parità dizionari, WAV ondate.
 
 ## Fase 5 — Cosmetici
 
-- [ ] T050 | T041 | COS | `cosmetics.test.ts`: ogni palette 7 colori distinti, contrasto ≥ 3:1 sul board, una palette Okabe-Ito
-- [ ] T051 | T050 | COS | `cosmeticUnlocks.test.ts`: requisito grado/stelle/boss, default sempre sbloccata, `resolveCosmetic` ricade sulla default
-- [ ] T052 | T051 | COS, R3 | store impostazioni: persistenza, id sconosciuto → default, `resetSettings` azzera
-- [ ] T053 | T050 | COS | `Theme` DTO (`packetColor(type)`, stile cursore, stile catena) passato a `RenderScene.theme` via `GameEngine.setTheme`; HUD legge il colore da un selettore dello store; `colorForType` resta la palette default pura; T005 verde (il tema non tocca l'RNG)
-- [ ] T054 | T052, T053, T030 | COS, LIM | `SkinRenderer.ts` in exclude; `GameEngine.setCosmetics` ≤ 4 righe; `GameEngine.ts` ≤ 405 righe; render osservato con ogni skin (30 min)
-- [ ] T055 | T052, T043 | UI, I18N | picker: radio group per slot, voce bloccata disabilitata con condizione in testo; parità i18n
-- [ ] T056 | T054, T055 | tutti | gate finale: tutti i comandi, e2e scelta + reload + persistenza, `a11y-gate`, render 375/1280, click-through completo
+- [x] T050 | T041 | COS | `cosmetics.test.ts`: ogni palette 7 colori distinti, contrasto ≥ 3:1 sul board, una palette Okabe-Ito
+- [x] T051 | T050 | COS | `cosmeticUnlocks.test.ts`: requisito grado/stelle/boss, default sempre sbloccata, `resolveCosmetic` ricade sulla default
+- [x] T052 | T051 | COS, R3 | store impostazioni: persistenza, id sconosciuto → default, `resetSettings` azzera
+- [x] T053 | T050 | COS | `Theme` DTO (`packetColor(type)`, stile cursore, stile catena) passato a `RenderScene.theme` via `GameEngine.setTheme`; HUD legge il colore da un selettore dello store; `colorForType` resta la palette default pura; T005 verde (il tema non tocca l'RNG)
+- [x] T054 | T052, T053, T030 | COS, LIM | `SkinRenderer.ts` in exclude; `GameEngine.setCosmetics` ≤ 4 righe; `GameEngine.ts` ≤ 405 righe; render osservato con ogni skin (30 min)
+- [x] T055 | T052, T043 | UI, I18N | picker: radio group per slot, voce bloccata disabilitata con condizione in testo; parità i18n
+- [x] T056 | T054, T055 | tutti | gate finale: tutti i comandi, e2e scelta + reload + persistenza, `a11y-gate`, render 375/1280, click-through completo
+  - 2026-10-06 gate: vitest 1225/1225, a11y-gate 5/5 sul Profilo con il selettore, click-through a 375 e 1280 (neon bloccata, ring+hex+okabe scelti, persistono al reload, tabellone ed HUD NEXT nel tema scelto), console senza errori. Decisione: palette okabe-ito e high-contrast sempre disponibili (accessibilità), neon come premio a 3 boss. Forme circle/diamond verificate solo da test di unità.
 
 ## Fase 6 — Ondate e capitolo 5 (30 livelli)
 

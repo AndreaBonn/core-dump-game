@@ -22,6 +22,27 @@ export const meta = {
     xpTotal: '{{xp}} XP',
     topRank: 'top rank reached',
     xpBar: 'XP to the next rank',
+    cosmetics: {
+      title: 'Cosmetics',
+      slots: { cursor: 'Cursor', chain: 'Chain', palette: 'Palette' },
+      items: {
+        'cursor-default': 'Standard cursor',
+        ring: 'Ring',
+        diamond: 'Diamond',
+        'chain-default': 'Standard packets',
+        circle: 'Round packets',
+        hex: 'Hex packets',
+        classic: 'Classic',
+        'okabe-ito': 'Okabe-Ito, colour-blind safe',
+        'high-contrast': 'High contrast',
+        neon: 'Neon',
+      },
+      unlock: {
+        rank: 'reach rank {{rank}}',
+        stars: 'collect {{stars}} stars',
+        bosses: 'clear {{bosses}} bosses',
+      },
+    },
     ranks: {
       'script-kiddie': 'script kiddie',
       intern: 'intern',
