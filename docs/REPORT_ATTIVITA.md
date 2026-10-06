@@ -384,3 +384,91 @@ Complessità: Media. Stato: Completato, non ancora pubblicato.
 6 documenti Markdown (1156 righe complessive), 7 asset catturati dal gioco reale, 2 diagrammi
 validati, badge dinamici configurati. Tutti i numeri citati nella documentazione provengono da
 comandi eseguiti in questa sessione. Nessun push effettuato.
+
+---
+
+## 2026-10-05/06 | Sessione #6 [FEATURE] [FIX] [REFACTOR] [TEST]
+
+### Richiesta
+
+Estendere la campagna (obiettivo O2) e aggiungere una progressione meta (obiettivo O4) per
+rendere il gioco più competitivo e longevo. Workflow RPI completo, piano in
+`specs/006-campaign-chapters-and-meta-progression/` (plan.md, tasks.md), 51 task chiusi.
+
+Decisioni dell'utente nella fase di pianificazione: campagna a 30 livelli divisa in 5 capitoli,
+salvataggi esistenti dei giocatori conservati senza reset, la run di campagna prosegue fino
+all'ultimo livello disponibile, il pacchetto corazzato nuovo si incrina sulla propria fila invece
+di comportarsi come un ostacolo indistruttibile.
+
+### Azioni Eseguite
+
+**Correzioni preliminari**
+
+- Corretto un bug per cui le stelle della campagna venivano assegnate anche giocando in modalità
+  endless o sfida del giorno.
+- Corretto un bug per cui l'ultimo livello della campagna non veniva mai valutato, rendendo
+  irraggiungibile il traguardo "tutte le stelle".
+- Aggiunte fixture di determinismo per endless e sfida del giorno, a copertura dei due bug sopra.
+
+**Campagna estesa**
+
+- Campagna portata da 10 a 30 livelli, organizzati in 5 capitoli: base, ostacoli, pacchetti
+  corazzati, inversione della catena, ondate. Un boss per capitolo.
+- Curva di difficoltà a dente di sega (sale dentro il capitolo, si abbassa all'apertura del
+  capitolo successivo), verificata con test dedicati.
+- HUD corretto: il totale dei livelli compare solo in modalità campagna (prima mostrava "15/10"
+  anche in endless, dove il conteggio non ha senso). Aggiunti badge boss e contatore d'ondata.
+- Selezione dei livelli riorganizzata per capitolo.
+- Soglie delle stelle per le ondate ricalcolate su tutti i pacchetti, non solo su un sottoinsieme.
+
+**Progressione meta**
+
+- XP derivato dallo stato di salvataggio già esistente, 8 gradi, pannello grado nel profilo,
+  notifica alla salita di grado.
+- Cosmetici sbloccabili: cursore, forma della catena, palette colore. Le palette per daltonici e
+  ad alto contrasto sono disponibili da subito; la palette neon va sbloccata.
+
+**Refactor e fix minori**
+
+- `GameEngine` ridotto da 403 a 227 righe estraendo `LevelSession`, che ora gestisce la
+  simulazione del livello.
+- Fix minori: leggibilità di stelline e toast, toast riposizionato sotto l'HUD durante la
+  partita.
+
+### Verifica
+
+- 1245 test vitest verdi.
+- Copertura: 100% sulle righe, 99,55% sui branch, misurata prima del refactor finale del motore.
+- 16 test end-to-end su 16 verdi.
+- Gate di accessibilità (`a11y-gate`): 5 su 5, eseguito su selezione livelli, profilo e
+  selettore cosmetici. Render osservato a 375 e 1280 px.
+- Test di replay deterministico sul motore: verde prima e dopo il refactor di `GameEngine` in
+  `LevelSession`.
+- 32 commit locali su `main`. Nessun push effettuato.
+
+### Debito Tecnico e Note Aperte
+
+- Playtest manuale dei livelli 13-30 non eseguito.
+- Render a runtime delle skin cerchio e rombo non osservato: verificato solo con test di unità.
+- Nessun test end-to-end automatico sulla scelta dei cosmetici; verificato con script manuale.
+- `plan.md` contiene ancora riferimenti a una campagna di 24 livelli, superati dalla decisione
+  finale di 30.
+- Decisione D1 ancora aperta: con le regole attuali il grado massimo si raggiunge solo dopo 200
+  livelli in modalità endless.
+- Finding F1: i test end-to-end e le partite locali condividono lo stesso file
+  `save/progress.json`.
+- `GameEngine` usa `this.session!` in 6 punti (severità LOW).
+- 4 voci di stash lasciate dagli agent durante la sessione, da verificare e rimuovere.
+
+### Note per il Cliente (linguaggio NON tecnico)
+
+La campagna è passata da 10 a 30 livelli, divisi in cinque capitoli ciascuno con il proprio boss
+finale e un nuovo tipo di pacchetto corazzato che si rompe solo colpendo la fila giusta. Chi gioca
+accumula ora esperienza e sale di grado, con un pannello dedicato nel profilo che mostra i
+progressi. Sono arrivati cosmetici da sbloccare: cursori, forme della catena e palette di colore,
+incluse palette pensate per chi ha difficoltà a distinguere i colori. I salvataggi di chi aveva
+già giocato restano validi, nessuno ricomincia da zero.
+
+### Riepilogo (Complessità / Stato)
+
+Complessità: Alta. Stato: Completato in locale, non pubblicato.
