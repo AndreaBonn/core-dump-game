@@ -189,27 +189,21 @@ describe('GameScreen', () => {
       expect(useProgressStore.getState().stats.powerUpsTriggered).toBe(1);
     });
 
-    it('rates the cleared level in the profile, using the level just finished', () => {
-      render(<GameScreen />);
-      act(() => engineEvents.onLevelChange(1));
-
-      act(() => engineEvents.onLevelComplete(getLevel(1).starThresholds[2], 250));
-
-      expect(useGameStore.getState().status).toBe('levelComplete');
-      expect(useProgressStore.getState().progress.stars[1]).toBe(3);
-      expect(useProgressStore.getState().progress.unlockedThrough).toBe(2);
-    });
-
-    it('counts a cleared endless level without writing campaign stars', () => {
+    it.each([
+      { mode: 'campaign', stars: { 1: 3 }, unlockedThrough: 2 },
+      { mode: 'endless', stars: {}, unlockedThrough: 1 },
+    ] as const)('counts the level just finished and rates it only in a $mode run', (run) => {
       render(<GameScreen />);
       act(() => {
-        useGameStore.setState({ mode: 'endless' });
+        useGameStore.setState({ mode: run.mode });
         engineEvents.onLevelChange(1);
         engineEvents.onLevelComplete(getLevel(1).starThresholds[2], 250);
       });
 
+      expect(useGameStore.getState().status).toBe('levelComplete');
       expect(useProgressStore.getState().stats.levelsCleared).toBe(1);
-      expect(useProgressStore.getState().progress.stars).toEqual({});
+      expect(useProgressStore.getState().progress.stars).toEqual(run.stars);
+      expect(useProgressStore.getState().progress.unlockedThrough).toBe(run.unlockedThrough);
     });
 
     it('files the finished run in the profile as well as on the end screen', () => {
