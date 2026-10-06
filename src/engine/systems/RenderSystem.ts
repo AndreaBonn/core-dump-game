@@ -7,7 +7,7 @@ import type { Projectile } from '@/engine/entities/Projectile';
 import type { Vec2 } from '@/engine/math/vec2';
 import { FxRenderer } from '@/engine/systems/FxRenderer';
 import { GuideRenderer } from '@/engine/systems/GuideRenderer';
-import { drawArmor } from '@/engine/systems/MechanicRenderer';
+import { drawArmor, drawReversal } from '@/engine/systems/MechanicRenderer';
 import type { Landing } from '@/engine/systems/trajectory';
 import type { VisualFx } from '@/engine/systems/VisualFx';
 import type { DataPacket } from '@/types/game.types';
@@ -33,6 +33,8 @@ export interface RenderScene {
   trajectory: Landing | null;
   /** Danger level of the chain front, 0..1, driving the head-of-chain warning. */
   urgency: number;
+  /** Reversal cue strength, 0..1: ramps up before the chain backs off, 1 while it does. */
+  reversalPhase: number;
 }
 
 export class RenderSystem {
@@ -67,6 +69,7 @@ export class RenderSystem {
     }
     this.drawCursor(ctx, scene.cursor, scene.fx.time);
     this.fxRenderer.render(ctx, scene.fx);
+    drawReversal(ctx, scene.voidPosition, scene.reversalPhase);
   }
 
   private clear(ctx: CanvasRenderingContext2D): void {

@@ -39,10 +39,10 @@ I18N parità dizionari, WAV ondate.
 
 ## Fase 3 — Inversione di direzione (24 livelli)
 
-- [ ] T030 | T019 | LIM | `GameEngine.ts` ≤ 395 righe; `git diff --stat tests/engine/gameEngine.test.ts` = 0 righe rimosse; suite verde
-- [ ] T031 | T011 | REV | `chainMotion.test.ts`: fattore ai bordi della finestra, periodi successivi, `null` → 1
-- [ ] T032 | T030, T031 | REV | test engine: `frontDistance` cala nella finestra e cresce fuori; SLEEP compone; test esistenti invariati (30 min)
-- [ ] T033 | T031, T024 | REV, UI | `telegraphPhase` testato (attivo ≥ 0,75 s prima); reduced motion → segnale statico
+- [x] T030 | T019 | LIM | `GameEngine.ts` ≤ 395 righe; `git diff --stat tests/engine/gameEngine.test.ts` = 0 righe rimosse; suite verde
+- [x] T031 | T011 | REV | `chainMotion.test.ts`: fattore ai bordi della finestra, periodi successivi, `null` → 1
+- [x] T032 | T030, T031 | REV | test engine: `frontDistance` cala nella finestra e cresce fuori; SLEEP compone; test esistenti invariati (30 min)
+- [x] T033 | T031, T024 | REV, UI | `telegraphPhase` testato (attivo ≥ 0,75 s prima); reduced motion → segnale statico
 - [ ] T034 | T032, T025 | CAMP, I18N | capitolo 4; `TOTAL_LEVELS === 24`; `factor ≥ -0.6`, `duration ≤ 2` validati sulla tabella
 - [ ] T035 | T033, T034 | tutti | gate di fase + playtest 19-24 annotato; nessuna inversione porta la testa sotto distanza 0 (test)
 

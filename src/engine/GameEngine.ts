@@ -7,12 +7,13 @@ import {
   PACKET_RADIUS,
   VOID_RADIUS,
 } from '@/config/constants';
-import { type LevelConfig } from '@/config/levels';
+import { type LevelConfig, type ReversalSchedule } from '@/config/levels';
 import { colorForType, HAZARD_COLOR } from '@/config/packetTypes';
 import { SHIELD_ROLLBACK } from '@/config/powerUps';
 import { audioManager } from '@/engine/audio/AudioManager';
 import { buildRunResult, comboHitStop } from '@/engine/core/runFeedback';
 import { isInsideBoard } from '@/engine/core/bounds';
+import { directionFactor, telegraphPhase } from '@/engine/core/chainMotion';
 import { buildLevelState, drawPacketType } from '@/engine/core/levelBuilder';
 import { campaignConfig, isRunWon, type RunConfig } from '@/engine/core/runController';
 import type { Chain } from '@/engine/entities/Chain';
@@ -58,6 +59,8 @@ export class GameEngine {
   private projectiles: Projectile[] = [];
 
   private baseSpeed = 0;
+  private levelTime: number = 0;
+  private reversal: ReversalSchedule | null = null;
   private sleepTimer = 0;
   private pendingFork = false;
   /** A caught reach of the void, granted by try/catch and spent once. */
@@ -132,6 +135,8 @@ export class GameEngine {
   }
 
   private buildLevel(config: LevelConfig): void {
+    this.levelTime = 0;
+    this.reversal = config.reversal;
     const state = buildLevelState(config);
     this.path = state.path;
     this.voidHole = state.voidHole;
@@ -237,8 +242,9 @@ export class GameEngine {
   };
 
   private fixedUpdate(dt: number): void {
+    this.levelTime += dt;
     this.updateSleep(dt);
-    this.chain.advance(dt);
+    this.chain.advance(dt * directionFactor(this.levelTime, this.reversal));
     this.updateProjectiles(dt);
     if (this.voidHole.hasSwallowed(this.chain.frontDistance, VOID_RADIUS)) {
       // try/catch turns the first reach of the void into a hard shove back
@@ -376,6 +382,8 @@ export class GameEngine {
         cursor: this.cursor,
         projectiles: this.projectiles,
         fx: this.fx,
+        reversalPhase: telegraphPhase(this.levelTime, this.reversal),
+        reducedMotion: this.reducedMotion,
       },
       dt,
     );

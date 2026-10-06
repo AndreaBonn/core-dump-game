@@ -1,4 +1,5 @@
 import type { DataPacket } from '@/types/game.types';
+import { reversalStep } from '@/engine/core/chainMotion';
 
 /**
  * The ordered train of data packets. Packets are kept sorted by ascending
@@ -24,8 +25,14 @@ export class Chain {
     return front ? front.distance : Number.NEGATIVE_INFINITY;
   }
 
+  /** Moves packets together, limiting backward travel at the path entrance. */
   advance(dt: number): void {
-    const delta = this.speed * dt;
+    if (this.isEmpty) return;
+    const requestedDelta = this.speed * dt;
+    const delta =
+      requestedDelta < 0
+        ? reversalStep(this.frontDistance, requestedDelta) - this.frontDistance
+        : requestedDelta;
     for (const packet of this.packets) {
       packet.distance += delta;
     }

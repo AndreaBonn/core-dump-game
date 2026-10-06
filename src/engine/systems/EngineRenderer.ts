@@ -13,6 +13,7 @@ import { vec2, type Vec2 } from '@/engine/math/vec2';
 import { BACKGROUND, RenderSystem, type RenderScene } from '@/engine/systems/RenderSystem';
 import { predictLanding } from '@/engine/systems/trajectory';
 import { frontUrgency } from '@/engine/systems/urgency';
+import { reversalCuePhase } from '@/engine/systems/MechanicRenderer';
 import type { VisualFx } from '@/engine/systems/VisualFx';
 import type { GamePhase } from '@/types/game.types';
 
@@ -28,6 +29,9 @@ export interface Frame {
   cursor: CpuCursor;
   projectiles: readonly Projectile[];
   fx: VisualFx;
+  /** Raw telegraph phase from the engine, before reduced motion steadies it. */
+  reversalPhase: number;
+  reducedMotion: boolean;
 }
 
 /**
@@ -111,6 +115,7 @@ export class EngineRenderer {
           ? predictLanding(cursor.position, cursor.angle, chain.packets, path)
           : null,
       urgency: frontUrgency(chain.frontDistance, path.length, URGENCY_THRESHOLD),
+      reversalPhase: reversalCuePhase(frame.reversalPhase, frame.reducedMotion),
     });
   }
 
