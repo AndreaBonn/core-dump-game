@@ -18,6 +18,7 @@ import { campaignConfig, isRunWon, type RunConfig } from '@/engine/core/runContr
 import { type Vec2 } from '@/engine/math/vec2';
 import { InputSystem } from '@/engine/systems/InputSystem';
 import { EngineRenderer, requireCanvasContext } from '@/engine/systems/EngineRenderer';
+import { frameFor } from '@/engine/systems/sessionFrame';
 import { VisualFx } from '@/engine/systems/VisualFx';
 import { DEFAULT_THEME, type Theme } from '@/engine/systems/theme';
 import type { EngineEvents, GamePhase } from '@/types/game.types';
@@ -56,8 +57,8 @@ export class GameEngine {
   }
   private swap(): void {
     if (this.phase !== 'playing') return;
-    this.session!.swap();
-    this.events.onNextPacketChange(this.session!.nextType);
+    this.live.swap();
+    this.events.onNextPacketChange(this.live.nextType);
   }
   /** Start a fresh run with the selected level provider and reset the score. */
   startRun(config: RunConfig = campaignConfig()): void {
@@ -75,7 +76,7 @@ export class GameEngine {
     this.phase = 'playing';
     this.events.onLevelChange(level);
     this.events.onWaveChange(1, config.waves);
-    this.events.onNextPacketChange(this.session!.nextType);
+    this.events.onNextPacketChange(this.live.nextType);
   }
   /** Advance to the next level after a level-complete screen. */
   nextLevel(): void {
@@ -125,15 +126,15 @@ export class GameEngine {
   }
   private aim(point: Vec2): void {
     if (this.phase === 'playing') {
-      this.session!.aim(point);
+      this.live.aim(point);
     }
   }
   private fire(): void {
     if (this.phase !== 'playing') return;
-    const { type, position } = this.session!.fire();
+    const { type, position } = this.live.fire();
     this.fx.spawnImpact(position, this.theme.packetColor(type));
     audioManager.play('shoot');
-    this.events.onNextPacketChange(this.session!.nextType);
+    this.events.onNextPacketChange(this.live.nextType);
   }
   private loop = (now: number): void => {
     this.rafId = requestAnimationFrame(this.loop);
@@ -154,7 +155,7 @@ export class GameEngine {
     this.drawFrame(frameTime);
   };
   private fixedUpdate(dt: number): void {
-    for (const event of this.session!.step(dt, this.theme.packetColor)) {
+    for (const event of this.live.step(dt, this.theme.packetColor)) {
       presentSessionEvent(event, {
         fx: this.fx,
         events: this.events,
@@ -206,22 +207,15 @@ export class GameEngine {
       this.presenter.applyIdleTransform(this.ctx);
       return;
     }
-    const session = this.session!;
-    this.presenter.present(
-      this.ctx,
-      {
-        phase: this.phase,
-        path: session.path,
-        chain: session.chain,
-        voidPosition: session.voidPosition,
-        cursor: session.cursor,
-        projectiles: session.projectiles,
-        fx: this.fx,
-        reversalPhase: session.reversalPhase,
-        reducedMotion: this.reducedMotion,
-        theme: this.theme,
-      },
-      dt,
-    );
+    const { phase, fx, reducedMotion, theme } = this;
+    this.presenter.present(this.ctx, frameFor(this.live, { phase, fx, reducedMotion, theme }), dt);
+  }
+
+  /** The level in play: every game action runs only after startLevel has built one. */
+  private get live(): LevelSession {
+    if (!this.session) {
+      throw new Error('GameEngine: no level in play');
+    }
+    return this.session;
   }
 }

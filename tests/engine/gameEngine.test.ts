@@ -82,6 +82,12 @@ describe('GameEngine', () => {
       );
     });
 
+    it('refuses a game action before any level is in play, naming the cause', () => {
+      const { internals } = makeEngine(spyEvents());
+
+      expect(() => internals.fixedUpdate(0.01)).toThrow('no level in play');
+    });
+
     it('start is idempotent while the loop is already running', () => {
       const raf = vi.fn(() => 1);
       vi.stubGlobal('requestAnimationFrame', raf);
