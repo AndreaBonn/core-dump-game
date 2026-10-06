@@ -19,7 +19,7 @@ const TRACE_GLOW = '#2fb344';
 const VOID_RING = '#ff5555';
 const CURSOR_BODY = '#1e2a38';
 const CURSOR_PIN = '#2fb344';
-const INK = '#0a0e14';
+export const INK = '#0a0e14';
 const HAZARD_MARK = '#0a0e14';
 
 export interface RenderScene {

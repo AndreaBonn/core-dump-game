@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { COSMETICS, DEFAULT_COSMETICS } from '@/config/cosmetics';
 
 /** Re-import the store so its module-level read of localStorage runs again. */
 async function loadStore() {
@@ -22,6 +23,65 @@ describe('useSettingsStore', () => {
 
     expect(store.getState().muted).toBe(false);
     expect(store.getState().nickname).toBe('');
+  });
+
+  it('starts every cosmetic slot at the first catalog entry', async () => {
+    const store = await loadStore();
+    for (const slot of ['cursor', 'chain', 'palette'] as const) {
+      expect(store.getState().cosmetics[slot]).toBe(
+        COSMETICS.find((item) => item.slot === slot)!.id,
+      );
+    }
+  });
+
+  it('persists each cosmetic slot without replacing the other selections and survives reload', async () => {
+    const store = await loadStore();
+    store.getState().selectCosmetic('cursor', 'ring');
+    store.getState().selectCosmetic('chain', 'hex');
+    store.getState().selectCosmetic('palette', 'okabe-ito');
+    const expected = { cursor: 'ring', chain: 'hex', palette: 'okabe-ito' };
+    expect(store.getState().cosmetics).toEqual(expected);
+    expect(JSON.parse(localStorage.getItem('coredump.cosmetics')!)).toEqual(expected);
+    expect((await loadStore()).getState().cosmetics).toEqual(expected);
+  });
+
+  it.each(['{broken', 'null', '42', '[]', '"classic"'])(
+    'defaults every cosmetic field for invalid saved data %s',
+    async (stored) => {
+      localStorage.setItem('coredump.cosmetics', stored);
+      expect((await loadStore()).getState().cosmetics).toEqual(DEFAULT_COSMETICS);
+      localStorage.setItem('coredump.cosmetics', JSON.stringify({ palette: 'okabe-ito' }));
+      expect((await loadStore()).getState().cosmetics.palette).toBe('okabe-ito');
+    },
+  );
+
+  it.each([{ palette: 'okabe-ito' }, { cursor: 42, chain: null, palette: 'okabe-ito' }])(
+    'defaults only missing or non-string fields in %j',
+    async (stored) => {
+      localStorage.setItem('coredump.cosmetics', JSON.stringify(stored));
+      expect((await loadStore()).getState().cosmetics).toEqual({
+        ...DEFAULT_COSMETICS,
+        palette: 'okabe-ito',
+      });
+    },
+  );
+
+  it('preserves unknown selections for runtime unlock resolution', async () => {
+    const store = await loadStore();
+    // resolveCosmetic, not device persistence, decides what the profile can use.
+    store.getState().selectCosmetic('cursor', 'future-cursor');
+    expect(store.getState().cosmetics.cursor).toBe('future-cursor');
+    expect((await loadStore()).getState().cosmetics.cursor).toBe('future-cursor');
+  });
+
+  it('resets cosmetic choices and removes their persisted value', async () => {
+    const store = await loadStore();
+    store.getState().selectCosmetic('palette', 'okabe-ito');
+    expect(localStorage.getItem('coredump.cosmetics')).not.toBeNull();
+    store.getState().resetSettings();
+    expect(store.getState().cosmetics).toEqual(DEFAULT_COSMETICS);
+    expect(localStorage.getItem('coredump.cosmetics')).toBeNull();
+    expect((await loadStore()).getState().cosmetics).toEqual(DEFAULT_COSMETICS);
   });
 
   it('persists the mute state and reads it back on the next visit', async () => {
