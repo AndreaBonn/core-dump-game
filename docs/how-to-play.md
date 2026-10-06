@@ -17,10 +17,11 @@ Back to the [README](../README.md).
 - [Packet types](#packet-types)
 - [Combos](#combos)
 - [Power-ups](#power-ups)
-- [Hazard packets](#hazard-packets)
+- [Campaign chapters](#campaign-chapters)
 - [Scoring and stars](#scoring-and-stars)
 - [Game modes](#game-modes)
 - [Achievements](#achievements)
+- [Rank and cosmetics](#rank-and-cosmetics)
 - [The leaderboard](#the-leaderboard)
 - [Settings and your data](#settings-and-your-data)
 
@@ -155,9 +156,23 @@ Some packets carry a power-up, marked with a glyph. They trigger when the packet
 | `try/catch`       | T     | Shields the run: the next time the chain reaches the void, it is pushed back instead of ending the run |
 | `regex`           | *     | Removes every packet of the type the chain holds most of                                               |
 
-## Hazard packets
+## Campaign chapters
 
-From level 4 onward the chain includes packets that cannot be matched. They never form a run and never extend one, so they split the chain into segments you have to clear around. Their density grows with the level and stops at roughly one packet in eight, which keeps a level from becoming unwinnable.
+The campaign has 30 levels in five chapters of six. Each chapter introduces one mechanic, and the chapters after it keep the earlier ones in play at a lower density. The sixth level of every chapter is its boss, marked `BOSS` in the level select.
+
+| Chapter | Levels | Mechanic                                                                                               |
+| ------- | ------ | ------------------------------------------------------------------------------------------------------ |
+| 1       | 1-6    | Basics: the chain grows longer and faster, and more packet types appear                                |
+| 2       | 7-12   | Hazards: packets that cannot be matched                                                                |
+| 3       | 13-18  | Armored packets: a match containing one cracks the armor instead of exploding                          |
+| 4       | 19-24  | Reversal: at regular intervals the chain backs away from the void for a moment                         |
+| 5       | 25-30  | Waves: the level sends two to four chains one after the other, and the HUD shows which wave you are on |
+
+**Hazard packets** never form a run and never extend one, so they split the chain into segments you have to clear around. In the campaign they appear from chapter 2; in Endless and the Daily challenge from level 4. Their density stops at roughly one packet in eight, which keeps a level from becoming unwinnable.
+
+**Armored packets** carry one layer of armor. The first match that includes them cracks the armor and leaves the run in place; the next match on that run explodes it as usual.
+
+**Reversal** starts after a few seconds and repeats every 7 to 12 seconds, depending on the level: the chain moves backwards for one or two seconds. It buys time, but it also moves the gap you were aiming at.
 
 ## Scoring and stars
 
@@ -171,7 +186,7 @@ Every campaign level has three score thresholds worth one, two, and three stars.
 
 | Mode                | How it works                                                                                                                                          |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Campaign**        | 10 levels. Clearing one unlocks the next. Each is rated one to three stars                                                                            |
+| **Campaign**        | 30 levels in five chapters. Clearing one unlocks the next. Each is rated one to three stars                                                           |
 | **Endless**         | Levels keep coming with no final one. The run ends when the chain reaches the void                                                                    |
 | **Daily challenge** | The layout is derived from the calendar date: everyone playing on the same day gets the same run, and a given date always produces the same one       |
 | **Tutorial**        | Four steps: aim and fire, match three, swap the queue, hold the line. It runs automatically the first time you play, and stays in the menu afterwards |
@@ -180,11 +195,27 @@ Every campaign level has three score thresholds worth one, two, and three stars.
 
 ## Achievements
 
-There are 18, unlocked by playing rather than by grinding a single number. They cover first steps (`hello, world`, `first commit`), combos (`SEGFAULT`, `stack overflow`, `kernel panic`), power-ups (`sudo`, `garbage collector`), campaign progress (`halfway through the stack`, `root access`), stars (`clean build`, `code quality`, `fully optimised`), volume of play (`uptime`, `daemon`), endless depth (`memory leak`, `no OOM killer`), the daily challenge (`cron job`), and score (`five figures`).
+There are 20, unlocked by playing rather than by grinding a single number. They cover first steps (`hello, world`, `first commit`), combos (`SEGFAULT`, `stack overflow`, `kernel panic`), power-ups (`sudo`, `garbage collector`), campaign progress (`halfway through the stack`, `root access`), chapter bosses (`kill -TERM`, `killall`), stars (`clean build`, `code quality`, `fully optimised`), volume of play (`uptime`, `daemon`), endless depth (`memory leak`, `no OOM killer`), the daily challenge (`cron job`), and score (`five figures`).
 
 The Achievements screen shows which ones you hold and what each of the others asks for.
 
 ![The achievements screen](./assets/achievements.png)
+
+## Rank and cosmetics
+
+Everything you do in the game adds experience points: 100 for each level cleared, 50 for each star, 300 for each boss cleared, 75 for each achievement. Experience sets your rank, from `script kiddie` up to `root`, eight in all. The Profile screen shows the rank, the points needed for the next one, and your statistics, and the game announces each rank-up.
+
+The Profile screen is also where you change how the game looks. There are three slots, and each has items that unlock as you play:
+
+| Slot    | Items                                                                       |
+| ------- | --------------------------------------------------------------------------- |
+| Cursor  | Standard; Ring (reach rank 2); Diamond (collect 6 stars)                    |
+| Chain   | Standard packets; Round packets (reach rank 2); Hex packets (clear 1 boss)  |
+| Palette | Classic; Okabe-Ito, colour-blind safe; High contrast; Neon (clear 3 bosses) |
+
+The two accessibility palettes, Okabe-Ito and High contrast, are open from the start: accessibility is never a reward.
+
+![The Profile screen: rank, statistics, and the cosmetics picker](./assets/profile.png)
 
 ## The leaderboard
 
@@ -199,7 +230,9 @@ When it is configured:
 
 ## Settings and your data
 
-Progress, stars, statistics, and settings are stored in your browser and never leave the device. Settings holds the nickname used on the leaderboard and the sound toggle.
+Progress, stars, statistics, achievements, and settings are stored in your browser and never leave the device. Settings holds the nickname used on the leaderboard, the sound toggle, and the language: the game is in Italian by default and can be switched to English, and the choice is remembered.
+
+When you start the game with the launcher, your progress is also written to `save/progress.json` in the game folder. Clearing the browser data, or playing in a different browser on the same computer, then does not lose it: the launcher hands the file back to the game on the next start. Settings stay in the browser only.
 
 Under Settings, Privacy and your data, you can erase everything: the local profile, and the leaderboard row if you saved one. The game returns to a first-run state.
 

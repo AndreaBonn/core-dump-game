@@ -2,7 +2,7 @@
 
 # Security Policy
 
-Core Dump is a client-side browser game. It has no server of its own: the only backend it can talk to is a Firebase project that the person deploying it owns, and only when they configure it. The attack surface is the leaderboard write path and the hosting configuration.
+Core Dump is a client-side browser game. The hosted build has no server of its own: the only backend it can talk to is a Firebase project that the person deploying it owns, and only when they configure it. When a player starts the game with the local launcher, a Vite server on their machine also serves a save-file route. The attack surface is the leaderboard write path, the hosting configuration, and that local save route.
 
 ## Supported Versions
 
@@ -35,7 +35,10 @@ Each item below was verified in the code of this repository.
 - **Monotonic scores**: an update is accepted only when the new score is strictly greater than the stored one, which caps the number of writes a client can usefully make (`firestore.rules:39`).
 - **Bounded fields**: score is an integer in `[0, 1000000)`, level in `[1, 100]`, display name a non-empty string of at most 24 characters, timestamp equal to the server time (`firestore.rules:14`).
 - **Client-side normalisation before the write**: scores, levels and nicknames are clamped and trimmed to the ranges the rules accept, so a malformed local state is rejected before it reaches the network (`src/services/scoreValidation.ts:10`, `src/services/scoreValidation.ts:29`).
-- **Right to erasure**: a player can delete their own leaderboard row, and nobody else's (`firestore.rules:46`, `src/services/leaderboardService.ts:92`).
+- **Right to erasure**: a player can delete their own leaderboard row, and nobody else's (`firestore.rules:46`, `src/services/leaderboardService.ts:95`).
+- **Local save route limited to same-origin requests**: `GET` and `PUT /api/save` are refused with 403 when the browser's `Origin` does not match the `Host` the server was reached on, so a page on another site cannot read or overwrite the save (`scripts/lib/saveFile.mjs:24`, `scripts/lib/saveFile.mjs:57`).
+- **Bounded and well-formed save writes**: a body over 64 KB is cut off while it is still being read and answered with 413; anything that is not a JSON object is refused with 400; the file is written to a temporary sibling and renamed, so an interrupted write leaves the previous save intact (`scripts/lib/saveFile.mjs:11`, `scripts/lib/saveFile.mjs:68`, `scripts/lib/saveFile.mjs:120`).
+- **Save contents re-validated on load**: the profile read back from the file is parsed field by field with type checks and fallbacks before it is merged, so a malformed file degrades to an empty profile instead of breaking the game (`src/store/useProgressStore.ts:91`).
 - **Anonymous authentication only**: no password, no email, no credential is ever handled by the game. Sign-in failure degrades to offline behaviour instead of throwing (`src/services/authService.ts:10`).
 - **Security headers on the hosted build**: `Content-Security-Policy` with `default-src 'self'`, `object-src 'none'` and `frame-ancestors 'none'`, plus HSTS, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` and `Referrer-Policy: strict-origin-when-cross-origin` (`firebase.json`).
 - **No HTML injection surface**: the interface is React with no `dangerouslySetInnerHTML`, no `innerHTML` assignment and no `eval` anywhere in `src/`.
@@ -48,6 +51,7 @@ Stated explicitly, because absence is easier to misread than presence:
 
 - **No rate limiting.** Nothing limits how often an authenticated client can attempt a write. The monotonic-score rule bounds useful writes, not attempts.
 - **No `npm audit` or equivalent scanner in CI.** Dependency updates rely on Dependabot alone.
+- **The save route is not covered by Vite's host check.** The route is mounted before Vite's own `Host` validation, so a DNS-rebinding page, whose `Origin` and `Host` agree on the attacker's domain, passes the same-origin check: with a forged `Host` header Vite answers 403 for the page and 204 for a `PUT /api/save`. The exposure is the player's game progress, only while the launcher is running, and only to a page that knows the port.
 - **No server-side verification that a score is reachable.** Scores are computed in the browser; the rules enforce shape and bounds, not plausibility. A determined client can submit any value inside those bounds.
 
 ## Security Best Practices for Deployers
@@ -65,7 +69,7 @@ The following are not considered vulnerabilities for this project:
 
 - Submitting an implausibly high but in-range score from a modified client. Scores are computed client side by design, and this is documented above rather than defended against.
 - Self-XSS, meaning attacks that require the victim to paste code into their own console.
-- Reading or altering the local profile in `localStorage`, which belongs to the player and holds no credentials.
+- Reading or altering the local profile in `localStorage` or in `save/progress.json` from the player's own machine. Both belong to the player and hold no credentials.
 - Social engineering and physical attacks.
 - Publicly disclosed vulnerabilities in third-party dependencies. Report those upstream.
 - Denial of service through excessive legitimate use.

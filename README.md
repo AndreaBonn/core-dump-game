@@ -74,7 +74,8 @@ The full walkthrough, including what to do when the launcher refuses to start, i
 - React 18.3 with TypeScript 5.7 in strict mode
 - HTML5 Canvas 2D for all game rendering, no rendering library
 - Zustand 5 for menu, settings, and auth state, never for per-frame game state
-- Tailwind CSS 3.4 for the interface around the canvas
+- Tailwind CSS 4 for the interface around the canvas
+- i18next with react-i18next for the Italian and English interface
 
 **Build and tooling**
 
@@ -100,6 +101,7 @@ flowchart TB
     engine --> systems["Systems: input, collision, match, power-ups"]
     engine --> pure_core["Pure core: chain, levels, scoring"]
     stores --> storage[("localStorage")]
+    stores -.->|"launcher only"| save_file[("save/progress.json")]
     services -.->|"only when configured"| firebase["Firebase Auth and Firestore"]
 
     classDef core fill:#2563eb,stroke:#1d4ed8,color:#fff
@@ -109,11 +111,11 @@ flowchart TB
 
     class react,canvas core
     class engine,systems,pure_core engine
-    class stores,storage,services data
+    class stores,storage,save_file,services data
     class firebase ext
 ```
 
-The game loop runs outside React and draws straight to the canvas, so no per-frame state passes through the component tree. Progress and settings live in `localStorage`. Firebase is a leaf of the graph: remove it and the rest keeps working.
+The game loop runs outside React and draws straight to the canvas, so no per-frame state passes through the component tree. Progress and settings live in `localStorage`. When the game is started through the launcher, the progress profile is also mirrored to `save/progress.json` in the game folder, through a small route the local server exposes; the hosted build has no such route and the client skips it. Firebase is a leaf of the graph: remove it and the rest keeps working.
 
 Saving a score is the one flow that crosses every layer:
 
@@ -176,6 +178,8 @@ The game needs no configuration to run. Copy `.env.example` to `.env` only if yo
 
 All six are optional and read at build time, so set them before `npm run build` when deploying. Leave them empty and the game runs offline with the leaderboard disabled.
 
+The launcher's save file goes to `save/progress.json` unless the `CORE_DUMP_SAVE_FILE` environment variable names another path when the server starts. The end-to-end suite uses it to keep its runs out of the player's save.
+
 To deploy the leaderboard rules, copy `.firebaserc.example` to `.firebaserc`, set your project id, then run `firebase deploy --only firestore:rules`.
 
 ## Running locally
@@ -191,9 +195,12 @@ To deploy the leaderboard rules, copy `.firebaserc.example` to `.firebaserc`, se
 | `npm run test:coverage` | Unit tests with a coverage report                              |
 | `npm run test:rules`    | Firestore security-rules tests against the emulator            |
 | `npm run test:e2e`      | Playwright end-to-end suite against the production build       |
+| `npm run playtest`      | Two bots play the whole campaign and print a per-level report  |
 | `npm run typecheck`     | `tsc --noEmit`                                                 |
 | `npm run lint`          | ESLint over the repository                                     |
+| `npm run lint:fix`      | ESLint with automatic fixes                                    |
 | `npm run format`        | Prettier over the repository                                   |
+| `npm run format:check`  | Prettier in check mode, without writing                        |
 | `npm run icons`         | Regenerate the PWA icons                                       |
 
 ## Repository structure
@@ -206,11 +213,13 @@ src/
   services/     Firebase init, anonymous auth, leaderboard, score validation
   store/        Zustand stores and localStorage persistence
   hooks/        React hooks bridging engine and services to components
+  i18n/         i18next setup and the Italian and English dictionaries
   types/        Shared TypeScript types
 tests/          Unit tests, mirroring src/
 e2e/            Playwright specs run against the built app
+playtest/       Campaign bots and the per-level balance report
 docs/adr/       Architecture decision records
-scripts/        Player launcher and PWA icon generation
+scripts/        Player launcher, save-file server route, PWA icon generation
 specs/          Feature specs and task lists used during development
 ```
 
@@ -218,12 +227,12 @@ specs/          Feature specs and task lists used during development
 
 | Mode            | What it is                                                                           |
 | --------------- | ------------------------------------------------------------------------------------ |
-| Campaign        | 10 levels, each unlocked by clearing the previous one, rated one to three stars      |
+| Campaign        | 30 levels in five chapters, each closed by a boss, rated one to three stars          |
 | Endless         | No final level, the run ends when the chain reaches the void                         |
 | Daily challenge | Layout seeded from the calendar date, identical for everyone that day                |
 | Tutorial        | Four steps covering aim, match, swap, and the void. Runs automatically on first play |
 
-Seven packet types named after log levels, seven power-ups (`sleep()`, `fork()`, `garbage collect`, `rollback()`, `kill -9`, `try/catch`, `regex`), 18 achievements, and unmatchable hazard packets from level 4 onward. The rules are explained in the [How to play guide](./docs/how-to-play.md).
+Each campaign chapter adds one mechanic: unmatchable hazard packets, armored packets that crack before they explode, a chain that periodically backs away from the void, and levels sent in several waves. Around that: seven packet types named after log levels, seven power-ups (`sleep()`, `fork()`, `garbage collect`, `rollback()`, `kill -9`, `try/catch`, `regex`), 20 achievements, and experience points that raise the player through eight ranks and unlock cosmetics (cursor, packet shape, colour palette). The interface is in Italian by default, with English one switch away in Settings. The rules are explained in the [How to play guide](./docs/how-to-play.md).
 
 ![Level select with campaign stars](./docs/assets/level-select.png)
 
@@ -247,11 +256,14 @@ npm run test:e2e     # Playwright, builds the app and serves it on port 4173
 
 The end-to-end suite runs against the production build in two projects, desktop Chrome at 1280x800 and Pixel 5 at 375x700, because the service worker and chunking only exist there.
 
+`npm run playtest` is a balance check rather than a test suite: a casual bot and a skilled bot, which looks one shot ahead, play all 30 campaign levels headless and print outcome, time, shots, score and stars for each. It is not part of CI.
+
 ## Deployment and CI/CD
 
-[`.github/workflows/ci.yml`](./.github/workflows/ci.yml) runs three jobs on every push and pull request to `main`:
+[`.github/workflows/ci.yml`](./.github/workflows/ci.yml) runs on every push and pull request to `main`:
 
 - **verify**: lint, type-check, tests with coverage, production build
+- **badges**: on pushes to `main` only, commits the test and coverage badge data in `badges/`
 - **rules**: Firestore security-rules tests against the emulator, on a JVM runner
 - **e2e**: Playwright suite, with the HTML report uploaded as an artifact
 
@@ -268,7 +280,7 @@ firebase deploy --only hosting
 
 ## Contributing
 
-There is no `CONTRIBUTING.md`. The gates a change has to pass are the three CI jobs above; running `npm run lint`, `npm run typecheck`, and `npm run test:coverage` locally reproduces the first one. Tests live beside the code they cover, mirroring `src/` under `tests/`.
+There is no `CONTRIBUTING.md`. The gates a change has to pass are the `verify`, `rules` and `e2e` jobs above; running `npm run lint`, `npm run typecheck`, and `npm run test:coverage` locally reproduces the first one. Tests live beside the code they cover, mirroring `src/` under `tests/`.
 
 ## Maintainer
 
@@ -276,7 +288,7 @@ There is no `CONTRIBUTING.md`. The gates a change has to pass are the three CI j
 
 ## Security
 
-The leaderboard is the only part of the game that accepts external input, and it is validated both in the client and in the Firestore rules. To report a vulnerability, see [SECURITY.md](./SECURITY.md).
+Two paths accept input from outside the game's own code: the leaderboard, validated both in the client and in the Firestore rules, and the launcher's local save route, which refuses cross-origin requests and bodies over 64 KB. To report a vulnerability, see [SECURITY.md](./SECURITY.md).
 
 ## License
 

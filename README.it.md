@@ -74,7 +74,8 @@ La procedura completa, compreso cosa fare quando il launcher si rifiuta di parti
 - React 18.3 con TypeScript 5.7 in modalità strict
 - HTML5 Canvas 2D per tutto il rendering di gioco, senza librerie grafiche
 - Zustand 5 per lo stato di menu, impostazioni e autenticazione, mai per lo stato di gioco per frame
-- Tailwind CSS 3.4 per l'interfaccia attorno al canvas
+- Tailwind CSS 4 per l'interfaccia attorno al canvas
+- i18next con react-i18next per l'interfaccia in italiano e in inglese
 
 **Build e tooling**
 
@@ -100,6 +101,7 @@ flowchart TB
     engine --> systems["Sistemi: input, collisioni, match, power-up"]
     engine --> pure_core["Core puro: catena, livelli, punteggio"]
     stores --> storage[("localStorage")]
+    stores -.->|"solo con il launcher"| save_file[("save/progress.json")]
     services -.->|"solo se configurato"| firebase["Firebase Auth e Firestore"]
 
     classDef core fill:#2563eb,stroke:#1d4ed8,color:#fff
@@ -109,11 +111,11 @@ flowchart TB
 
     class react,canvas core
     class engine,systems,pure_core engine
-    class stores,storage,services data
+    class stores,storage,save_file,services data
     class firebase ext
 ```
 
-Il loop di gioco gira fuori da React e disegna direttamente sul canvas, quindi nessuno stato per frame attraversa l'albero dei componenti. Progressi e impostazioni vivono in `localStorage`. Firebase è una foglia del grafo: togliendolo, il resto continua a funzionare.
+Il loop di gioco gira fuori da React e disegna direttamente sul canvas, quindi nessuno stato per frame attraversa l'albero dei componenti. Progressi e impostazioni vivono in `localStorage`. Quando il gioco parte dal launcher, il profilo dei progressi viene copiato anche in `save/progress.json` nella cartella del gioco, attraverso una piccola route esposta dal server locale; la build pubblicata non ha quella route e il client la salta. Firebase è una foglia del grafo: togliendolo, il resto continua a funzionare.
 
 Il salvataggio di un punteggio è l'unico flusso che attraversa tutti i layer:
 
@@ -176,25 +178,30 @@ Il gioco non richiede configurazione per funzionare. Copia `.env.example` in `.e
 
 Tutte e sei sono opzionali e vengono lette in fase di build, quindi vanno impostate prima di `npm run build` quando si fa deploy. Lasciandole vuote il gioco funziona offline con la classifica disattivata.
 
+Il file di salvataggio del launcher è `save/progress.json`, a meno che la variabile d'ambiente `CORE_DUMP_SAVE_FILE` indichi un altro percorso all'avvio del server. La suite end-to-end la usa per tenere le sue partite fuori dal salvataggio del giocatore.
+
 Per pubblicare le regole della classifica, copia `.firebaserc.example` in `.firebaserc`, inserisci l'id del tuo progetto ed esegui `firebase deploy --only firestore:rules`.
 
 ## Esecuzione locale
 
-| Comando                 | Cosa fa                                                    |
-| ----------------------- | ---------------------------------------------------------- |
-| `npm run play`          | Installa e compila se serve, poi apre il gioco nel browser |
-| `npm run dev`           | Server di sviluppo con hot reload sulla porta 5173         |
-| `npm run build`         | Type-check, poi build in `dist/`                           |
-| `npm run preview`       | Serve la build di produzione sulla porta 4173              |
-| `npm test`              | Test unitari, una esecuzione                               |
-| `npm run test:watch`    | Test unitari in watch mode                                 |
-| `npm run test:coverage` | Test unitari con report di copertura                       |
-| `npm run test:rules`    | Test delle regole di sicurezza Firestore sull'emulatore    |
-| `npm run test:e2e`      | Suite end-to-end Playwright sulla build di produzione      |
-| `npm run typecheck`     | `tsc --noEmit`                                             |
-| `npm run lint`          | ESLint su tutto il repository                              |
-| `npm run format`        | Prettier su tutto il repository                            |
-| `npm run icons`         | Rigenera le icone della PWA                                |
+| Comando                 | Cosa fa                                                            |
+| ----------------------- | ------------------------------------------------------------------ |
+| `npm run play`          | Installa e compila se serve, poi apre il gioco nel browser         |
+| `npm run dev`           | Server di sviluppo con hot reload sulla porta 5173                 |
+| `npm run build`         | Type-check, poi build in `dist/`                                   |
+| `npm run preview`       | Serve la build di produzione sulla porta 4173                      |
+| `npm test`              | Test unitari, una esecuzione                                       |
+| `npm run test:watch`    | Test unitari in watch mode                                         |
+| `npm run test:coverage` | Test unitari con report di copertura                               |
+| `npm run test:rules`    | Test delle regole di sicurezza Firestore sull'emulatore            |
+| `npm run test:e2e`      | Suite end-to-end Playwright sulla build di produzione              |
+| `npm run playtest`      | Due bot giocano l'intera campagna e stampano un report per livello |
+| `npm run typecheck`     | `tsc --noEmit`                                                     |
+| `npm run lint`          | ESLint su tutto il repository                                      |
+| `npm run lint:fix`      | ESLint con correzioni automatiche                                  |
+| `npm run format`        | Prettier su tutto il repository                                    |
+| `npm run format:check`  | Prettier in sola verifica, senza scrivere                          |
+| `npm run icons`         | Rigenera le icone della PWA                                        |
 
 ## Struttura del repository
 
@@ -206,24 +213,26 @@ src/
   services/     Init Firebase, auth anonima, classifica, validazione punteggi
   store/        Store Zustand e persistenza su localStorage
   hooks/        Hook React che collegano engine e servizi ai componenti
+  i18n/         Setup di i18next e dizionari italiano e inglese
   types/        Tipi TypeScript condivisi
 tests/          Test unitari, speculari a src/
 e2e/            Spec Playwright eseguite sulla build
+playtest/       Bot della campagna e report di bilanciamento per livello
 docs/adr/       Architecture decision record
-scripts/        Launcher per il giocatore e generazione icone PWA
+scripts/        Launcher per il giocatore, route del file di salvataggio, icone PWA
 specs/          Spec di feature e task list usate durante lo sviluppo
 ```
 
 ## Contenuti di gioco
 
-| Modalità        | Che cos'è                                                                            |
-| --------------- | ------------------------------------------------------------------------------------ |
-| Campagna        | 10 livelli, ognuno sbloccato completando il precedente, valutati da una a tre stelle |
-| Endless         | Nessun livello finale, la partita finisce quando la catena raggiunge il void         |
-| Daily challenge | Tracciato derivato dalla data del giorno, identico per tutti in quella giornata      |
-| Tutorial        | Quattro passi su mira, match, scambio e void. Parte da solo alla prima partita       |
+| Modalità        | Che cos'è                                                                             |
+| --------------- | ------------------------------------------------------------------------------------- |
+| Campagna        | 30 livelli in cinque capitoli, ognuno chiuso da un boss, valutati da una a tre stelle |
+| Endless         | Nessun livello finale, la partita finisce quando la catena raggiunge il void          |
+| Daily challenge | Tracciato derivato dalla data del giorno, identico per tutti in quella giornata       |
+| Tutorial        | Quattro passi su mira, match, scambio e void. Parte da solo alla prima partita        |
 
-Sette tipi di pacchetto che prendono il nome dai livelli di log, sette power-up (`sleep()`, `fork()`, `garbage collect`, `rollback()`, `kill -9`, `try/catch`, `regex`), 18 achievement e pacchetti ostacolo non abbinabili dal livello 4 in poi. Le regole sono spiegate nella [guida su come si gioca](./docs/how-to-play.it.md).
+Ogni capitolo della campagna aggiunge una meccanica: pacchetti ostacolo non abbinabili, pacchetti corazzati che si incrinano prima di esplodere, una catena che a intervalli arretra dal void e livelli mandati in più ondate. Attorno a questo: sette tipi di pacchetto che prendono il nome dai livelli di log, sette power-up (`sleep()`, `fork()`, `garbage collect`, `rollback()`, `kill -9`, `try/catch`, `regex`), 20 achievement e punti esperienza che fanno salire il giocatore attraverso otto gradi e sbloccano cosmetici (cursore, forma dei pacchetti, palette di colori). L'interfaccia è in italiano per impostazione predefinita, e l'inglese si sceglie in Impostazioni. Le regole sono spiegate nella [guida su come si gioca](./docs/how-to-play.it.md).
 
 ![Selezione livelli con le stelle della campagna](./docs/assets/level-select.png)
 
@@ -247,11 +256,14 @@ npm run test:e2e     # Playwright, compila l'app e la serve sulla porta 4173
 
 La suite end-to-end gira sulla build di produzione in due progetti, Chrome desktop a 1280x800 e Pixel 5 a 375x700, perché service worker e chunking esistono solo lì.
 
+`npm run playtest` è un controllo di bilanciamento più che una suite di test: un bot che gioca come un principiante e uno esperto, che guarda un colpo avanti, giocano headless tutti i 30 livelli della campagna e stampano per ciascuno esito, tempo, colpi, punteggio e stelle. Non fa parte della CI.
+
 ## Deploy e CI/CD
 
-[`.github/workflows/ci.yml`](./.github/workflows/ci.yml) esegue tre job a ogni push e pull request verso `main`:
+[`.github/workflows/ci.yml`](./.github/workflows/ci.yml) gira a ogni push e pull request verso `main`:
 
 - **verify**: lint, type-check, test con copertura, build di produzione
+- **badges**: solo sui push verso `main`, committa in `badges/` i dati dei badge di test e copertura
 - **rules**: test delle regole di sicurezza Firestore sull'emulatore, su un runner con JVM
 - **e2e**: suite Playwright, con il report HTML caricato come artifact
 
@@ -268,7 +280,7 @@ firebase deploy --only hosting
 
 ## Come contribuire
 
-Non esiste un `CONTRIBUTING.md`. I gate che una modifica deve superare sono i tre job di CI qui sopra; eseguire in locale `npm run lint`, `npm run typecheck` e `npm run test:coverage` riproduce il primo. I test stanno accanto al codice che coprono, con `tests/` speculare a `src/`.
+Non esiste un `CONTRIBUTING.md`. I gate che una modifica deve superare sono i job `verify`, `rules` ed `e2e` qui sopra; eseguire in locale `npm run lint`, `npm run typecheck` e `npm run test:coverage` riproduce il primo. I test stanno accanto al codice che coprono, con `tests/` speculare a `src/`.
 
 ## Maintainer
 
@@ -276,7 +288,7 @@ Non esiste un `CONTRIBUTING.md`. I gate che una modifica deve superare sono i tr
 
 ## Sicurezza
 
-La classifica è l'unica parte del gioco che accetta input esterno, ed è validata sia nel client sia nelle regole Firestore. Per segnalare una vulnerabilità, consulta [SECURITY.it.md](./SECURITY.it.md).
+Due percorsi accettano input dall'esterno del codice del gioco: la classifica, validata sia nel client sia nelle regole Firestore, e la route locale di salvataggio del launcher, che rifiuta le richieste cross-origin e i body oltre 64 KB. Per segnalare una vulnerabilità, consulta [SECURITY.it.md](./SECURITY.it.md).
 
 ## Licenza
 

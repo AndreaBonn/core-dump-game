@@ -2,7 +2,7 @@
 
 # Politica di sicurezza
 
-Core Dump è un gioco che gira interamente nel browser. Non ha un server proprio: l'unico backend con cui può parlare è un progetto Firebase di chi lo pubblica, e solo se lo configura. La superficie di attacco è il percorso di scrittura della classifica e la configurazione dell'hosting.
+Core Dump è un gioco che gira interamente nel browser. La build pubblicata non ha un server proprio: l'unico backend con cui può parlare è un progetto Firebase di chi lo pubblica, e solo se lo configura. Quando un giocatore avvia il gioco con il launcher locale, un server Vite sulla sua macchina espone anche una route per il file di salvataggio. La superficie di attacco è il percorso di scrittura della classifica, la configurazione dell'hosting e quella route locale.
 
 ## Versioni supportate
 
@@ -35,7 +35,10 @@ Ogni voce qui sotto è stata verificata nel codice di questo repository.
 - **Punteggi monotoni**: un aggiornamento viene accettato solo se il nuovo punteggio è strettamente maggiore di quello salvato, il che limita il numero di scritture utili per un client (`firestore.rules:39`).
 - **Campi limitati**: punteggio intero in `[0, 1000000)`, livello in `[1, 100]`, nome visualizzato stringa non vuota di massimo 24 caratteri, timestamp uguale all'ora del server (`firestore.rules:14`).
 - **Normalizzazione lato client prima della scrittura**: punteggi, livelli e nickname vengono limitati e ripuliti negli intervalli che le regole accettano, così uno stato locale malformato viene respinto prima di arrivare in rete (`src/services/scoreValidation.ts:10`, `src/services/scoreValidation.ts:29`).
-- **Diritto alla cancellazione**: un giocatore può eliminare la propria riga di classifica, e nessun'altra (`firestore.rules:46`, `src/services/leaderboardService.ts:92`).
+- **Diritto alla cancellazione**: un giocatore può eliminare la propria riga di classifica, e nessun'altra (`firestore.rules:46`, `src/services/leaderboardService.ts:95`).
+- **Route di salvataggio locale limitata alle richieste same-origin**: `GET` e `PUT /api/save` vengono rifiutate con 403 quando l'`Origin` del browser non coincide con l'`Host` con cui il server è stato raggiunto, quindi una pagina di un altro sito non può leggere né sovrascrivere il salvataggio (`scripts/lib/saveFile.mjs:24`, `scripts/lib/saveFile.mjs:57`).
+- **Scritture di salvataggio limitate e ben formate**: un body oltre 64 KB viene interrotto già durante la lettura e riceve 413; tutto ciò che non è un oggetto JSON viene rifiutato con 400; il file viene scritto su un file temporaneo accanto e poi rinominato, così una scrittura interrotta lascia intatto il salvataggio precedente (`scripts/lib/saveFile.mjs:11`, `scripts/lib/saveFile.mjs:68`, `scripts/lib/saveFile.mjs:120`).
+- **Contenuto del salvataggio rivalidato al caricamento**: il profilo riletto dal file viene interpretato campo per campo, con controlli di tipo e valori di ripiego, prima di essere unito, quindi un file malformato si riduce a un profilo vuoto invece di rompere il gioco (`src/store/useProgressStore.ts:91`).
 - **Solo autenticazione anonima**: il gioco non gestisce nessuna password, email o credenziale. Se l'accesso fallisce, il comportamento degrada in modalità offline invece di sollevare un errore (`src/services/authService.ts:10`).
 - **Header di sicurezza sulla build pubblicata**: `Content-Security-Policy` con `default-src 'self'`, `object-src 'none'` e `frame-ancestors 'none'`, più HSTS, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` e `Referrer-Policy: strict-origin-when-cross-origin` (`firebase.json`).
 - **Nessuna superficie di HTML injection**: l'interfaccia è React senza `dangerouslySetInnerHTML`, senza assegnazioni a `innerHTML` e senza `eval` in tutto `src/`.
@@ -48,6 +51,7 @@ Dichiarato esplicitamente, perché un'assenza si legge male più facilmente di u
 
 - **Nessun rate limiting.** Niente limita la frequenza con cui un client autenticato può tentare una scrittura. La regola sul punteggio monotono limita le scritture utili, non i tentativi.
 - **Nessun `npm audit` o scanner equivalente in CI.** L'aggiornamento delle dipendenze si appoggia al solo Dependabot.
+- **La route di salvataggio non è coperta dal controllo host di Vite.** La route è montata prima della validazione dell'`Host` fatta da Vite, quindi una pagina che usa il DNS rebinding, con `Origin` e `Host` concordi sul dominio dell'attaccante, supera il controllo same-origin: con un header `Host` falsificato Vite risponde 403 per la pagina e 204 per una `PUT /api/save`. L'esposizione riguarda i progressi di gioco del giocatore, solo mentre il launcher è in esecuzione e solo verso una pagina che conosce la porta.
 - **Nessuna verifica server-side che un punteggio sia raggiungibile.** I punteggi sono calcolati nel browser; le regole impongono forma e limiti, non plausibilità. Un client determinato può inviare qualsiasi valore dentro quei limiti.
 
 ## Best practice per chi pubblica il gioco
@@ -65,7 +69,7 @@ Non sono considerate vulnerabilità di questo progetto:
 
 - L'invio di un punteggio poco plausibile ma dentro i limiti da un client modificato. I punteggi sono calcolati lato client per scelta, e la cosa è documentata sopra invece di essere difesa.
 - Il self-XSS, cioè gli attacchi che richiedono alla vittima di incollare codice nella propria console.
-- La lettura o la modifica del profilo locale in `localStorage`, che appartiene al giocatore e non contiene credenziali.
+- La lettura o la modifica del profilo locale in `localStorage` o in `save/progress.json` dalla macchina del giocatore. Entrambi appartengono al giocatore e non contengono credenziali.
 - Ingegneria sociale e attacchi fisici.
 - Vulnerabilità già divulgate pubblicamente in dipendenze di terze parti. Vanno segnalate a monte.
 - Denial of service ottenuto con un uso legittimo ma eccessivo.

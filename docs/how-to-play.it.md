@@ -17,10 +17,11 @@ Torna al [README](../README.it.md).
 - [Tipi di pacchetto](#tipi-di-pacchetto)
 - [Combo](#combo)
 - [Power-up](#power-up)
-- [Pacchetti ostacolo](#pacchetti-ostacolo)
+- [Capitoli della campagna](#capitoli-della-campagna)
 - [Punteggio e stelle](#punteggio-e-stelle)
 - [Modalità di gioco](#modalità-di-gioco)
 - [Achievement](#achievement)
+- [Grado e cosmetici](#grado-e-cosmetici)
 - [La classifica online](#la-classifica-online)
 - [Impostazioni e dati personali](#impostazioni-e-dati-personali)
 
@@ -111,7 +112,7 @@ La linea punteggiata che parte dal cursore è l'anteprima di traiettoria: mostra
 | Mirare                                           | Muovi il mouse                       | Tocca dove vuoi sparare      |
 | Sparare                                          | Click sinistro, oppure `Space`       | Lo stesso tocco mira e spara |
 | Scambiare il pacchetto in mano con il successivo | Click destro, oppure `S`             | Non disponibile              |
-| Mettere in pausa                                 | Il pulsante `PAUSE` in alto a destra | Lo stesso pulsante           |
+| Mettere in pausa                                 | Il pulsante `PAUSA` in alto a destra | Lo stesso pulsante           |
 
 Lo scambio è il comando che sfugge a quasi tutti. L'HUD mostra il pacchetto successivo: quando quello che hai in mano non serve, scambialo invece di sprecarlo nella catena.
 
@@ -155,9 +156,23 @@ Alcuni pacchetti portano un power-up, segnato da un glifo. Si attivano quando il
 | `try/catch`       | T     | Protegge la partita: la prossima volta che la catena raggiunge il void viene respinta invece di far finire la partita |
 | `regex`           | \*    | Rimuove tutti i pacchetti del tipo più presente nella catena                                                          |
 
-## Pacchetti ostacolo
+## Capitoli della campagna
 
-Dal livello 4 in poi la catena contiene pacchetti che non si possono abbinare. Non formano una sequenza e non ne allungano una, quindi spezzano la catena in segmenti da svuotare aggirandoli. La loro densità cresce con il livello e si ferma attorno a un pacchetto su otto, cosa che impedisce a un livello di diventare invincibile.
+La campagna ha 30 livelli divisi in cinque capitoli da sei. Ogni capitolo introduce una meccanica, e i capitoli successivi tengono in gioco quelle precedenti con una densità più bassa. Il sesto livello di ogni capitolo è il suo boss, segnato `BOSS` nella scelta del livello.
+
+| Capitolo | Livelli | Meccanica                                                                                          |
+| -------- | ------- | -------------------------------------------------------------------------------------------------- |
+| 1        | 1-6     | Basi: la catena diventa più lunga e più veloce, e compaiono più tipi di pacchetto                  |
+| 2        | 7-12    | Ostacoli: pacchetti che non si possono abbinare                                                    |
+| 3        | 13-18   | Pacchetti corazzati: un match che ne contiene uno incrina la corazza invece di esplodere           |
+| 4        | 19-24   | Inversione: a intervalli regolari la catena arretra per un momento, allontanandosi dal void        |
+| 5        | 25-30   | Ondate: il livello manda da due a quattro catene una dopo l'altra, e l'HUD mostra a che ondata sei |
+
+I **pacchetti ostacolo** non formano una sequenza e non ne allungano una, quindi spezzano la catena in segmenti da svuotare aggirandoli. In campagna compaiono dal capitolo 2; in Infinita e nella Sfida del giorno dal livello 4. La loro densità si ferma attorno a un pacchetto su otto, cosa che impedisce a un livello di diventare invincibile.
+
+I **pacchetti corazzati** hanno uno strato di corazza. Il primo match che li include incrina la corazza e lascia la sequenza al suo posto; il match successivo su quella sequenza la fa esplodere come al solito.
+
+L'**inversione** parte dopo qualche secondo e si ripete ogni 7-12 secondi, a seconda del livello: la catena torna indietro per uno o due secondi. Fa guadagnare tempo, ma sposta anche il varco a cui stavi mirando.
 
 ## Punteggio e stelle
 
@@ -169,22 +184,38 @@ Ogni livello della campagna ha tre soglie di punteggio che valgono una, due e tr
 
 ## Modalità di gioco
 
-| Modalità            | Come funziona                                                                                                                    |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| **Campagna**        | 10 livelli. Completarne uno sblocca il successivo. Ognuno viene valutato da una a tre stelle                                     |
-| **Endless**         | I livelli continuano senza un livello finale. La partita finisce quando la catena raggiunge il void                              |
-| **Daily challenge** | Il tracciato deriva dalla data del giorno: chi gioca nello stesso giorno trova la stessa partita, e una data dà sempre la stessa |
-| **Tutorial**        | Quattro passi: mira e spara, allinea tre, scambia la coda, tieni la linea. Parte da solo alla prima partita e resta nel menu     |
+| Modalità             | Come funziona                                                                                                                    |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Campagna**         | 30 livelli in cinque capitoli. Completarne uno sblocca il successivo. Ognuno viene valutato da una a tre stelle                  |
+| **Infinita**         | I livelli continuano senza un livello finale. La partita finisce quando la catena raggiunge il void                              |
+| **Sfida del giorno** | Il tracciato deriva dalla data del giorno: chi gioca nello stesso giorno trova la stessa partita, e una data dà sempre la stessa |
+| **Tutorial**         | Quattro passi: mira e spara, allinea tre, scambia la coda, tieni la linea. Parte da solo alla prima partita e resta nel menu     |
 
 ![L'overlay del tutorial alla prima partita](./assets/tutorial.png)
 
 ## Achievement
 
-Sono 18 e si sbloccano giocando, non macinando un solo numero. Coprono i primi passi (`hello, world`, `first commit`), le combo (`SEGFAULT`, `stack overflow`, `kernel panic`), i power-up (`sudo`, `garbage collector`), l'avanzamento in campagna (`halfway through the stack`, `root access`), le stelle (`clean build`, `code quality`, `fully optimised`), la quantità di partite (`uptime`, `daemon`), la profondità in endless (`memory leak`, `no OOM killer`), la daily challenge (`cron job`) e il punteggio (`five figures`).
+Sono 20 e si sbloccano giocando, non macinando un solo numero. Coprono i primi passi (`hello, world`, `first commit`), le combo (`SEGFAULT`, `stack overflow`, `kernel panic`), i power-up (`sudo`, `garbage collector`), l'avanzamento in campagna (`halfway through the stack`, `root access`), i boss dei capitoli (`kill -TERM`, `killall`), le stelle (`clean build`, `code quality`, `fully optimised`), la quantità di partite (`uptime`, `daemon`), la profondità in endless (`memory leak`, `no OOM killer`), la daily challenge (`cron job`) e il punteggio (`five figures`).
 
-La schermata Achievements mostra quali hai ottenuto e cosa chiedono gli altri.
+La schermata Obiettivi mostra quali hai ottenuto e cosa chiedono gli altri.
 
 ![La schermata degli achievement](./assets/achievements.png)
+
+## Grado e cosmetici
+
+Tutto ciò che fai nel gioco aggiunge punti esperienza: 100 per ogni livello completato, 50 per ogni stella, 300 per ogni boss battuto, 75 per ogni achievement. L'esperienza determina il grado, da `script kiddie` fino a `root`, otto in tutto. La schermata Profilo mostra il grado, i punti che mancano al successivo e le tue statistiche, e il gioco annuncia ogni passaggio di grado.
+
+Sempre dal Profilo cambi l'aspetto del gioco. Ci sono tre categorie, e ognuna ha elementi che si sbloccano giocando:
+
+| Categoria | Elementi                                                                                       |
+| --------- | ---------------------------------------------------------------------------------------------- |
+| Cursore   | Standard; Anello (raggiungi il grado 2); Rombo (raccogli 6 stelle)                             |
+| Catena    | Pacchetti standard; Pacchetti tondi (raggiungi il grado 2); Pacchetti esagonali (batti 1 boss) |
+| Palette   | Classica; Okabe-Ito, per daltonici; Alto contrasto; Neon (batti 3 boss)                        |
+
+Le due palette per l'accessibilità, Okabe-Ito e Alto contrasto, sono disponibili da subito: l'accessibilità non è mai un premio.
+
+![La schermata Profilo: grado, statistiche e scelta dei cosmetici](./assets/profile.png)
 
 ## La classifica online
 
@@ -199,9 +230,11 @@ Quando è configurata:
 
 ## Impostazioni e dati personali
 
-Progressi, stelle, statistiche e impostazioni restano nel browser e non lasciano mai il dispositivo. In Settings ci sono il nickname usato in classifica e l'interruttore dell'audio.
+Progressi, stelle, statistiche, achievement e impostazioni restano nel browser e non lasciano mai il dispositivo. In Impostazioni ci sono il nickname usato in classifica, l'interruttore dell'audio e la lingua: il gioco parte in italiano, si può passare all'inglese e la scelta viene ricordata.
 
-In Settings, alla voce Privacy and your data, puoi cancellare tutto: il profilo locale e, se ne hai salvata una, la riga in classifica. Il gioco torna allo stato di prima partita.
+Se avvii il gioco con il launcher, i progressi vengono scritti anche in `save/progress.json` nella cartella del gioco. Cancellare i dati del browser, o giocare con un altro browser sullo stesso computer, quindi non li fa perdere: al successivo avvio il launcher restituisce il file al gioco. Le impostazioni restano solo nel browser.
+
+In Impostazioni, alla voce Privacy e i tuoi dati, puoi cancellare tutto: il profilo locale e, se ne hai salvata una, la riga in classifica. Il gioco torna allo stato di prima partita.
 
 ![Il menu principale](./assets/main-menu.png)
 
