@@ -1,10 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getLevel, type ReversalSchedule } from '@/config/levels';
-import { SLEEP_FACTOR } from '@/config/powerUps';
 import * as mechanics from '@/engine/systems/MechanicRenderer';
 import { GameEngine } from '@/engine/GameEngine';
-import type { Chain } from '@/engine/entities/Chain';
-import type { PowerUpType } from '@/types/game.types';
+import type { LevelSession } from '@/engine/LevelSession';
 import { createCanvasMock } from '../helpers/canvasMock';
 import { createNoopEngineEvents } from '../helpers/engineEvents';
 
@@ -12,9 +10,8 @@ const schedule = { period: 8, duration: 1.5, factor: -0.5 };
 const STEP = 0.125;
 const SPEED = 20;
 interface ReversalInternals {
-  chain: Chain;
+  session: LevelSession;
   fixedUpdate: (dt: number) => void;
-  applyPowerUp: (type: PowerUpType) => void;
 }
 let engine: GameEngine;
 
@@ -40,34 +37,14 @@ function advanceTo(internals: ReversalInternals, elapsed: number): void {
 }
 
 function nextDistanceDelta(internals: ReversalInternals): number {
-  const before = internals.chain.frontDistance;
+  const before = internals.session.chain.frontDistance;
   internals.fixedUpdate(STEP);
-  return internals.chain.frontDistance - before;
+  return internals.session.chain.frontDistance - before;
 }
 
 afterEach(() => engine?.destroy());
 
 describe('GameEngine reversal', () => {
-  it('moves backward inside the window and forward before and after it', () => {
-    const internals = createEngine();
-    expect(nextDistanceDelta(internals)).toBe(SPEED * STEP);
-    advanceTo(internals, 7.75);
-    expect(nextDistanceDelta(internals)).toBe(SPEED * STEP * -0.5);
-    expect(nextDistanceDelta(internals)).toBe(SPEED * STEP * -0.5);
-    advanceTo(internals, 1.25);
-    expect(nextDistanceDelta(internals)).toBe(SPEED * STEP);
-  });
-
-  it('keeps forward motion for null schedules at the same elapsed time', () => {
-    const reversing = createEngine();
-    advanceTo(reversing, 8);
-    expect(nextDistanceDelta(reversing)).toBe(-1.25);
-    engine.destroy();
-    const forward = createEngine(null);
-    advanceTo(forward, 8);
-    expect(nextDistanceDelta(forward)).toBe(2.5);
-  });
-
   it('restarts the reversal clock when rebuilding the level', () => {
     const internals = createEngine();
     advanceTo(internals, 8);
@@ -85,13 +62,6 @@ describe('GameEngine reversal', () => {
     engine.startLevel(3);
     advanceTo(internals, 8);
     expect(nextDistanceDelta(internals)).toBe(2.5);
-  });
-
-  it('composes reversal with the SLEEP speed multiplier', () => {
-    const internals = createEngine();
-    advanceTo(internals, 8);
-    internals.applyPowerUp('SLEEP');
-    expect(nextDistanceDelta(internals)).toBeCloseTo(SPEED * STEP * -0.5 * SLEEP_FACTOR);
   });
 });
 

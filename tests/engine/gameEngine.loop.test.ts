@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameEngine } from '@/engine/GameEngine';
+import type { LevelSession } from '@/engine/LevelSession';
 import { createNoopEngineEvents } from '../helpers/engineEvents';
 import { createCanvasMock } from '../helpers/canvasMock';
 
@@ -22,13 +23,12 @@ describe('GameEngine fixed-timestep loop', () => {
 
     // Force the chain front onto the void so every step would end the game.
     const internals = engine as unknown as {
-      chain: { packets: { distance: number }[] };
-      path: { length: number };
+      session: LevelSession;
       lastTime: number;
       accumulator: number;
     };
-    const packets = internals.chain.packets;
-    packets[packets.length - 1]!.distance = internals.path.length;
+    const packets = internals.session.chain.packets;
+    packets[packets.length - 1]!.distance = internals.session.path.length;
     internals.lastTime = 0;
     internals.accumulator = 0;
 

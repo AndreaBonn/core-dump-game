@@ -4,71 +4,33 @@ import {
   FIXED_TIMESTEP,
   LEVEL_CLEAR_BONUS,
   MAX_FRAME_TIME,
-  PACKET_RADIUS,
-  VOID_RADIUS,
 } from '@/config/constants';
-import { getLevel, type LevelConfig, type ReversalSchedule } from '@/config/levels';
-import { HAZARD_COLOR } from '@/config/packetTypes';
-import { SHIELD_ROLLBACK } from '@/config/powerUps';
+import { LevelSession } from '@/engine/LevelSession';
+import {
+  GAME_OVER_SHAKE,
+  presentSessionEvent,
+  scoreSessionShot,
+} from '@/engine/systems/sessionFeedback';
+import type { ShotOutcome } from '@/engine/systems/ShotSystem';
 import { audioManager } from '@/engine/audio/AudioManager';
-import { buildRunResult, comboHitStop } from '@/engine/core/runFeedback';
-import { isInsideBoard } from '@/engine/core/bounds';
-import { directionFactor, telegraphPhase } from '@/engine/core/chainMotion';
-import { buildLevelState, drawPacketType } from '@/engine/core/levelBuilder';
-import { resolveChainCompletion } from '@/engine/core/chainCompletion';
+import { buildRunResult } from '@/engine/core/runFeedback';
 import { campaignConfig, isRunWon, type RunConfig } from '@/engine/core/runController';
-import type { Chain } from '@/engine/entities/Chain';
-import type { CpuCursor } from '@/engine/entities/CpuCursor';
-import type { Path } from '@/engine/entities/Path';
-import type { Projectile } from '@/engine/entities/Projectile';
-import type { VoidHole } from '@/engine/entities/VoidHole';
-import { createRng, type Rng } from '@/engine/math/rng';
 import { type Vec2 } from '@/engine/math/vec2';
-import { resolvePowerUp, rollbackChain } from '@/engine/systems/PowerUpSystem';
-import { applyShot, spawnProjectiles } from '@/engine/systems/ShotSystem';
 import { InputSystem } from '@/engine/systems/InputSystem';
 import { EngineRenderer, requireCanvasContext } from '@/engine/systems/EngineRenderer';
 import { VisualFx } from '@/engine/systems/VisualFx';
 import { DEFAULT_THEME, type Theme } from '@/engine/systems/theme';
-import type {
-  EngineEvents,
-  GamePhase,
-  PacketType,
-  PowerUpType,
-  RunResult,
-} from '@/types/game.types';
+import type { EngineEvents, GamePhase } from '@/types/game.types';
 
-const PROJECTILE_MARGIN = PACKET_RADIUS * 2;
 /** Screen shake when a level is cleared, and when the chain reaches the void. */
 const LEVEL_CLEAR_SHAKE = 6;
-const GAME_OVER_SHAKE = 16;
 
 export class GameEngine {
   private readonly ctx: CanvasRenderingContext2D;
-  private readonly canvas: HTMLCanvasElement;
   private readonly presenter: EngineRenderer;
-  private readonly events: EngineEvents;
   private readonly input: InputSystem;
   private readonly fx = new VisualFx();
-
-  private path!: Path;
-  private levelConfig: LevelConfig = getLevel(1);
-  private currentWave = 1;
-  private chain!: Chain;
-  private voidHole!: VoidHole;
-  private cursor!: CpuCursor;
-  private rng: Rng = createRng(1);
-  private types: readonly PacketType[] = [];
-  private projectiles: Projectile[] = [];
-
-  private baseSpeed = 0;
-  private levelTime: number = 0;
-  private reversal: ReversalSchedule | null = null;
-  private sleepTimer = 0;
-  private pendingFork = false;
-  /** A caught reach of the void, granted by try/catch and spent once. */
-  private shielded = false;
-
+  private session: LevelSession | null = null;
   private runConfig: RunConfig = campaignConfig();
   private level = 1;
   private score = 0;
@@ -77,109 +39,67 @@ export class GameEngine {
   private rafId = 0;
   private lastTime = 0;
   private accumulator = 0;
-  /** Simulation steps to skip for hit-stop; time still passes, the sim does not. */
   private hitStopSteps = 0;
   private reducedMotion = false;
   private theme: Theme = DEFAULT_THEME;
-
-  constructor(canvas: HTMLCanvasElement, events: EngineEvents) {
+  constructor(
+    private readonly canvas: HTMLCanvasElement,
+    private readonly events: EngineEvents,
+  ) {
     this.ctx = requireCanvasContext(canvas);
-    this.canvas = canvas;
     this.presenter = new EngineRenderer(BOARD_WIDTH, BOARD_HEIGHT);
-    this.events = events;
     this.input = new InputSystem(
       canvas,
       { onAim: (point) => this.aim(point), onFire: () => this.fire(), onSwap: () => this.swap() },
       (clientX, clientY) => this.screenToBoard(clientX, clientY),
     );
   }
-
   private swap(): void {
-    if (this.phase !== 'playing') {
-      return;
-    }
-    this.cursor.swap();
-    this.events.onNextPacketChange(this.cursor.nextType);
+    if (this.phase !== 'playing') return;
+    this.session!.swap();
+    this.events.onNextPacketChange(this.session!.nextType);
   }
-
-  /**
-   * Start a fresh run, resetting the accumulated score. The RunConfig selects
-   * the mode (campaign/endless/daily) via its level provider; defaults to the
-   * campaign so existing callers and tests keep the previous behaviour.
-   */
+  /** Start a fresh run with the selected level provider and reset the score. */
   startRun(config: RunConfig = campaignConfig()): void {
     this.runConfig = config;
     this.score = 0;
     this.events.onScoreChange(0);
     this.startLevel(config.startIndex);
   }
-
   startLevel(level: number): void {
     const config = this.runConfig.levelProvider(level);
-    if (!config) {
-      return;
-    }
+    if (!config) return;
     this.level = level;
     this.levelStartScore = this.score;
-    this.buildLevel(config);
+    this.session = new LevelSession(config);
     this.phase = 'playing';
     this.events.onLevelChange(level);
     this.events.onWaveChange(1, config.waves);
-    this.events.onNextPacketChange(this.cursor.nextType);
+    this.events.onNextPacketChange(this.session!.nextType);
   }
-
   /** Advance to the next level after a level-complete screen. */
   nextLevel(): void {
     if (this.phase === 'levelComplete') {
       this.startLevel(this.level + 1);
     }
   }
-
-  private buildLevel(config: LevelConfig): void {
-    this.levelTime = 0;
-    this.reversal = config.reversal;
-    const state = buildLevelState(config);
-    this.path = state.path;
-    this.voidHole = state.voidHole;
-    this.chain = state.chain;
-    this.cursor = state.cursor;
-    this.rng = state.rng;
-    this.types = state.types;
-    this.baseSpeed = state.baseSpeed;
-    this.levelConfig = config;
-    this.currentWave = 1;
-    this.sleepTimer = 0;
-    this.pendingFork = false;
-    this.shielded = false;
-    this.projectiles = [];
-  }
-
-  private drawType(): PacketType {
-    return drawPacketType(this.rng, this.types);
-  }
-
   start(): void {
-    if (this.rafId !== 0) {
-      return;
-    }
+    if (this.rafId !== 0) return;
     this.lastTime = performance.now();
     this.accumulator = 0;
     this.loop(this.lastTime);
   }
-
   pause(): void {
     if (this.phase === 'playing') {
       this.phase = 'paused';
     }
   }
-
   resume(): void {
     if (this.phase === 'paused') {
       this.phase = 'playing';
       this.lastTime = performance.now();
     }
   }
-
   destroy(): void {
     this.input.destroy();
     if (this.rafId !== 0) {
@@ -187,56 +107,41 @@ export class GameEngine {
       this.rafId = 0;
     }
   }
-
   /** Toggle reduced-motion: no shake, no particles, and no hit-stop. */
   setReducedMotion(reduced: boolean): void {
     this.reducedMotion = reduced;
     this.hitStopSteps = 0;
     this.fx.setReducedMotion(reduced);
   }
-
-  /** Change presentation colors without altering simulation state. */
   setTheme(theme: Theme): void {
     this.theme = theme;
   }
-
   resize(cssWidth: number, cssHeight: number, devicePixelRatio: number): void {
     this.presenter.configure(this.canvas, cssWidth, cssHeight, devicePixelRatio);
     this.drawFrame(0);
   }
-
   private screenToBoard(clientX: number, clientY: number): Vec2 {
     return this.presenter.screenToBoard(this.canvas, clientX, clientY);
   }
-
   private aim(point: Vec2): void {
     if (this.phase === 'playing') {
-      this.cursor.aimAt(point);
+      this.session!.aim(point);
     }
   }
-
   private fire(): void {
-    if (this.phase !== 'playing') {
-      return;
-    }
-    const type = this.cursor.loadNext(this.drawType());
-    const { position, angle } = this.cursor;
-    this.projectiles.push(...spawnProjectiles(position, angle, type, this.pendingFork));
-    this.pendingFork = false;
-    this.fx.spawnImpact(this.cursor.position, this.theme.packetColor(type));
+    if (this.phase !== 'playing') return;
+    const { type, position } = this.session!.fire();
+    this.fx.spawnImpact(position, this.theme.packetColor(type));
     audioManager.play('shoot');
-    this.events.onNextPacketChange(this.cursor.nextType);
+    this.events.onNextPacketChange(this.session!.nextType);
   }
-
   private loop = (now: number): void => {
     this.rafId = requestAnimationFrame(this.loop);
     const frameTime = Math.min((now - this.lastTime) / 1000, MAX_FRAME_TIME);
     this.lastTime = now;
-
     if (this.phase === 'playing') {
       this.accumulator += frameTime;
-      // Re-check the phase each step: fixedUpdate can end the level or the game
-      // mid-frame, and remaining steps must not keep simulating past that.
+      // Completion can stop the simulation midway through a frame.
       while (this.phase === 'playing' && this.accumulator >= FIXED_TIMESTEP) {
         if (this.hitStopSteps > 0) {
           this.hitStopSteps -= 1;
@@ -248,96 +153,28 @@ export class GameEngine {
     }
     this.drawFrame(frameTime);
   };
-
   private fixedUpdate(dt: number): void {
-    this.levelTime += dt;
-    this.updateSleep(dt);
-    this.chain.advance(dt * directionFactor(this.levelTime, this.reversal));
-    this.updateProjectiles(dt);
-    if (this.voidHole.hasSwallowed(this.chain.frontDistance, VOID_RADIUS)) {
-      // try/catch turns the first reach of the void into a hard shove back
-      // instead of a game over. The second one ends the run.
-      if (this.shielded) {
-        this.shielded = false;
-        rollbackChain(this.chain.packets, SHIELD_ROLLBACK);
-        this.fx.addShake(GAME_OVER_SHAKE);
-        audioManager.play('powerup');
-        return;
-      }
-      this.endGame();
+    for (const event of this.session!.step(dt, this.theme.packetColor)) {
+      presentSessionEvent(event, {
+        fx: this.fx,
+        events: this.events,
+        onShot: (outcome) => this.scoreShot(outcome),
+        onCleared: () => this.completeLevel(),
+        onBreached: () => this.endGame(),
+      });
     }
   }
-
-  private updateSleep(dt: number): void {
-    if (this.sleepTimer > 0) {
-      this.sleepTimer -= dt;
-      if (this.sleepTimer <= 0) {
-        this.chain.speed = this.baseSpeed;
-      }
-    }
-  }
-
-  private updateProjectiles(dt: number): void {
-    const survivors: Projectile[] = [];
-    for (const projectile of this.projectiles) {
-      projectile.advance(dt);
-      if (this.tryInsert(projectile)) {
-        if (this.phase !== 'playing') {
-          // The shot ended the level, which already cleared the projectiles:
-          // returning keeps the rest of this frame's shots from coming back.
-          return;
-        }
-        continue;
-      }
-      if (isInsideBoard(projectile.position, PROJECTILE_MARGIN)) {
-        survivors.push(projectile);
-      }
-    }
-    this.projectiles = survivors;
-  }
-
-  private tryInsert(projectile: Projectile): boolean {
-    const outcome = applyShot(this.chain.packets, this.path, projectile, this.theme.packetColor);
-    if (!outcome.hit) {
-      return false;
-    }
-    this.fx.reactToShot(outcome, projectile.position, this.theme.packetColor(projectile.type));
-    if (outcome.explosions > 0 || outcome.cracked > 0) {
-      this.score += outcome.score;
-      this.events.onScoreChange(this.score);
-      audioManager.playMatch(outcome.combo);
-      if (outcome.combo) {
-        this.events.onComboChange(outcome.combo);
-        this.hitStopSteps = comboHitStop(
-          this.hitStopSteps,
-          outcome.combo.multiplier,
-          this.reducedMotion,
-        );
-      }
-      for (const powerUp of outcome.powerUps) {
-        this.applyPowerUp(powerUp);
-      }
-    }
-    // Power-ups can empty the chain after the shot outcome has been computed.
-    this.resolveChainEnd();
-    return true;
-  }
-
-  private resolveChainEnd(): void {
-    resolveChainCompletion(this.chain, this.levelConfig, this.currentWave, {
-      onHazard: (hazard) =>
-        this.fx.spawnExplosion(this.path.pointAt(hazard.distance), HAZARD_COLOR),
-      onNextWave: (next) => {
-        this.currentWave = next.wave;
-        this.chain.packets.splice(0, this.chain.packets.length, ...next.packets);
-        this.events.onWaveChange(next.wave, next.total);
-      },
-      onComplete: () => this.completeLevel(),
+  private scoreShot(outcome: ShotOutcome): void {
+    if (outcome.explosions === 0 && outcome.cracked === 0) return;
+    this.score += outcome.score;
+    this.events.onScoreChange(this.score);
+    this.hitStopSteps = scoreSessionShot(outcome, {
+      hitStopSteps: this.hitStopSteps,
+      reducedMotion: this.reducedMotion,
+      events: this.events,
     });
   }
-
   private completeLevel(): void {
-    this.projectiles = [];
     const levelScore = this.score - this.levelStartScore;
     this.score += LEVEL_CLEAR_BONUS;
     this.events.onScoreChange(this.score);
@@ -345,55 +182,42 @@ export class GameEngine {
     audioManager.play('level-complete');
     if (isRunWon(this.level, this.runConfig.finalLevel)) {
       this.phase = 'gameWon';
-      this.events.onRunEnd(this.runResult(levelScore, true));
+      this.events.onRunEnd(
+        buildRunResult(this.runConfig, this.score, this.level, { levelScore, won: true }),
+      );
       return;
     }
     this.phase = 'levelComplete';
     this.events.onLevelComplete(levelScore, LEVEL_CLEAR_BONUS);
   }
-
-  private applyPowerUp(type: PowerUpType): void {
-    const effect = resolvePowerUp(type, { packets: this.chain.packets, rng: this.rng });
-    if (effect.speedFactor !== null) {
-      this.chain.speed = this.baseSpeed * effect.speedFactor;
-    }
-    this.sleepTimer = effect.sleepSeconds ?? this.sleepTimer;
-    this.pendingFork ||= effect.armsFork;
-    this.shielded ||= effect.grantsShield;
-    audioManager.play('powerup');
-    this.events.onPowerUp(type);
-  }
-
   private endGame(): void {
     this.phase = 'gameOver';
-    this.projectiles = [];
     this.fx.addShake(GAME_OVER_SHAKE);
     audioManager.play('game-over');
-    this.events.onRunEnd(this.runResult(this.score - this.levelStartScore, false));
+    this.events.onRunEnd(
+      buildRunResult(this.runConfig, this.score, this.level, {
+        levelScore: this.score - this.levelStartScore,
+        won: false,
+      }),
+    );
   }
-
-  private runResult(levelScore: number, won: boolean): RunResult {
-    return buildRunResult(this.runConfig, this.score, this.level, { levelScore, won });
-  }
-
   private drawFrame(dt: number): void {
-    // Before the first level is built the entities do not exist yet, so only
-    // the base transform is applied and nothing is read.
     if (this.phase === 'idle') {
       this.presenter.applyIdleTransform(this.ctx);
       return;
     }
+    const session = this.session!;
     this.presenter.present(
       this.ctx,
       {
         phase: this.phase,
-        path: this.path,
-        chain: this.chain,
-        voidPosition: this.voidHole.position,
-        cursor: this.cursor,
-        projectiles: this.projectiles,
+        path: session.path,
+        chain: session.chain,
+        voidPosition: session.voidPosition,
+        cursor: session.cursor,
+        projectiles: session.projectiles,
         fx: this.fx,
-        reversalPhase: telegraphPhase(this.levelTime, this.reversal),
+        reversalPhase: session.reversalPhase,
         reducedMotion: this.reducedMotion,
         theme: this.theme,
       },
