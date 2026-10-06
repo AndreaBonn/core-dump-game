@@ -2,7 +2,6 @@ import {
   BOARD_HEIGHT,
   BOARD_WIDTH,
   FIXED_TIMESTEP,
-  HIT_STOP_STEPS,
   LEVEL_CLEAR_BONUS,
   MAX_FRAME_TIME,
   PACKET_RADIUS,
@@ -12,6 +11,7 @@ import { type LevelConfig } from '@/config/levels';
 import { colorForType, HAZARD_COLOR } from '@/config/packetTypes';
 import { SHIELD_ROLLBACK } from '@/config/powerUps';
 import { audioManager } from '@/engine/audio/AudioManager';
+import { buildRunResult, comboHitStop } from '@/engine/core/runFeedback';
 import { isInsideBoard } from '@/engine/core/bounds';
 import { buildLevelState, drawPacketType } from '@/engine/core/levelBuilder';
 import { campaignConfig, isRunWon, type RunConfig } from '@/engine/core/runController';
@@ -294,7 +294,11 @@ export class GameEngine {
       audioManager.playMatch(outcome.combo);
       if (outcome.combo) {
         this.events.onComboChange(outcome.combo);
-        this.freezeForCombo(outcome.combo.multiplier);
+        this.hitStopSteps = comboHitStop(
+          this.hitStopSteps,
+          outcome.combo.multiplier,
+          this.reducedMotion,
+        );
       }
       for (const powerUp of outcome.powerUps) {
         this.applyPowerUp(powerUp);
@@ -331,29 +335,14 @@ export class GameEngine {
     this.events.onLevelComplete(levelScore, LEVEL_CLEAR_BONUS);
   }
 
-  /** Hold the simulation still for a moment so a big cascade reads. */
-  private freezeForCombo(multiplier: number): void {
-    if (this.reducedMotion) {
-      return;
-    }
-    const steps = HIT_STOP_STEPS[Math.min(multiplier, HIT_STOP_STEPS.length - 1)] ?? 0;
-    this.hitStopSteps = Math.max(this.hitStopSteps, steps);
-  }
-
   private applyPowerUp(type: PowerUpType): void {
     const effect = resolvePowerUp(type, { packets: this.chain.packets, rng: this.rng });
     if (effect.speedFactor !== null) {
       this.chain.speed = this.baseSpeed * effect.speedFactor;
     }
-    if (effect.sleepSeconds !== null) {
-      this.sleepTimer = effect.sleepSeconds;
-    }
-    if (effect.armsFork) {
-      this.pendingFork = true;
-    }
-    if (effect.grantsShield) {
-      this.shielded = true;
-    }
+    this.sleepTimer = effect.sleepSeconds ?? this.sleepTimer;
+    this.pendingFork ||= effect.armsFork;
+    this.shielded ||= effect.grantsShield;
     audioManager.play('powerup');
     this.events.onPowerUp(type);
   }
@@ -366,19 +355,8 @@ export class GameEngine {
     this.events.onRunEnd(this.runResult(this.score - this.levelStartScore, false));
   }
 
-  /**
-   * Everything the meta layer needs about a finished run. `won` is passed in
-   * rather than derived: losing on the final campaign level reaches the same
-   * level as winning it, and only the caller knows which happened.
-   */
   private runResult(levelScore: number, won: boolean): RunResult {
-    return {
-      mode: this.runConfig.mode,
-      score: this.score,
-      levelReached: this.level,
-      levelScore,
-      won,
-    };
+    return buildRunResult(this.runConfig, this.score, this.level, { levelScore, won });
   }
 
   private drawFrame(dt: number): void {
