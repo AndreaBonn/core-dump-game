@@ -83,7 +83,13 @@ function miss(): ShotOutcome {
  * respect to engine state: identical inputs yield an identical outcome, which
  * makes the core of the gameplay testable in isolation.
  */
-export function applyShot(packets: DataPacket[], path: PathQuery, shot: Shot): ShotOutcome {
+export function applyShot(
+  packets: DataPacket[],
+  path: PathQuery,
+  shot: Shot,
+  // The player's palette: bursts must match the packets they came from.
+  packetColor: (type: PacketType) => string = colorForType,
+): ShotOutcome {
   const index = findCollisionIndex(packets, path, shot.position);
   if (index < 0) {
     return miss();
@@ -110,7 +116,7 @@ export function applyShot(packets: DataPacket[], path: PathQuery, shot: Shot): S
     .map((packet) => packet.powerUpType!);
   const bursts = resolution.removed.map((packet) => ({
     point: path.pointAt(packet.distance),
-    color: colorForType(packet.type),
+    color: packetColor(packet.type),
   }));
   return {
     hit: true,

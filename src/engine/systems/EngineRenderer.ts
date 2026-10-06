@@ -16,9 +16,19 @@ import { frontUrgency } from '@/engine/systems/urgency';
 import { reversalCuePhase } from '@/engine/systems/MechanicRenderer';
 import type { VisualFx } from '@/engine/systems/VisualFx';
 import type { GamePhase } from '@/types/game.types';
+import type { Theme } from '@/engine/systems/theme';
 
 /** Arc-length before the void within which the chain front reads as "in danger". */
 const URGENCY_THRESHOLD = VOID_RADIUS * 6;
+
+/** Require the drawing surface before the engine installs any input listeners. */
+export function requireCanvasContext(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
+  const context = canvas.getContext('2d');
+  if (!context) {
+    throw new Error('2D canvas context is not available');
+  }
+  return context;
+}
 
 /** The simulation state a frame is drawn from, read but never written here. */
 export interface Frame {
@@ -32,6 +42,7 @@ export interface Frame {
   /** Raw telegraph phase from the engine, before reduced motion steadies it. */
   reversalPhase: number;
   reducedMotion: boolean;
+  theme: Theme;
 }
 
 /**
@@ -116,6 +127,7 @@ export class EngineRenderer {
           : null,
       urgency: frontUrgency(chain.frontDistance, path.length, URGENCY_THRESHOLD),
       reversalPhase: reversalCuePhase(frame.reversalPhase, frame.reducedMotion),
+      theme: frame.theme,
     });
   }
 

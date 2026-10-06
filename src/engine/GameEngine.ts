@@ -8,14 +8,14 @@ import {
   VOID_RADIUS,
 } from '@/config/constants';
 import { getLevel, type LevelConfig, type ReversalSchedule } from '@/config/levels';
-import { colorForType, HAZARD_COLOR } from '@/config/packetTypes';
+import { HAZARD_COLOR } from '@/config/packetTypes';
 import { SHIELD_ROLLBACK } from '@/config/powerUps';
 import { audioManager } from '@/engine/audio/AudioManager';
 import { buildRunResult, comboHitStop } from '@/engine/core/runFeedback';
 import { isInsideBoard } from '@/engine/core/bounds';
 import { directionFactor, telegraphPhase } from '@/engine/core/chainMotion';
 import { buildLevelState, drawPacketType } from '@/engine/core/levelBuilder';
-import { nextWave } from '@/engine/core/waves';
+import { resolveChainCompletion } from '@/engine/core/chainCompletion';
 import { campaignConfig, isRunWon, type RunConfig } from '@/engine/core/runController';
 import type { Chain } from '@/engine/entities/Chain';
 import type { CpuCursor } from '@/engine/entities/CpuCursor';
@@ -24,12 +24,12 @@ import type { Projectile } from '@/engine/entities/Projectile';
 import type { VoidHole } from '@/engine/entities/VoidHole';
 import { createRng, type Rng } from '@/engine/math/rng';
 import { type Vec2 } from '@/engine/math/vec2';
-import { removeStrandedHazards } from '@/engine/systems/MatchSystem';
 import { resolvePowerUp, rollbackChain } from '@/engine/systems/PowerUpSystem';
 import { applyShot, spawnProjectiles } from '@/engine/systems/ShotSystem';
 import { InputSystem } from '@/engine/systems/InputSystem';
-import { EngineRenderer } from '@/engine/systems/EngineRenderer';
+import { EngineRenderer, requireCanvasContext } from '@/engine/systems/EngineRenderer';
 import { VisualFx } from '@/engine/systems/VisualFx';
+import { DEFAULT_THEME, type Theme } from '@/engine/systems/theme';
 import type {
   EngineEvents,
   GamePhase,
@@ -80,14 +80,11 @@ export class GameEngine {
   /** Simulation steps to skip for hit-stop; time still passes, the sim does not. */
   private hitStopSteps = 0;
   private reducedMotion = false;
+  private theme: Theme = DEFAULT_THEME;
 
   constructor(canvas: HTMLCanvasElement, events: EngineEvents) {
-    const context = canvas.getContext('2d');
-    if (!context) {
-      throw new Error('2D canvas context is not available');
-    }
+    this.ctx = requireCanvasContext(canvas);
     this.canvas = canvas;
-    this.ctx = context;
     this.presenter = new EngineRenderer(BOARD_WIDTH, BOARD_HEIGHT);
     this.events = events;
     this.input = new InputSystem(
@@ -198,6 +195,11 @@ export class GameEngine {
     this.fx.setReducedMotion(reduced);
   }
 
+  /** Change presentation colors without altering simulation state. */
+  setTheme(theme: Theme): void {
+    this.theme = theme;
+  }
+
   resize(cssWidth: number, cssHeight: number, devicePixelRatio: number): void {
     this.presenter.configure(this.canvas, cssWidth, cssHeight, devicePixelRatio);
     this.drawFrame(0);
@@ -221,7 +223,7 @@ export class GameEngine {
     const { position, angle } = this.cursor;
     this.projectiles.push(...spawnProjectiles(position, angle, type, this.pendingFork));
     this.pendingFork = false;
-    this.fx.spawnImpact(this.cursor.position, colorForType(type));
+    this.fx.spawnImpact(this.cursor.position, this.theme.packetColor(type));
     audioManager.play('shoot');
     this.events.onNextPacketChange(this.cursor.nextType);
   }
@@ -295,11 +297,11 @@ export class GameEngine {
   }
 
   private tryInsert(projectile: Projectile): boolean {
-    const outcome = applyShot(this.chain.packets, this.path, projectile);
+    const outcome = applyShot(this.chain.packets, this.path, projectile, this.theme.packetColor);
     if (!outcome.hit) {
       return false;
     }
-    this.fx.reactToShot(outcome, projectile.position, colorForType(projectile.type));
+    this.fx.reactToShot(outcome, projectile.position, this.theme.packetColor(projectile.type));
     if (outcome.explosions > 0 || outcome.cracked > 0) {
       this.score += outcome.score;
       this.events.onScoreChange(this.score);
@@ -322,20 +324,16 @@ export class GameEngine {
   }
 
   private resolveChainEnd(): void {
-    for (const hazard of removeStrandedHazards(this.chain.packets)) {
-      this.fx.spawnExplosion(this.path.pointAt(hazard.distance), HAZARD_COLOR);
-    }
-    if (!this.chain.isEmpty) {
-      return;
-    }
-    const next = nextWave(this.levelConfig, this.currentWave);
-    if (next) {
-      this.currentWave = next.wave;
-      this.chain.packets.splice(0, this.chain.packets.length, ...next.packets);
-      this.events.onWaveChange(next.wave, next.total);
-    } else {
-      this.completeLevel();
-    }
+    resolveChainCompletion(this.chain, this.levelConfig, this.currentWave, {
+      onHazard: (hazard) =>
+        this.fx.spawnExplosion(this.path.pointAt(hazard.distance), HAZARD_COLOR),
+      onNextWave: (next) => {
+        this.currentWave = next.wave;
+        this.chain.packets.splice(0, this.chain.packets.length, ...next.packets);
+        this.events.onWaveChange(next.wave, next.total);
+      },
+      onComplete: () => this.completeLevel(),
+    });
   }
 
   private completeLevel(): void {
@@ -397,6 +395,7 @@ export class GameEngine {
         fx: this.fx,
         reversalPhase: telegraphPhase(this.levelTime, this.reversal),
         reducedMotion: this.reducedMotion,
+        theme: this.theme,
       },
       dt,
     );

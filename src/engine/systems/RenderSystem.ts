@@ -1,5 +1,5 @@
 import { CURSOR_RADIUS, PACKET_RADIUS, VOID_RADIUS } from '@/config/constants';
-import { colorForType, HAZARD_COLOR, labelForType } from '@/config/packetTypes';
+import { HAZARD_COLOR, labelForType } from '@/config/packetTypes';
 import { POWER_UPS } from '@/config/powerUps';
 import type { CpuCursor } from '@/engine/entities/CpuCursor';
 import type { Path } from '@/engine/entities/Path';
@@ -11,6 +11,9 @@ import { drawArmor, drawReversal } from '@/engine/systems/MechanicRenderer';
 import type { Landing } from '@/engine/systems/trajectory';
 import type { VisualFx } from '@/engine/systems/VisualFx';
 import type { DataPacket } from '@/types/game.types';
+import { DEFAULT_THEME, type Theme } from '@/engine/systems/theme';
+import { drawRoundedSquare } from '@/engine/systems/packetShape';
+import { drawChainShape, drawCursorSkin, drawProjectileTrail } from '@/engine/systems/SkinRenderer';
 
 /** Board background, also used to clear the canvas outside the fitted board. */
 export const BACKGROUND = '#0a0e14';
@@ -19,8 +22,9 @@ const TRACE_GLOW = '#2fb344';
 const VOID_RING = '#ff5555';
 const CURSOR_BODY = '#1e2a38';
 const CURSOR_PIN = '#2fb344';
-export const INK = '#0a0e14';
+export const INK = BACKGROUND;
 const HAZARD_MARK = '#0a0e14';
+const LOADED_PACKET_SCALE = 0.7;
 
 export interface RenderScene {
   path: Path;
@@ -35,6 +39,7 @@ export interface RenderScene {
   urgency: number;
   /** Reversal cue strength, 0..1: ramps up before the chain backs off, 1 while it does. */
   reversalPhase: number;
+  theme: Theme;
 }
 
 export class RenderSystem {
@@ -58,18 +63,32 @@ export class RenderSystem {
       if (distance < -PACKET_RADIUS) {
         continue;
       }
-      this.drawPacket(ctx, packet, scene.path.pointAt(distance), scene.fx.popScaleFor(packet.id));
+      this.drawPacket(
+        ctx,
+        packet,
+        scene.path.pointAt(distance),
+        scene.fx.popScaleFor(packet.id),
+        scene.theme,
+      );
     }
     if (scene.urgency > 0) {
       this.guides.urgency(ctx, scene);
     }
-    for (const projectile of scene.projectiles) {
-      this.fxRenderer.tracer(ctx, scene.fx.tracerFor(projectile.id), colorForType(projectile.type));
-      this.drawProjectile(ctx, projectile);
-    }
-    this.drawCursor(ctx, scene.cursor, scene.fx.time);
+    this.drawProjectiles(ctx, scene);
+    this.drawCursor(ctx, scene.cursor, scene.fx.time, scene.theme);
     this.fxRenderer.render(ctx, scene.fx);
     drawReversal(ctx, scene.voidPosition, scene.reversalPhase);
+  }
+
+  private drawProjectiles(ctx: CanvasRenderingContext2D, scene: RenderScene): void {
+    for (const projectile of scene.projectiles) {
+      this.fxRenderer.tracer(
+        ctx,
+        scene.fx.tracerFor(projectile.id),
+        scene.theme.packetColor(projectile.type),
+      );
+      this.drawProjectile(ctx, projectile, scene.theme);
+    }
   }
 
   private clear(ctx: CanvasRenderingContext2D): void {
@@ -151,14 +170,21 @@ export class RenderSystem {
     ctx.stroke();
   }
 
-  drawPacket(ctx: CanvasRenderingContext2D, packet: DataPacket, position: Vec2, scale = 1): void {
+  /** Draw a packet with optional scale and theme; direct callers retain classic by default. */
+  drawPacket(
+    ctx: CanvasRenderingContext2D,
+    packet: DataPacket,
+    position: Vec2,
+    scale = 1,
+    theme: Theme = DEFAULT_THEME,
+  ): void {
     const radius = PACKET_RADIUS * scale;
     if (!packet.matchable) {
       this.drawHazard(ctx, position, radius);
       return;
     }
-    const color = colorForType(packet.type);
-    this.roundedSquare(ctx, position, radius, color, true);
+    const color = theme.packetColor(packet.type);
+    drawChainShape(ctx, theme.chain, { center: position, radius }, { color, highlight: true });
     if (packet.isPowerUp && packet.powerUpType) {
       ctx.strokeStyle = INK;
       ctx.lineWidth = 2;
@@ -185,7 +211,7 @@ export class RenderSystem {
    * match" by shape as well as by colour, on a greyscale screen too.
    */
   private drawHazard(ctx: CanvasRenderingContext2D, position: Vec2, radius: number): void {
-    this.roundedSquare(ctx, position, radius, HAZARD_COLOR, false);
+    drawRoundedSquare(ctx, position, radius, { color: HAZARD_COLOR, highlight: false });
     ctx.strokeStyle = HAZARD_MARK;
     ctx.lineWidth = Math.max(2, radius * 0.18);
     ctx.lineCap = 'round';
@@ -198,36 +224,33 @@ export class RenderSystem {
     ctx.stroke();
   }
 
-  private drawProjectile(ctx: CanvasRenderingContext2D, projectile: Projectile): void {
-    const { position, velocity, type } = projectile;
-    const color = colorForType(type);
-    const speed = Math.hypot(velocity.x, velocity.y) || 1;
-    const dirX = velocity.x / speed;
-    const dirY = velocity.y / speed;
-
-    // Fading motion trail behind the projectile.
-    ctx.save();
-    for (let i = 1; i <= 4; i += 1) {
-      const back = i * PACKET_RADIUS * 0.7;
-      ctx.globalAlpha = 0.28 - i * 0.05;
-      this.roundedSquare(
-        ctx,
-        { x: position.x - dirX * back, y: position.y - dirY * back },
-        PACKET_RADIUS * (1 - i * 0.14),
-        color,
-        false,
-      );
-    }
-    ctx.restore();
+  private drawProjectile(
+    ctx: CanvasRenderingContext2D,
+    projectile: Projectile,
+    theme: Theme,
+  ): void {
+    const { position, type } = projectile;
+    const color = theme.packetColor(type);
+    drawProjectileTrail(ctx, projectile, theme);
 
     ctx.save();
     ctx.shadowColor = color;
     ctx.shadowBlur = 14;
-    this.roundedSquare(ctx, position, PACKET_RADIUS, color, true);
+    drawChainShape(
+      ctx,
+      theme.chain,
+      { center: position, radius: PACKET_RADIUS },
+      { color, highlight: true },
+    );
     ctx.restore();
   }
 
-  private drawCursor(ctx: CanvasRenderingContext2D, cursor: CpuCursor, time: number): void {
+  private drawCursor(
+    ctx: CanvasRenderingContext2D,
+    cursor: CpuCursor,
+    time: number,
+    theme: Theme,
+  ): void {
     const { position, angle } = cursor;
 
     ctx.strokeStyle = 'rgba(47, 179, 68, 0.35)';
@@ -251,39 +274,16 @@ export class RenderSystem {
     }
     ctx.restore();
 
-    this.roundedSquare(ctx, position, CURSOR_RADIUS, CURSOR_BODY, false);
+    drawRoundedSquare(ctx, position, CURSOR_RADIUS, { color: CURSOR_BODY, highlight: false });
     ctx.save();
-    ctx.shadowColor = colorForType(cursor.currentType);
+    ctx.shadowColor = theme.packetColor(cursor.currentType);
     ctx.shadowBlur = 12;
-    this.roundedSquare(ctx, position, PACKET_RADIUS * 0.7, colorForType(cursor.currentType), true);
+    drawCursorSkin(
+      ctx,
+      theme.cursor,
+      { center: position, radius: PACKET_RADIUS * LOADED_PACKET_SCALE },
+      theme.packetColor(cursor.currentType),
+    );
     ctx.restore();
-  }
-
-  private roundedSquare(
-    ctx: CanvasRenderingContext2D,
-    center: Vec2,
-    radius: number,
-    color: string,
-    highlight: boolean,
-  ): void {
-    const size = radius * 2;
-    const x = center.x - radius;
-    const y = center.y - radius;
-    const cornerRadius = radius * 0.4;
-    ctx.beginPath();
-    ctx.roundRect(x, y, size, size, cornerRadius);
-    ctx.fillStyle = color;
-    ctx.fill();
-    if (highlight) {
-      // Top-left sheen for a bit of volume over the flat fill.
-      const sheen = ctx.createLinearGradient(x, y, x, y + size);
-      sheen.addColorStop(0, 'rgba(255, 255, 255, 0.28)');
-      sheen.addColorStop(0.45, 'rgba(255, 255, 255, 0)');
-      ctx.fillStyle = sheen;
-      ctx.fill();
-    }
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
   }
 }

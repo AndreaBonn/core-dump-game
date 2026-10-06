@@ -89,6 +89,7 @@ export default defineConfig({
         'src/engine/systems/FxRenderer.ts',
         'src/engine/systems/GuideRenderer.ts',
         'src/engine/systems/MechanicRenderer.ts',
+        'src/engine/systems/SkinRenderer.ts',
       ],
       // Measured at 99.4% lines, 99% branches, 98.2% functions when these
       // thresholds were set. They sit a few points below that: high enough to

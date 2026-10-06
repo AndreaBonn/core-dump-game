@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { colorForType, labelForType } from '@/config/packetTypes';
+import { labelForType } from '@/config/packetTypes';
+import { useTheme } from '@/hooks/useTheme';
 import { getLevel, TOTAL_LEVELS } from '@/config/levels';
 import { useGameStore } from '@/store/useGameStore';
 import { Button } from '@/components/shared/Button';
@@ -23,6 +24,7 @@ export function HUD({ onPause }: HUDProps) {
   const powerUp = useGameStore((state) => state.powerUp);
   const setPowerUp = useGameStore((state) => state.setPowerUp);
   const { t } = useTranslation();
+  const theme = useTheme();
   // Endless and daily run past the campaign: a total and a boss mean nothing there.
   const inCampaign = mode === 'campaign';
   const isBoss = inCampaign && getLevel(level).isBoss;
@@ -85,7 +87,7 @@ export function HUD({ onPause }: HUDProps) {
               <p className="text-xs uppercase text-terminal-muted">{t('game.next')}</p>
               <span
                 className="mt-1 inline-flex h-7 w-7 items-center justify-center rounded-sm font-bold text-terminal-bg"
-                style={{ backgroundColor: colorForType(nextPacket) }}
+                style={{ backgroundColor: theme.packetColor(nextPacket) }}
               >
                 {labelForType(nextPacket)}
               </span>

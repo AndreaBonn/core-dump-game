@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { GameCanvas } from '@/components/game/GameCanvas';
 import { GameEngine } from '@/engine/GameEngine';
+import { EMPTY_STATS } from '@/engine/core/stats';
+import { useProgressStore } from '@/store/useProgressStore';
+import { useSettingsStore } from '@/store/useSettingsStore';
 import { useGameStore } from '@/store/useGameStore';
 import type { EngineEvents } from '@/types/game.types';
 import { createCanvasMock } from '../helpers/canvasMock';
@@ -134,6 +137,23 @@ describe('GameCanvas', () => {
     motionListeners[0]!({} as MediaQueryListEvent);
 
     expect(setReducedMotion).toHaveBeenLastCalledWith(true);
+  });
+
+  it("draws with the player's unlocked cosmetics and follows a new choice mid-run", () => {
+    useSettingsStore.getState().resetSettings();
+    // resetSettings also restores the default language, Italian; these tests read English.
+    useSettingsStore.getState().setLanguage('en');
+    useProgressStore.setState({ stats: { ...EMPTY_STATS, runsPlayed: 1, levelsCleared: 5 } });
+    const setTheme = vi.spyOn(GameEngine.prototype, 'setTheme');
+    render(<GameCanvas events={spyEvents()} onReady={vi.fn()} />);
+    expect(setTheme.mock.lastCall![0].cursor.id).toBe('cursor-default');
+
+    act(() => useSettingsStore.getState().selectCosmetic('cursor', 'ring'));
+
+    expect(setTheme.mock.lastCall![0].cursor.id).toBe('ring');
+    useProgressStore.getState().clearProfile();
+    useSettingsStore.getState().resetSettings();
+    useSettingsStore.getState().setLanguage('en');
   });
 
   it('plays with motion on when the browser cannot report the preference', () => {

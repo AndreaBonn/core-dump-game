@@ -4,7 +4,10 @@ import userEvent from '@testing-library/user-event';
 import { HUD } from '@/components/game/HUD';
 import { TOTAL_LEVELS } from '@/config/levels';
 import { labelForType } from '@/config/packetTypes';
+import { EMPTY_STATS } from '@/engine/core/stats';
 import { useGameStore } from '@/store/useGameStore';
+import { useProgressStore } from '@/store/useProgressStore';
+import { useSettingsStore } from '@/store/useSettingsStore';
 
 /** The HUD clears the combo and the power-up name after this long. */
 const COMBO_VISIBLE_MS = 1200;
@@ -84,6 +87,20 @@ describe('HUD', () => {
     render(<HUD onPause={vi.fn()} />);
 
     expect(screen.queryByTestId('hud-wave')).not.toBeInTheDocument();
+  });
+
+  it("previews the next packet in the player's unlocked palette", () => {
+    useSettingsStore.getState().selectCosmetic('palette', 'okabe-ito');
+    useProgressStore.setState({ stats: { ...EMPTY_STATS, runsPlayed: 1, levelsCleared: 5 } });
+    useGameStore.setState({ nextPacket: 'ERROR' });
+
+    render(<HUD onPause={vi.fn()} />);
+
+    expect(screen.getByText(labelForType('ERROR'))).toHaveStyle({ backgroundColor: '#d55e00' });
+    useSettingsStore.getState().resetSettings();
+    // resetSettings also restores the default language, Italian; these tests read English.
+    useSettingsStore.getState().setLanguage('en');
+    useProgressStore.getState().clearProfile();
   });
 
   it('previews the packet that will be fired next', () => {

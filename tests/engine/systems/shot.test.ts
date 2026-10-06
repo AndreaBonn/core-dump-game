@@ -137,3 +137,19 @@ describe('spawnProjectiles', () => {
     expect(headings[2]).toBeCloseTo(0.5 + FORK_SPREAD);
   });
 });
+
+describe('applyShot burst colours', () => {
+  it('paints each burst with the colour the caller gives for its packet type', () => {
+    const packets = [packet('ERROR', 200), packet('ERROR', 216)];
+
+    const outcome = applyShot(
+      packets,
+      straightPath,
+      { position: vec2(208, 0), type: 'ERROR' },
+      (type) => (type === 'ERROR' ? '#123456' : '#000000'),
+    );
+
+    expect(outcome.bursts).toHaveLength(3);
+    expect(outcome.bursts.every((burst) => burst.color === '#123456')).toBe(true);
+  });
+});

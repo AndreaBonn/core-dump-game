@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { GameEngine } from '@/engine/GameEngine';
 import { audioManager } from '@/engine/audio/AudioManager';
 import { runConfigForMode } from '@/engine/core/runController';
+import { useTheme } from '@/hooks/useTheme';
 import { useGameStore } from '@/store/useGameStore';
 import type { EngineEvents } from '@/types/game.types';
 
@@ -18,6 +19,10 @@ export function GameCanvas({ events, onReady }: GameCanvasProps) {
   eventsRef.current = events;
   const onReadyRef = useRef(onReady);
   onReadyRef.current = onReady;
+  const theme = useTheme();
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
+  const engineRef = useRef<GameEngine | null>(null);
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -40,6 +45,8 @@ export function GameCanvas({ events, onReady }: GameCanvasProps) {
 
     audioManager.load();
     const engine = new GameEngine(canvas, forward);
+    engineRef.current = engine;
+    engine.setTheme(themeRef.current);
     const applySize = () => {
       const rect = container.getBoundingClientRect();
       engine.resize(rect.width, rect.height, window.devicePixelRatio || 1);
@@ -66,8 +73,14 @@ export function GameCanvas({ events, onReady }: GameCanvasProps) {
       observer.disconnect();
       motionQuery?.removeEventListener('change', applyMotion);
       engine.destroy();
+      engineRef.current = null;
     };
   }, []);
+
+  // A cosmetic picked or unlocked mid-run repaints the board without a restart.
+  useEffect(() => {
+    engineRef.current?.setTheme(theme);
+  }, [theme]);
 
   return (
     <div ref={containerRef} className="h-full w-full touch-none">
