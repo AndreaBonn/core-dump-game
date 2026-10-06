@@ -38,3 +38,6 @@ test-results.xml
 
 # Local save written by the launcher (play.cmd / play.sh)
 save/
+
+# Save file of the end-to-end suite, kept apart from the player's
+/.e2e-save/

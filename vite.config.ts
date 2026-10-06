@@ -3,14 +3,19 @@ import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
-import { saveFilePlugin } from './scripts/lib/saveFile.mjs';
+import { resolveSaveFilePath, saveFilePlugin } from './scripts/lib/saveFile.mjs';
 
 const THEME_BACKGROUND = '#0a0e14';
 
 export default defineConfig({
   plugins: [
     react(),
-    saveFilePlugin(fileURLToPath(new URL('./save/progress.json', import.meta.url))),
+    saveFilePlugin(
+      resolveSaveFilePath(
+        process.env,
+        fileURLToPath(new URL('./save/progress.json', import.meta.url)),
+      ),
+    ),
     VitePWA({
       // The player is told and chooses: an update that swaps the app mid-run
       // reloads the board with no explanation.

@@ -1,6 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
+import { SAVE_FILE_ENV } from './scripts/lib/saveFile.mjs';
+import { E2E_SAVE_FILE } from './e2e/saveFile';
 
-const PORT = 4173;
+// Not vite preview's default 4173: that is the port the game launcher plays on,
+// and reuseExistingServer would run the suite against the player's own server.
+const PORT = 4317;
 
 /**
  * End-to-end tests run against the production build, not the dev server: the
@@ -9,6 +13,7 @@ const PORT = 4173;
  */
 export default defineConfig({
   testDir: './e2e',
+  globalSetup: './e2e/global-setup.ts',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
@@ -32,5 +37,6 @@ export default defineConfig({
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    env: { [SAVE_FILE_ENV]: E2E_SAVE_FILE },
   },
 });

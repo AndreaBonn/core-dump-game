@@ -81,6 +81,24 @@ export function handleSaveRequest(request, store) {
 }
 
 /**
+ * Environment variable that moves the save file elsewhere. The end-to-end
+ * suite sets it so its runs never write into the player's own save.
+ */
+export const SAVE_FILE_ENV = 'CORE_DUMP_SAVE_FILE';
+
+/**
+ * The save file to use: the one the environment names, or `defaultPath`.
+ *
+ * @param {Record<string, string | undefined>} env usually process.env
+ * @param {string} defaultPath the player's save file
+ * @returns {string}
+ */
+export function resolveSaveFilePath(env, defaultPath) {
+  const configured = env[SAVE_FILE_ENV]?.trim();
+  return configured ? configured : defaultPath;
+}
+
+/**
  * File-backed store. The write goes to a sibling temp file and is renamed over
  * the save, so a crash or power loss mid-write leaves the previous save intact
  * instead of a truncated one.
