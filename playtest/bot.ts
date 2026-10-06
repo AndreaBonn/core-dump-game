@@ -7,6 +7,8 @@ const CASUAL_ERROR_INTERVAL = 3;
 const PATH_ENTRY_DISTANCE = 0;
 // Below this rank a shot only lengthens the chain.
 const WORTHWHILE_RANK = 0;
+// Waiting for a better colour is only safe while the front is near the start.
+const HOLD_FIRE_TRACK_SHARE = 0.25;
 
 export type SkillLevel = 'casual' | 'skilled';
 
@@ -62,8 +64,22 @@ function best(session: LevelSession, pool: readonly Candidate[]) {
 }
 
 /**
+ * Whether holding fire still costs nothing: packets keep entering, so the
+ * next colours may join a run, and the front has slack before the void. A
+ * chain longer than its track never finishes entering, so the slack decides.
+ */
+function canWait(session: LevelSession): boolean {
+  const { packets } = session.chain;
+  const front = packets[packets.length - 1];
+  const entering = packets.some((packet) => !isVisible(packet));
+  return (
+    entering && front !== undefined && front.distance < session.path.length * HOLD_FIRE_TRACK_SHARE
+  );
+}
+
+/**
  * Choose the next shot by playing each candidate forward on a copy of the
- * board. Skilled weighs the swap and, while packets are still entering, holds
+ * board. Skilled weighs the swap and, while it can afford to wait, holds
  * fire rather than feed the chain a lone packet; casual plays the ready packet
  * and slips one packet off every third shot. Return null to hold fire.
  */
@@ -76,8 +92,7 @@ export function chooseShot(
   if (!found) return null;
   const { candidate, rank } = found;
   if (skill === 'skilled') {
-    const entering = session.chain.packets.some((packet) => !isVisible(packet));
-    return rank < WORTHWHILE_RANK && entering ? null : planFor(session, candidate);
+    return rank < WORTHWHILE_RANK && canWait(session) ? null : planFor(session, candidate);
   }
   const slips = (shotCount + 1) % CASUAL_ERROR_INTERVAL === 0;
   const last = session.chain.packets.length - 1;

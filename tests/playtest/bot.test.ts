@@ -44,6 +44,18 @@ describe('chooseShot', () => {
     expect(chooseShot(session, 'casual', FIRST_SHOT)?.shouldSwap).toBe(false);
   });
 
+  it('skilled stops holding fire once the chain front is well along the track', () => {
+    // Still entering at the back, as a chain longer than its track always is,
+    // but the front has covered more than a quarter of the 600-long track.
+    const alternating: PacketType[] = Array.from({ length: 8 }, (_, index) =>
+      index % 2 === 0 ? 'INFO' : 'SUCCESS',
+    );
+    const session = board(alternating, 'ERROR', 'WARNING', -SPACING);
+
+    expect(session.chain.packets.some(({ distance }) => distance < 0)).toBe(true);
+    expect(chooseShot(session, 'skilled', FIRST_SHOT)).not.toBeNull();
+  });
+
   it('skilled holds fire on a lone placement while packets are still entering', () => {
     const session = board(['INFO', 'SUCCESS', 'INFO'], 'ERROR', 'WARNING', -SPACING);
 
