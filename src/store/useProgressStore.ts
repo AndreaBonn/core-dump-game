@@ -143,7 +143,8 @@ export const useProgressStore = create<ProgressState>((set, get) => {
     const fresh = newlyEarned(state, profile.earned);
     const saved: StoredProfile = {
       ...profile,
-      earned: [...profile.earned, ...fresh],
+      // Same list when nothing new: a fresh array on every combo would re-derive XP and theme.
+      earned: fresh.length > 0 ? [...profile.earned, ...fresh] : profile.earned,
       resetAt: profile.resetAt ?? get().resetAt,
     };
     writeProfile(saved);

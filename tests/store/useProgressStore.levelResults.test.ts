@@ -106,3 +106,31 @@ describe('useProgressStore level results by mode', () => {
     expect(store.getState().stats.runsWon).toBe(1);
   });
 });
+
+describe('useProgressStore references', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('keeps the earned list when an update earns nothing, so subscribers do not recompute', async () => {
+    const store = await loadStore();
+    store.getState().noteCombo(2);
+    const earned = store.getState().earned;
+    expect(earned.length).toBeGreaterThan(0);
+
+    store.getState().noteCombo(2);
+
+    expect(store.getState().earned).toBe(earned);
+  });
+
+  it('replaces the earned list when an update does earn something', async () => {
+    const store = await loadStore();
+    store.getState().noteCombo(2);
+    const earned = store.getState().earned;
+
+    store.getState().noteCombo(3);
+
+    expect(store.getState().earned).not.toBe(earned);
+    expect(store.getState().earned).toContain('stack-overflow');
+  });
+});
