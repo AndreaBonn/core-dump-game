@@ -31,9 +31,9 @@ describe('level configuration', () => {
     expect(getLevel(3).level).toBe(3);
   });
 
-  it.each(CHAPTERS)('increases chain speed monotonically within chapter $id', ({ id }) => {
-    const levels = LEVELS.filter(({ chapter }) => chapter === id);
-    expect(levels).toHaveLength(CHAPTERS.find((chapter) => chapter.id === id)!.levels.length);
+  // The authored speed is the pace on a spiral; the built level rescales it to
+  // its track (tests/config/trackPace.test.ts), so the curve is read from the spec.
+  it.each(CHAPTERS)('increases the authored chain speed within chapter $id', ({ levels }) => {
     for (let i = 1; i < levels.length; i += 1) {
       expect(levels[i]!.chainSpeed).toBeGreaterThan(levels[i - 1]!.chainSpeed);
     }
@@ -48,10 +48,11 @@ describe('level configuration', () => {
   });
 
   it('starts the hazard chapter below the previous boss at the previous fifth level tuning', () => {
-    expect(getLevel(6)).toMatchObject({ chainLength: 48, chainSpeed: 57 });
-    expect(getLevel(7)).toMatchObject({ chainLength: 36, chainSpeed: 46 });
-    expect(getLevel(7).chainLength).toBe(getLevel(5).chainLength);
-    expect(getLevel(7).chainSpeed).toBe(getLevel(5).chainSpeed);
+    const [base, hazard] = [CHAPTERS[0]!.levels, CHAPTERS[1]!.levels];
+    expect(base[5]).toMatchObject({ chainLength: 48, chainSpeed: 57 });
+    expect(hazard[0]).toMatchObject({ chainLength: 36, chainSpeed: 46 });
+    expect(hazard[0]!.chainLength).toBe(base[4]!.chainLength);
+    expect(hazard[0]!.chainSpeed).toBe(base[4]!.chainSpeed);
   });
 
   it('starts at 4 colours and grows to at most 7', () => {

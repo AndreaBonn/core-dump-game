@@ -92,8 +92,8 @@ describe('campaign replay through public engine input and animation frames', () 
   it('preserves the level 13 armor replay', () => {
     expect(replay(13)).toMatchInlineSnapshot(`
       {
-        "armor": "0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
-        "count": 78,
+        "armor": "0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+        "count": 67,
         "events": [
           "["score",0]",
           "["level",13]",
@@ -151,19 +151,21 @@ describe('campaign replay through public engine input and animation frames', () 
           "["next","DEBUG"]",
           "["next","DEBUG"]",
           "["next","WARNING"]",
-          "["score",30]",
           "["next","SUCCESS"]",
           "["next","INFO"]",
           "["next","INFO"]",
           "["next","TRACE"]",
-          "["end",{"mode":"campaign","score":30,"levelReached":13,"levelScore":30,"won":false}]",
+          "["next","DEBUG"]",
+          "["next","TRACE"]",
+          "["next","DEBUG"]",
+          "["next","FATAL"]",
         ],
-        "phase": "gameOver",
+        "phase": "playing",
         "score": [
           "score",
-          30,
+          0,
         ],
-        "types": "ERROR,SUCCESS,INFO,WARNING,WARNING,DEBUG,SUCCESS,TRACE,WARNING,TRACE,DEBUG,SUCCESS,ERROR,SUCCESS,TRACE,WARNING,FATAL,INFO,ERROR,FATAL,INFO,ERROR,SUCCESS,DEBUG,ERROR,ERROR,DEBUG,INFO,FATAL,INFO,DEBUG,DEBUG,ERROR,DEBUG,TRACE,SUCCESS,TRACE,DEBUG,SUCCESS,TRACE,WARNING,INFO,WARNING,INFO,SUCCESS,INFO,DEBUG,ERROR,WARNING,ERROR,ERROR,TRACE,INFO,SUCCESS,SUCCESS,INFO,FATAL,WARNING,FATAL,INFO,WARNING,SUCCESS,FATAL,FATAL,INFO,WARNING,FATAL,WARNING,DEBUG,WARNING,TRACE,DEBUG,INFO,DEBUG,INFO,INFO,WARNING,TRACE",
+        "types": "ERROR,SUCCESS,INFO,WARNING,WARNING,DEBUG,SUCCESS,TRACE,WARNING,TRACE,DEBUG,SUCCESS,ERROR,SUCCESS,TRACE,WARNING,FATAL,INFO,ERROR,FATAL,INFO,ERROR,SUCCESS,DEBUG,ERROR,ERROR,DEBUG,INFO,FATAL,INFO,DEBUG,DEBUG,ERROR,DEBUG,TRACE,SUCCESS,TRACE,SUCCESS,TRACE,WARNING,INFO,WARNING,ERROR,INFO,INFO,WARNING,WARNING,FATAL,INFO,INFO,DEBUG,DEBUG,INFO,INFO,WARNING,TRACE,SUCCESS,WARNING,INFO,ERROR,DEBUG,DEBUG,ERROR,SUCCESS,TRACE,FATAL,DEBUG",
         "wave": [
           "wave",
           1,
@@ -175,8 +177,8 @@ describe('campaign replay through public engine input and animation frames', () 
   it('preserves the level 25 waves replay', () => {
     expect(replay(25)).toMatchInlineSnapshot(`
       {
-        "armor": "0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,1,0,0,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
-        "count": 104,
+        "armor": "0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,1,0,0,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+        "count": 94,
         "events": [
           "["score",0]",
           "["level",25]",
@@ -233,14 +235,23 @@ describe('campaign replay through public engine input and animation frames', () 
           "["next","SUCCESS"]",
           "["next","SUCCESS"]",
           "["next","ERROR"]",
-          "["end",{"mode":"campaign","score":0,"levelReached":25,"levelScore":0,"won":false}]",
+          "["next","INFO"]",
+          "["score",30]",
+          "["next","DEBUG"]",
+          "["next","TRACE"]",
+          "["next","FATAL"]",
+          "["next","SUCCESS"]",
+          "["next","WARNING"]",
+          "["next","DEBUG"]",
+          "["next","WARNING"]",
+          "["next","SUCCESS"]",
         ],
-        "phase": "gameOver",
+        "phase": "playing",
         "score": [
           "score",
-          0,
+          30,
         ],
-        "types": "SUCCESS,INFO,WARNING,FATAL,TRACE,WARNING,SUCCESS,INFO,TRACE,ERROR,TRACE,ERROR,WARNING,TRACE,WARNING,ERROR,INFO,WARNING,TRACE,FATAL,INFO,INFO,FATAL,FATAL,ERROR,ERROR,TRACE,ERROR,DEBUG,ERROR,ERROR,SUCCESS,WARNING,ERROR,ERROR,WARNING,TRACE,INFO,INFO,INFO,INFO,TRACE,SUCCESS,INFO,DEBUG,TRACE,TRACE,DEBUG,WARNING,SUCCESS,INFO,WARNING,WARNING,INFO,TRACE,TRACE,DEBUG,ERROR,TRACE,SUCCESS,SUCCESS,FATAL,SUCCESS,ERROR,SUCCESS,ERROR,INFO,WARNING,SUCCESS,SUCCESS,DEBUG,ERROR,TRACE,TRACE,WARNING,TRACE,FATAL,INFO,TRACE,SUCCESS,WARNING,INFO,FATAL,ERROR,SUCCESS,ERROR,WARNING,INFO,SUCCESS,FATAL,FATAL,INFO,ERROR,FATAL,INFO,INFO,DEBUG,TRACE,WARNING,DEBUG,DEBUG,WARNING,SUCCESS,INFO",
+        "types": "SUCCESS,INFO,WARNING,FATAL,TRACE,WARNING,SUCCESS,INFO,TRACE,ERROR,TRACE,ERROR,WARNING,TRACE,WARNING,ERROR,INFO,WARNING,TRACE,FATAL,INFO,INFO,FATAL,FATAL,ERROR,ERROR,TRACE,ERROR,DEBUG,ERROR,ERROR,SUCCESS,WARNING,ERROR,ERROR,WARNING,TRACE,INFO,INFO,INFO,INFO,TRACE,SUCCESS,INFO,DEBUG,TRACE,TRACE,DEBUG,WARNING,SUCCESS,INFO,WARNING,WARNING,INFO,TRACE,TRACE,DEBUG,ERROR,SUCCESS,FATAL,SUCCESS,WARNING,ERROR,SUCCESS,INFO,INFO,INFO,TRACE,TRACE,FATAL,ERROR,WARNING,SUCCESS,SUCCESS,DEBUG,INFO,ERROR,DEBUG,TRACE,SUCCESS,SUCCESS,INFO,DEBUG,DEBUG,WARNING,SUCCESS,FATAL,TRACE,INFO,ERROR,WARNING,ERROR,DEBUG,TRACE",
         "wave": [
           "wave",
           1,

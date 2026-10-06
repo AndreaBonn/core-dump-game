@@ -6,6 +6,7 @@ import {
 } from '@/config/campaign';
 import { buildTrack, type PathKind } from '@/config/paths';
 import type { StarThresholds } from '@/engine/core/stars';
+import { sampleCatmullRom } from '@/engine/math/spline';
 import type { Vec2 } from '@/engine/math/vec2';
 
 export interface ReversalSchedule {
@@ -118,8 +119,12 @@ export interface CampaignPosition {
   readonly chapterLength: number;
 }
 
-function buildLevelTrack(level: number, turns: number): readonly Vec2[] {
-  const kind = pathKindFor(level);
+/** The track of a level, drawn as `kind` (by default the shape the level uses). */
+export function levelTrack(
+  level: number,
+  turns: number,
+  kind: PathKind = pathKindFor(level),
+): readonly Vec2[] {
   const step = level - 1;
   return buildTrack({
     kind,
@@ -127,6 +132,19 @@ function buildLevelTrack(level: number, turns: number): readonly Vec2[] {
     sweeps: kind === 'spiral' ? turns : Math.max(MIN_TRACK_SWEEPS, Math.round(turns)),
     waypoints: TRACK_WAYPOINT_COUNT,
   });
+}
+
+/**
+ * The chain speed that crosses `track` in the time this level's spiral takes
+ * at `speed`. A serpentine is half as long as a spiral and a loop half again
+ * as long, so one speed for every shape turned the shape into the difficulty;
+ * the authored speed sets the clock, the shape only changes the drawing. The
+ * cap still wins: past it a longer track gives more time instead of more speed.
+ */
+function speedOnTrack(speed: number, level: number, turns: number, track: readonly Vec2[]): number {
+  if (pathKindFor(level) === 'spiral') return speed;
+  const spiral = sampleCatmullRom(levelTrack(level, turns, 'spiral')).totalLength;
+  return Math.min((speed * sampleCatmullRom(track).totalLength) / spiral, MAX_CHAIN_SPEED);
 }
 
 function tuningForLevel(level: number): LevelTuning {
@@ -148,7 +166,7 @@ function tuningForLevel(level: number): LevelTuning {
 export function buildLevelConfig(level: number, seedBase: number): LevelConfig {
   const tuning = tuningForLevel(level);
   const pathKind = pathKindFor(level);
-  const waypoints = buildLevelTrack(level, tuning.turns);
+  const waypoints = levelTrack(level, tuning.turns);
   return {
     level,
     chapter: null,
@@ -159,7 +177,7 @@ export function buildLevelConfig(level: number, seedBase: number): LevelConfig {
     waypoints,
     chainLength: tuning.chainLength,
     colorCount: tuning.colorCount,
-    chainSpeed: tuning.chainSpeed,
+    chainSpeed: speedOnTrack(tuning.chainSpeed, level, tuning.turns, waypoints),
     powerUpChance: POWER_UP_CHANCE,
     hazardChance: hazardChanceFor(level),
     pathKind,
@@ -174,6 +192,7 @@ export function buildLevelConfig(level: number, seedBase: number): LevelConfig {
  */
 export function buildCampaignLevel(spec: LevelSpec, position: CampaignPosition): LevelConfig {
   const { level, chapter, index, chapterLength } = position;
+  const waypoints = levelTrack(level, spec.turns);
   return {
     level,
     chapter,
@@ -181,10 +200,10 @@ export function buildCampaignLevel(spec: LevelSpec, position: CampaignPosition):
     armorChance: spec.armorChance,
     reversal: spec.reversal,
     waves: spec.waves,
-    waypoints: buildLevelTrack(level, spec.turns),
+    waypoints,
     chainLength: spec.chainLength,
     colorCount: spec.colorCount,
-    chainSpeed: spec.chainSpeed,
+    chainSpeed: speedOnTrack(spec.chainSpeed, level, spec.turns, waypoints),
     powerUpChance: POWER_UP_CHANCE,
     hazardChance: spec.hazardChance,
     pathKind: pathKindFor(level),

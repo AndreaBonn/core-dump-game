@@ -24,7 +24,6 @@ describe('playable campaign chapters', () => {
       isBoss: true,
       chainLength: 52,
       colorCount: 7,
-      chainSpeed: 66,
       hazardChance: 0.1,
       armorChance: 0.25,
       reversal: CUSTOM_BOSS_SPEC.reversal,
@@ -38,6 +37,9 @@ describe('playable campaign chapters', () => {
     expect(config.waypoints).toEqual(
       buildTrack({ kind: 'loop', reach: 250, sweeps: 4, waypoints: 64 }),
     );
+    // A loop is longer than the spiral the speed was authored for: the chain
+    // runs faster to keep the same clock.
+    expect(config.chainSpeed).toBeGreaterThan(CUSTOM_BOSS_SPEC.chainSpeed);
   });
 
   it('keeps fractional spiral turns and alternates the track radius', () => {
@@ -94,12 +96,12 @@ describe('playable campaign chapters', () => {
     ).toEqual([0, 0, 0, 0, 0, 0]);
   });
 
+  // chainSpeed is authored as a spiral pace and rescaled per track: trackPace.test.ts.
   it.each(CHAPTERS)('uses the authored tuning of chapter $id', (chapter) => {
     const levels = LEVELS.filter((level) => level.chapter === chapter.id);
     const tuning = chapter.levels.map((spec) => ({
       chainLength: spec.chainLength,
       colorCount: spec.colorCount,
-      chainSpeed: spec.chainSpeed,
       armorChance: spec.armorChance,
       reversal: spec.reversal,
       waves: spec.waves,
