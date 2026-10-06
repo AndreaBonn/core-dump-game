@@ -14,6 +14,7 @@ export const game: Pick<Messages, 'game' | 'combo' | 'powerUps' | 'tutorial'> = 
     quitToMenu: 'Esci al menu',
     levelCleared: 'LIVELLO SUPERATO',
     boss: en.game.boss,
+    wave: 'ondata {{wave}}/{{total}}',
     nextChapter: 'Prossimo: capitolo {{chapter}} · {{mechanic}}',
     levelScore: 'punti del livello',
     clearBonus: 'bonus completamento',

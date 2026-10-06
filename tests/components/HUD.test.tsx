@@ -69,6 +69,23 @@ describe('HUD', () => {
     expect(screen.queryByText('BOSS')).not.toBeInTheDocument();
   });
 
+  it('announces the current wave of a multi-wave level', () => {
+    useGameStore.setState({ level: 25, mode: 'campaign', wave: 2, waveTotal: 3 });
+
+    render(<HUD onPause={vi.fn()} />);
+
+    expect(screen.getByTestId('hud-wave')).toHaveTextContent('wave 2/3');
+    expect(screen.getByTestId('hud-wave')).toHaveAttribute('aria-live', 'polite');
+  });
+
+  it('shows no wave counter on a single-wave level', () => {
+    useGameStore.setState({ level: 3, mode: 'campaign', wave: 1, waveTotal: 1 });
+
+    render(<HUD onPause={vi.fn()} />);
+
+    expect(screen.queryByTestId('hud-wave')).not.toBeInTheDocument();
+  });
+
   it('previews the packet that will be fired next', () => {
     useGameStore.setState({ nextPacket: 'ERROR' });
 

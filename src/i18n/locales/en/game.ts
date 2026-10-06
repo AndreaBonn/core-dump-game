@@ -12,6 +12,7 @@ export const game = {
     quitToMenu: 'Quit to menu',
     levelCleared: 'LEVEL CLEARED',
     boss: 'BOSS',
+    wave: 'wave {{wave}}/{{total}}',
     nextChapter: 'Next up: Chapter {{chapter}} · {{mechanic}}',
     levelScore: 'level score',
     clearBonus: 'clear bonus',

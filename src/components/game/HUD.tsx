@@ -15,6 +15,8 @@ export function HUD({ onPause }: HUDProps) {
   const score = useGameStore((state) => state.score);
   const level = useGameStore((state) => state.level);
   const mode = useGameStore((state) => state.mode);
+  const wave = useGameStore((state) => state.wave);
+  const waveTotal = useGameStore((state) => state.waveTotal);
   const nextPacket = useGameStore((state) => state.nextPacket);
   const combo = useGameStore((state) => state.combo);
   const setCombo = useGameStore((state) => state.setCombo);
@@ -66,6 +68,15 @@ export function HUD({ onPause }: HUDProps) {
             {isBoss && (
               <p className="text-xs font-bold tracking-widest text-packet-error">
                 {t('game.boss')}
+              </p>
+            )}
+            {waveTotal > 1 && (
+              <p
+                data-testid="hud-wave"
+                aria-live="polite"
+                className="text-xs uppercase text-terminal-muted tabular-nums"
+              >
+                {t('game.wave', { wave, total: waveTotal })}
               </p>
             )}
           </div>
