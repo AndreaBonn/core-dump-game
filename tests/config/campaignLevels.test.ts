@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CHAPTERS, type LevelSpec } from '@/config/campaign';
-import { buildCampaignLevel, LEVELS } from '@/config/levels';
+import { buildCampaignLevel, getLevel, LEVELS, TOTAL_LEVELS } from '@/config/levels';
 import { buildTrack } from '@/config/paths';
 
 const CUSTOM_BOSS_SPEC: LevelSpec = {
@@ -32,7 +32,8 @@ describe('playable campaign chapters', () => {
       powerUpChance: 0.05,
       pathKind: 'loop',
       seed: 88109,
-      starThresholds: [310, 520, 780],
+      // Two waves of 52: thresholds on all 104 packets.
+      starThresholds: [620, 1040, 1560],
     });
     expect(config.waypoints).toEqual(
       buildTrack({ kind: 'loop', reach: 250, sweeps: 4, waypoints: 64 }),
@@ -56,6 +57,19 @@ describe('playable campaign chapters', () => {
     expect(levels.filter(({ isBoss }) => isBoss).map(({ level }) => level)).toEqual([
       levels.at(-1)!.level,
     ]);
+  });
+
+  it('rates a multi-wave level on every packet it sends, not on one wave', () => {
+    const finale = getLevel(TOTAL_LEVELS);
+    expect(finale.waves).toBe(4);
+    expect(finale.chainLength).toBe(96);
+    // 384 packets at 6, 10 and 15 points each, rounded to tens.
+    expect(finale.starThresholds).toEqual([2300, 3840, 5760]);
+  });
+
+  it('keeps single-wave thresholds on the chain length alone', () => {
+    // 20 packets at 6, 10 and 15 points each.
+    expect(getLevel(1).starThresholds).toEqual([120, 200, 300]);
   });
 
   it('keeps chapters ordered and contiguous', () => {

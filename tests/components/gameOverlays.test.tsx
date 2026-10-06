@@ -126,6 +126,7 @@ describe('LevelCompleteScreen', () => {
     { level: 6, title: 'Chapter 2 · Hazards' },
     { level: 12, title: 'Chapter 3 · Armored packets' },
     { level: 18, title: 'Chapter 4 · Reversal' },
+    { level: 24, title: 'Chapter 5 · Waves' },
   ])('announces the next chapter after campaign boss $level is cleared', ({ level, title }) => {
     render(
       <LevelCompleteScreen

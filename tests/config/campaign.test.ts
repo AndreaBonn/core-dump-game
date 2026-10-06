@@ -31,20 +31,21 @@ function chapterFor(id: number): ChapterSpec {
 }
 
 describe('campaign chapters', () => {
-  it('defines the base, hazard, armor and reversal chapters in order', () => {
+  it('defines the base, hazard, armor, reversal and waves chapters in order', () => {
     expect(CHAPTERS.map(({ id, mechanic }) => ({ id, mechanic }))).toEqual([
       { id: 1, mechanic: 'base' },
       { id: 2, mechanic: 'hazard' },
       { id: 3, mechanic: 'armor' },
       { id: 4, mechanic: 'reversal' },
+      { id: 5, mechanic: 'waves' },
     ]);
   });
 
-  it.each([1, 2, 3, 4])('gives chapter %i six levels', (id) => {
+  it.each([1, 2, 3, 4, 5])('gives chapter %i six levels', (id) => {
     expect(chapterFor(id).levels).toHaveLength(LEVELS_PER_CHAPTER);
   });
 
-  it.each([1, 2, 3, 4])(
+  it.each([1, 2, 3, 4, 5])(
     'increases difficulty through the first five levels of chapter %i',
     (id) => {
       const indices = chapterFor(id).levels.map(indexFor);
@@ -54,7 +55,7 @@ describe('campaign chapters', () => {
     },
   );
 
-  it.each([1, 2, 3, 4])('puts the unique difficulty maximum last in chapter %i', (id) => {
+  it.each([1, 2, 3, 4, 5])('puts the unique difficulty maximum last in chapter %i', (id) => {
     const indices = chapterFor(id).levels.map(indexFor);
     const maximum = Math.max(...indices);
     expect(indices.filter((index) => index === maximum)).toHaveLength(1);
@@ -62,7 +63,7 @@ describe('campaign chapters', () => {
     expect(indices[BOSS_INDEX]).toBeGreaterThanOrEqual(indices[BOSS_INDEX - 1]! * MIN_BOSS_RATIO);
   });
 
-  it.each([1, 2, 3, 4])(
+  it.each([1, 2, 3, 4, 5])(
     'keeps the chapter %i boss within a quarter of the fifth level speed',
     (id) => {
       const levels = chapterFor(id).levels;
@@ -149,6 +150,30 @@ describe('campaign chapters', () => {
     }
   });
 
+  it('sends more waves towards the chapter five boss, never fewer than two', () => {
+    const waves = chapterFor(5).levels.map((level) => level.waves);
+    expect(Math.min(...waves)).toBeGreaterThanOrEqual(2);
+    for (let index = 1; index < waves.length; index += 1) {
+      expect(waves[index]).toBeGreaterThanOrEqual(waves[index - 1]!);
+    }
+    expect(waves[BOSS_INDEX]).toBe(Math.max(...waves));
+    expect(waves[BOSS_INDEX]).toBeGreaterThan(waves[0]!);
+  });
+
+  it('mixes every earlier mechanic into chapter five below its own peak', () => {
+    const peakHazard = Math.max(...chapterFor(2).levels.map((level) => level.hazardChance));
+    const peakArmor = Math.max(...chapterFor(3).levels.map((level) => level.armorChance));
+    const gentlestReversal = chapterFor(4).levels[0]!.reversal!;
+    for (const level of chapterFor(5).levels) {
+      expect(level.hazardChance).toBeGreaterThan(0);
+      expect(level.hazardChance).toBeLessThan(peakHazard);
+      expect(level.armorChance).toBeGreaterThan(0);
+      expect(level.armorChance).toBeLessThan(peakArmor);
+      expect(level.reversal).not.toBeNull();
+      expect(level.reversal!.factor).toBeGreaterThanOrEqual(gentlestReversal.factor);
+    }
+  });
+
   it('keeps every reversal short and gentler than full speed backwards', () => {
     for (const { reversal } of chapterFor(4).levels) {
       expect(reversal!.factor).toBeGreaterThanOrEqual(MIN_REVERSAL_FACTOR);
@@ -176,7 +201,7 @@ describe('campaign chapters', () => {
     }
   });
 
-  it.each([1, 2, 3, 4])('keeps chapter %i within the existing tuning caps', (id) => {
+  it.each([1, 2, 3, 4, 5])('keeps chapter %i within the existing tuning caps', (id) => {
     for (const level of chapterFor(id).levels) {
       expect(level.chainLength).toBeLessThanOrEqual(MAX_CHAIN_LENGTH);
       expect(level.chainSpeed).toBeLessThanOrEqual(MAX_CHAIN_SPEED);

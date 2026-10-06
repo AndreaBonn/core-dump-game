@@ -64,6 +64,7 @@ describe('LevelSelect', () => {
       screen.getByRole('heading', { name: 'Chapter 3 · Armored packets' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Chapter 4 · Reversal' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Chapter 5 · Waves' })).toBeInTheDocument();
   });
 
   it('shows the stars earned in a chapter against the stars available in it', () => {

@@ -189,7 +189,8 @@ export function buildCampaignLevel(spec: LevelSpec, position: CampaignPosition):
     hazardChance: spec.hazardChance,
     pathKind: pathKindFor(level),
     seed: CAMPAIGN_SEED_BASE + level * SEED_STEP,
-    starThresholds: starThresholdsFor(spec.chainLength),
+    // Every wave is a full chain, and the level score adds them all up.
+    starThresholds: starThresholdsFor(spec.chainLength * spec.waves),
   };
 }
 

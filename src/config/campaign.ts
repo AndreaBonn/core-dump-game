@@ -27,6 +27,12 @@ const BASE_MECHANICS = { hazardChance: 0, armorChance: 0, reversal: null, waves:
  */
 const LATE_MECHANICS = { ...BASE_MECHANICS, hazardChance: 0.06, armorChance: 0.2 } as const;
 
+/**
+ * The finale keeps every earlier mechanic in play and reverses only as gently
+ * as the first reversal level: the waves are the new pressure, not the stumble.
+ */
+const FINALE_REVERSAL = { period: 12, duration: 1, factor: -0.3 } as const;
+
 export const CHAPTERS: readonly ChapterSpec[] = [
   {
     id: 1,
@@ -205,6 +211,66 @@ export const CHAPTERS: readonly ChapterSpec[] = [
         chainSpeed: 126,
         turns: 4.76,
         reversal: { period: 7, duration: 2, factor: -0.6 },
+      },
+    ],
+  },
+  {
+    id: 5,
+    mechanic: 'waves',
+    levels: [
+      {
+        ...LATE_MECHANICS,
+        chainLength: 72,
+        colorCount: 7,
+        chainSpeed: 101,
+        turns: 4.6,
+        reversal: FINALE_REVERSAL,
+        waves: 2,
+      },
+      {
+        ...LATE_MECHANICS,
+        chainLength: 76,
+        colorCount: 7,
+        chainSpeed: 106,
+        turns: 4.7,
+        reversal: FINALE_REVERSAL,
+        waves: 2,
+      },
+      {
+        ...LATE_MECHANICS,
+        chainLength: 80,
+        colorCount: 7,
+        chainSpeed: 111,
+        turns: 4.8,
+        reversal: FINALE_REVERSAL,
+        waves: 2,
+      },
+      {
+        ...LATE_MECHANICS,
+        chainLength: 82,
+        colorCount: 7,
+        chainSpeed: 113,
+        turns: 4.9,
+        reversal: FINALE_REVERSAL,
+        waves: 3,
+      },
+      {
+        ...LATE_MECHANICS,
+        chainLength: 84,
+        colorCount: 7,
+        chainSpeed: 116,
+        turns: 5.0,
+        reversal: FINALE_REVERSAL,
+        waves: 3,
+      },
+      {
+        ...LATE_MECHANICS,
+        chainLength: 96,
+        colorCount: 7,
+        chainSpeed: 138,
+        turns: 5.2,
+        reversal: FINALE_REVERSAL,
+        waves: 4,
       },
     ],
   },

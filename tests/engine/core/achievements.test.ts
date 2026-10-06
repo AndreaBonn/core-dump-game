@@ -50,14 +50,20 @@ describe('evaluate', () => {
     expect(isEarned(NOTHING)).toBe(false);
   });
 
-  it('earns all-bosses only when all four campaign bosses have at least one star', () => {
+  it('earns all-bosses only when all five campaign bosses have at least one star', () => {
     const isEarned = achievementById('all-bosses')!.isEarned;
     expect(
       isEarned({
         ...NOTHING,
-        progress: { stars: { 6: 1, 12: 2, 18: 1, 24: 1 }, unlockedThrough: 24 },
+        progress: { stars: { 6: 1, 12: 2, 18: 1, 24: 1, 30: 1 }, unlockedThrough: 30 },
       }),
     ).toBe(true);
+    expect(
+      isEarned({
+        ...NOTHING,
+        progress: { stars: { 6: 1, 12: 2, 18: 1, 24: 1 }, unlockedThrough: 30 },
+      }),
+    ).toBe(false);
     expect(
       isEarned({ ...NOTHING, progress: { stars: { 6: 1, 12: 2, 18: 1 }, unlockedThrough: 24 } }),
     ).toBe(false);

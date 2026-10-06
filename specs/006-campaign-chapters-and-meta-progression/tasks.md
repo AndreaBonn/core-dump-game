@@ -68,8 +68,9 @@ I18N parità dizionari, WAV ondate.
 
 ## Fase 6 — Ondate e capitolo 5 (30 livelli)
 
-- [ ] T060 | T011 | WAV, DET | `waves.test.ts`: `waveCount` da config, `buildWave` deterministico per seed e indice, sub-RNG separato (T005 verde)
-- [ ] T061 | T060, T030 | WAV | test engine: catena vuota con ondate rimaste → nuova catena e `onWaveChange`, nessun `onLevelComplete`; ultima ondata → level complete; `GameEngine.ts` ≤ 405 righe
-- [ ] T062 | T061 | WAV, UI, I18N | HUD `ondata k/n` con `aria-live` polite; parità i18n
-- [ ] T063 | T062, T034 | CAMP, I18N | capitolo 5 in tabella (ondate + meccaniche 2-4 a densità ridotta); `TOTAL_LEVELS === 30`; test curva con 5 capitoli e content box verdi
-- [ ] T064 | T063 | tutti | gate di fase + playtest 25-30 annotato qui; e2e `hud-level` derivato
+- [x] T060 | T011 | WAV, DET | `waves.test.ts`: `waveCount` da config, `buildWave` deterministico per seed e indice, sub-RNG separato (T005 verde)
+- [x] T061 | T060, T030 | WAV | test engine: catena vuota con ondate rimaste → nuova catena e `onWaveChange`, nessun `onLevelComplete`; ultima ondata → level complete; `GameEngine.ts` ≤ 405 righe
+- [x] T062 | T061 | WAV, UI, I18N | HUD `ondata k/n` con `aria-live` polite; parità i18n
+- [x] T063 | T062, T034 | CAMP, I18N | capitolo 5 in tabella (ondate + meccaniche 2-4 a densità ridotta); `TOTAL_LEVELS === 30`; test curva con 5 capitoli e content box verdi
+- [x] T064 | T063 | tutti | gate di fase + playtest 25-30 annotato qui; e2e `hud-level` derivato
+  - 2026-10-06 gate: vitest 1103/1103, e2e 16/16, a11y-gate 5/5 sulla level select a 5 capitoli, render 375 e 1280 del livello 30 (HUD 30/30 BOSS WAVE 1/4, nessuna sovrapposizione). Review: soglie stelle calcolate su una sola ondata (MAJOR), corretto su chainLength x waves. **Playtest livelli 25-30 NON eseguito.**
