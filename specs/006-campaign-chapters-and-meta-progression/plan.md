@@ -87,7 +87,7 @@ Ogni voce ha il suo Given/When/Then; i comandi sono in § Criteri di verifica.
 - **I livelli sono generati, non disegnati a mano**: un "livello in più" costa una riga di tuning nella tabella, non contenuto. Il costo vero di 24 contro 30 è il bilanciamento e il playtest, non la scrittura.
 - Endless e daily **non** ricevono le nuove meccaniche in questo piano: continuano a usare `buildLevelConfig` invariato, così il daily resta riproducibile per data e le classifiche esistenti restano confrontabili. Estenderli è una fase opzionale fuori scope (§ Fuori scope).
 - Le catene doppie sono **escluse** (R2): richiedono più `Chain`/`Path`/`VoidHole` nel motore, che oggi ne assume una; il refactor costa più dell'intera Fase 2+3 e toccherebbe i 22 privati pilotati dai test.
-- XP, gradi e cosmetici restano locali: nessuna modifica a `firestore.rules`, nessun nuovo campo in classifica. `levelReached <= 100` resta compatibile con 24 livelli.
+- XP, gradi e cosmetici restano locali: nessuna modifica a `firestore.rules`, nessun nuovo campo in classifica. `levelReached <= 100` resta compatibile con 30 livelli.
 - La selezione dei cosmetici è una preferenza, quindi vive nello store delle impostazioni (come lingua e audio), non nel profilo: niente regola di merge, niente save file. La disponibilità invece si deriva dal profilo, quindi un reset del profilo fa ricadere la scelta sulla default. Scelta implementativa, rivedibile.
 - La palette è applicata con uno stato di modulo in `config/packetTypes.ts` (`setActivePalette`), non passando la palette ai 9 consumer di `colorForType`. È uno stato globale mutabile ma solo di presentazione: il sim non lo legge. Alternativa scartata: iniettare la palette in `ShotSystem`, `HUD`, `GameEngine` e `RenderSystem`, 9 firme cambiate per un dato cosmetico.
 - **[BLOCCANTE, Q2]** Salvataggi esistenti: le stelle sono indicizzate per numero di livello e i livelli 1-10 cambiano layout. Default assunto: il gioco non ha ancora giocatori con salvataggi da proteggere, quindi le stelle restano dove sono (un giocatore che aveva il livello 7 a 3 stelle lo ritrova a 3 stelle anche se ora è un altro livello) e `unlockedThrough` resta valido.
@@ -135,7 +135,7 @@ Scelta implementativa: **a tempo**, con una schedule deterministica nel config (
 
 **Boss**: in questo piano un boss è tuning al picco + meccanica al massimo + `isBoss` (badge HUD, tile marcata, achievement). Un "pacchetto boss" con meccanica propria è fuori scope.
 
-**Determinismo**: `generateChainPackets` aggiunge l'estrazione dell'armatura **in coda** (hazard, power-up, tipo, armatura) e **solo quando `armorChance > 0`**. Con `armorChance = 0` lo stream RNG è identico a oggi: il fixture di Fase 0 lo prova per endless, daily e i capitoli 1-2. L'inversione non usa RNG.
+**Determinismo**: `generateChainPackets` non cambia. Armatura e ondate pescano da generatori separati (`armorSeed`, `waveSeed`) applicati dopo la generazione, e solo quando la meccanica è attiva: lo stream principale, che dispone la catena e alimenta il cursore, resta identico anche sui livelli con armatura. Il fixture di Fase 0 lo prova per endless e daily. L'inversione non usa RNG.
 
 **Motore**: le meccaniche vivono in moduli separati: armatura in `MatchSystem` + `chainOps`; inversione in `src/engine/core/chainMotion.ts` (puro). In `GameEngine` entrano solo un campo `levelTime` e la moltiplicazione del passo per `directionFactor`, compensati da un'estrazione (T030) di membri **non** presenti nell'interfaccia privata dei test. I nomi `sleepTimer`, `baseSpeed`, `updateSleep`, `fixedUpdate` restano invariati.
 
@@ -164,7 +164,8 @@ xp = 100 * levelsCleared + 50 * totalStars + 300 * bossesCleared + 75 * earned.l
 | 0    | Fix R1 e R1b, fixture di determinismo                                          | 10 livelli come oggi, stelle corrette in ogni modo | 3-4 h   |
 | 1    | Capitoli 1-2 (12 livelli, base + hazard), boss, curva, UI capitoli, split i18n | Campagna da 12 livelli a 2 capitoli giocabile      | 1,5-2 d |
 | 2    | Pacchetti corazzati + capitolo 3                                               | 18 livelli                                         | 1-1,5 d |
-| 3    | Inversione di direzione + capitolo 4                                           | 24 livelli, O2 completo                            | 1-1,5 d |
+| 3    | Inversione di direzione + capitolo 4                                           | 24 livelli                                         | 1-1,5 d |
+| 6    | Ondate + capitolo 5                                                            | 30 livelli, O2 completo                            | 1,5-2 d |
 | 4    | XP e gradi nel Profilo                                                         | Gradi visibili, nessun cosmetico                   | 0,5-1 d |
 | 5    | Cosmetici sbloccabili e selezionabili                                          | O4 completo                                        | 1,5-2 d |
 
@@ -215,7 +216,7 @@ Elenco completo con dipendenze e verify in `tasks.md`. Qui il dettaglio dove ser
 - **T031** `src/engine/core/chainMotion.ts`: `directionFactor(elapsed, schedule)` puro, test ai bordi (0, inizio finestra, fine finestra, periodi successivi, schedule null → 1). — basso
 - **T032** Cablaggio in `GameEngine`: `levelTime` azzerato in `buildLevel`, `chain.advance(dt * factor)` in `fixedUpdate`. SLEEP compone (rallenta anche all'indietro). Test: finestra di inversione, assenza di effetto con `reversal: null` (i test esistenti restano invariati). — alto (fisica condivisa con shield/rollback e void)
 - **T033** Telegraph: `telegraphPhase(elapsed, schedule)` puro, disegno in `MechanicRenderer`; con reduced motion il segnale è statico, non assente. — medio
-- **T034** Capitolo 4 in tabella + chiavi i18n; test curva con 4 capitoli e `TOTAL_LEVELS === 24`. — medio
+- **T034** Capitolo 4 in tabella + chiavi i18n; test curva con 4 capitoli e `TOTAL_LEVELS === 24` (diventa 30 con la Fase 6). — medio
 - **T035** Gate di fase + playtest 19-24, verifica che nessuna inversione porti la testa della catena sotto distanza 0. — medio
 
 ### Fase 4 — XP e gradi
@@ -269,7 +270,7 @@ Elenco completo con dipendenze e verify in `tasks.md`. Qui il dettaglio dove ser
 
 ## Rischi e mitigazioni
 
-- **R1/R1b**: poiché lo store riconosce la campagna dal numero di livello e la vittoria salta `onLevelComplete`, stelle vengono date dove non devono e negate dove devono; con 24 livelli il primo caso copre tutta la campagna. → Fase 0 prima di tutto, test rossi prima del fix (T001-T004).
+- **R1/R1b**: poiché lo store riconosce la campagna dal numero di livello e la vittoria salta `onLevelComplete`, stelle vengono date dove non devono e negate dove devono; con 30 livelli il primo caso copre tutta la campagna. → Fase 0 prima di tutto, test rossi prima del fix (T001-T004).
 - **R2 multi-chain**: le catene doppie toccherebbero collisione, void, render e i privati dei test. → escluse; il loro posto è un'eventuale fase separata con ADR propria.
 - **R3 salvataggi**: le stelle per numero di livello cambiano significato. → D1 = XP derivato (nessun campo nuovo nel profilo), selezione cosmetici nelle impostazioni con fallback, Q2 per la politica sulle stelle. `parseProfile` non cambia in questo piano.
 - **R4 determinismo**: un'estrazione RNG in più cambia ogni layout successivo. → estrazione dell'armatura in coda e condizionata a `armorChance > 0`; inversione senza RNG; fixture T005 verde a ogni fase; endless/daily non toccati.
@@ -314,6 +315,13 @@ livelli del capitolo, con esito (superato / stelle / note sulla difficoltà) in 
 3. **XP: derivato dallo stato** (default, non chiesto: planner e architect concordavano).
 4. **Run campagna: dal livello scelto fino all'ultimo** (30). La risposta diceva "fino al 24", formulata prima che i livelli fossero 30: letta come "fino alla fine della campagna".
 5. **Corazzato: match sulla sua fila.** Una run di 3 o più che contiene un corazzato si incrina invece di esplodere; il secondo match la fa esplodere (semantica del planner, DoD § Corazzato).
+
+## Decisioni prese durante l'implementazione
+
+- **Palette di accessibilità sempre disponibili** (2026-10-06). Okabe-Ito e alto contrasto usano il tipo di sblocco `always`: libere dal primo livello, ma non sono la voce predefinita. Un giocatore daltonico non deve guadagnarsi i colori che gli servono per giocare. Il premio della slot palette è la palette `neon`, che si sblocca con 3 boss.
+- **D1, XP senza tetto: confermato dall'utente** (2026-10-06). `levelsCleared` conta anche i livelli endless e daily senza limite: il grado massimo si raggiunge anche con circa 200 livelli endless. I gradi premiano il tempo di gioco, non solo la maestria.
+- **F1, salvataggio degli e2e separato** (2026-10-06). Il percorso del salvataggio si legge da `CORE_DUMP_SAVE_FILE` (`resolveSaveFilePath`); gli e2e usano `.e2e-save/progress.json`, azzerato dal `globalSetup`, e la porta 4317 invece della 4173 del launcher, così non possono agganciarsi a una partita in corso.
+- **GameEngine diviso** (2026-10-06). La simulazione di un livello è in `LevelSession` (finding A1 di `/analyze`); `GameEngine.ts` passa da 403 a 227 righe.
 
 ## Handoff
 
